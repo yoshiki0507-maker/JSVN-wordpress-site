@@ -1,0 +1,45 @@
+# 日本訪問看護学会サイト ローカル開発環境
+#
+# 使い方:
+#   docker compose up -d
+#   → http://localhost:8080 にアクセスして WordPress の初期設定を行う
+#   → 管理画面 [外観 > テーマ] で「JSVN - 日本訪問看護学会」を有効化
+#
+# テーマは wp-content/themes/jsvn をそのままマウントしているため、
+# ファイルを編集すると即座に反映されます。
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: jsvn-db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: wordpress
+      MYSQL_ROOT_PASSWORD: rootpassword
+    volumes:
+      - db_data:/var/lib/mysql
+
+  wordpress:
+    image: wordpress:6.5-php8.2-apache
+    container_name: jsvn-wordpress
+    restart: unless-stopped
+    depends_on:
+      - db
+    ports:
+      - "8080:80"
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+      WORDPRESS_DB_NAME: wordpress
+      WORDPRESS_DEBUG: 1
+    volumes:
+      # カスタムテーマだけをマウント（WordPress 本体はイメージ側を利用）
+      - ./wp-content/themes/jsvn:/var/www/html/wp-content/themes/jsvn
+      - wp_uploads:/var/www/html/wp-content/uploads
+
+volumes:
+  db_data:
+  wp_uploads:

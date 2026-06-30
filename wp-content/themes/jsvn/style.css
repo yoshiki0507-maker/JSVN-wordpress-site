@@ -1,0 +1,566 @@
+/*
+Theme Name: JSVN - 日本訪問看護学会
+Theme URI: https://jsvn.example.jp/
+Author: JSVN Web Team
+Author URI: https://jsvn.example.jp/
+Description: 日本訪問看護学会の公式サイト用カスタムテーマ。訪問看護の「温かさ」と学会としての「学術的な信頼感」を両立させたデザインです。WordPress 6.x 対応。
+Version: 1.0.0
+Requires at least: 6.0
+Tested up to: 6.5
+Requires PHP: 7.4
+License: GNU General Public License v2 or later
+License URI: http://www.gnu.org/licenses/gpl-2.0.html
+Text Domain: jsvn
+Tags: academic, society, healthcare, nursing, custom-menu, featured-images, translation-ready
+*/
+
+/* ==========================================================================
+   1. デザイントークン（カラー・タイポグラフィの基準値）
+   --------------------------------------------------------------------------
+   コンセプト:
+   - 看護/ケアの「温かさ」 … セージグリーン・クリーム・コーラル
+   - 学会の「学術性・信頼感」 … 深いネイビー・明朝体の見出し
+   ========================================================================== */
+:root {
+  /* Brand colors */
+  --jsvn-green:        #2f7d63; /* 訪問看護を象徴する深いグリーン（健康・ケア）*/
+  --jsvn-green-light:  #5aa589;
+  --jsvn-green-soft:   #e6f1ec; /* 背景に敷く淡いグリーン */
+  --jsvn-navy:         #1f3a5f; /* 学術的な信頼感を出すネイビー */
+  --jsvn-navy-deep:    #14253c;
+  --jsvn-coral:        #e08a6e; /* 温もりのアクセント */
+  --jsvn-coral-soft:   #f5d9cf;
+  --jsvn-gold:         #c79a4b; /* 学術賞・格式を添えるゴールド */
+
+  /* Neutrals */
+  --jsvn-cream:        #faf6ef; /* 全体の地色（温かみのあるオフホワイト）*/
+  --jsvn-paper:        #ffffff;
+  --jsvn-ink:          #25303b; /* 本文テキスト */
+  --jsvn-ink-soft:     #54616d;
+  --jsvn-line:         #e7ded2; /* 罫線 */
+
+  /* Typography */
+  --jsvn-serif: "Noto Serif JP", "Yu Mincho", "YuMincho", "Hiragino Mincho ProN", serif;
+  --jsvn-sans:  "Noto Sans JP", "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif;
+
+  /* Layout */
+  --jsvn-maxw: 1160px;
+  --jsvn-radius: 10px;
+  --jsvn-shadow: 0 8px 30px rgba(31, 58, 95, 0.08);
+  --jsvn-shadow-sm: 0 4px 14px rgba(31, 58, 95, 0.06);
+}
+
+/* ==========================================================================
+   2. リセット & ベース
+   ========================================================================== */
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  font-family: var(--jsvn-sans);
+  color: var(--jsvn-ink);
+  background-color: var(--jsvn-cream);
+  line-height: 1.85;
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+img { max-width: 100%; height: auto; display: block; }
+
+a { color: var(--jsvn-green); text-decoration: none; transition: color .2s ease, opacity .2s ease; }
+a:hover { color: var(--jsvn-navy); }
+
+h1, h2, h3, h4 {
+  font-family: var(--jsvn-serif);
+  color: var(--jsvn-navy);
+  line-height: 1.45;
+  font-weight: 600;
+  margin: 0 0 .6em;
+}
+
+p { margin: 0 0 1.2em; }
+
+ul, ol { margin: 0 0 1.2em; padding-left: 1.4em; }
+
+/* レイアウトの共通コンテナ */
+.jsvn-container {
+  width: min(92%, var(--jsvn-maxw));
+  margin-inline: auto;
+}
+
+.jsvn-section { padding: 5.5rem 0; }
+.jsvn-section--tight { padding: 3.5rem 0; }
+.jsvn-section--green { background: var(--jsvn-green-soft); }
+.jsvn-section--navy { background: var(--jsvn-navy); color: #eef2f7; }
+.jsvn-section--navy h2,
+.jsvn-section--navy h3 { color: #ffffff; }
+
+/* セクション見出し（学術的な明朝＋小さなラベル）*/
+.jsvn-section-head { text-align: center; margin-bottom: 3rem; }
+.jsvn-section-head .jsvn-eyebrow {
+  display: inline-block;
+  font-family: var(--jsvn-sans);
+  font-size: .8rem;
+  letter-spacing: .22em;
+  color: var(--jsvn-green);
+  font-weight: 700;
+  margin-bottom: .9rem;
+}
+.jsvn-section-head h2 {
+  font-size: clamp(1.6rem, 3.5vw, 2.3rem);
+  margin: 0;
+  position: relative;
+  padding-bottom: 1rem;
+}
+.jsvn-section-head h2::after {
+  content: "";
+  position: absolute;
+  left: 50%; bottom: 0;
+  transform: translateX(-50%);
+  width: 56px; height: 3px;
+  background: linear-gradient(90deg, var(--jsvn-green), var(--jsvn-coral));
+  border-radius: 3px;
+}
+.jsvn-section--navy .jsvn-section-head .jsvn-eyebrow { color: var(--jsvn-coral-soft); }
+
+/* ボタン */
+.jsvn-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: .5em;
+  font-family: var(--jsvn-sans);
+  font-weight: 700;
+  font-size: .98rem;
+  padding: .85em 2em;
+  border-radius: 999px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: transform .2s ease, box-shadow .2s ease, background .2s ease, color .2s ease;
+}
+.jsvn-btn--primary { background: var(--jsvn-green); color: #fff; box-shadow: var(--jsvn-shadow-sm); }
+.jsvn-btn--primary:hover { background: var(--jsvn-navy); color: #fff; transform: translateY(-2px); }
+.jsvn-btn--coral { background: var(--jsvn-coral); color: #fff; box-shadow: var(--jsvn-shadow-sm); }
+.jsvn-btn--coral:hover { background: #c9715a; color: #fff; transform: translateY(-2px); }
+.jsvn-btn--outline { background: transparent; color: var(--jsvn-navy); border-color: var(--jsvn-navy); }
+.jsvn-btn--outline:hover { background: var(--jsvn-navy); color: #fff; }
+.jsvn-btn--ghost-light { background: rgba(255,255,255,.12); color:#fff; border-color: rgba(255,255,255,.5); }
+.jsvn-btn--ghost-light:hover { background:#fff; color: var(--jsvn-navy); }
+
+/* ==========================================================================
+   3. ヘッダー / グローバルナビ
+   ========================================================================== */
+.jsvn-topbar {
+  background: var(--jsvn-navy-deep);
+  color: #cdd7e3;
+  font-size: .82rem;
+}
+.jsvn-topbar .jsvn-container {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 1.4rem;
+  min-height: 38px;
+}
+.jsvn-topbar a { color: #cdd7e3; }
+.jsvn-topbar a:hover { color: #fff; }
+
+.jsvn-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(255, 255, 255, .92);
+  backdrop-filter: saturate(180%) blur(8px);
+  border-bottom: 1px solid var(--jsvn-line);
+}
+.jsvn-header__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  min-height: 80px;
+}
+.jsvn-brand { display: flex; align-items: center; gap: .85rem; }
+.jsvn-brand__mark {
+  width: 46px; height: 46px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, var(--jsvn-green-light), var(--jsvn-green));
+  display: grid; place-items: center;
+  color: #fff; font-family: var(--jsvn-serif); font-weight: 700; font-size: 1.2rem;
+  box-shadow: inset 0 0 0 3px rgba(255,255,255,.35);
+}
+.jsvn-brand__text { line-height: 1.3; }
+.jsvn-brand__name {
+  font-family: var(--jsvn-serif);
+  font-weight: 700;
+  font-size: 1.18rem;
+  color: var(--jsvn-navy);
+  letter-spacing: .02em;
+}
+.jsvn-brand__en {
+  display: block;
+  font-size: .66rem;
+  letter-spacing: .12em;
+  color: var(--jsvn-ink-soft);
+  text-transform: uppercase;
+}
+
+.jsvn-nav ul { list-style: none; display: flex; gap: 1.6rem; margin: 0; padding: 0; }
+.jsvn-nav a {
+  font-weight: 600;
+  font-size: .96rem;
+  color: var(--jsvn-ink);
+  padding: .4em 0;
+  position: relative;
+}
+.jsvn-nav a::after {
+  content:""; position:absolute; left:0; bottom:-2px;
+  width:0; height:2px; background: var(--jsvn-green); transition: width .25s ease;
+}
+.jsvn-nav a:hover { color: var(--jsvn-green); }
+.jsvn-nav a:hover::after { width: 100%; }
+.jsvn-nav .current-menu-item > a,
+.jsvn-nav .current_page_item > a { color: var(--jsvn-green); }
+.jsvn-nav .current-menu-item > a::after,
+.jsvn-nav .current_page_item > a::after { width: 100%; }
+
+.jsvn-header__cta { display: flex; align-items: center; gap: .8rem; }
+
+/* ハンバーガー */
+.jsvn-burger {
+  display: none;
+  width: 44px; height: 44px;
+  border: none; background: transparent; cursor: pointer;
+  padding: 0;
+}
+.jsvn-burger span {
+  display: block; width: 24px; height: 2px; margin: 5px auto;
+  background: var(--jsvn-navy); transition: transform .3s ease, opacity .3s ease;
+}
+.jsvn-burger[aria-expanded="true"] span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.jsvn-burger[aria-expanded="true"] span:nth-child(2) { opacity: 0; }
+.jsvn-burger[aria-expanded="true"] span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+/* ==========================================================================
+   4. ヒーロー
+   ========================================================================== */
+.jsvn-hero {
+  position: relative;
+  background:
+    linear-gradient(115deg, rgba(31,58,95,.72), rgba(47,125,99,.55)),
+    radial-gradient(120% 120% at 80% 10%, #cfe6db 0%, #f4ede2 55%);
+  overflow: hidden;
+}
+.jsvn-hero__inner {
+  display: grid;
+  grid-template-columns: 1.05fr .95fr;
+  gap: 3rem;
+  align-items: center;
+  padding: 5.5rem 0 6rem;
+}
+.jsvn-hero__copy { color: #fff; }
+.jsvn-hero__badge {
+  display: inline-flex; align-items:center; gap:.5em;
+  background: rgba(255,255,255,.16);
+  border: 1px solid rgba(255,255,255,.35);
+  border-radius: 999px;
+  padding: .4em 1.1em;
+  font-size: .8rem; letter-spacing: .12em; font-weight: 600;
+  margin-bottom: 1.4rem;
+}
+.jsvn-hero h1 {
+  color: #fff;
+  font-size: clamp(2rem, 5vw, 3.1rem);
+  line-height: 1.4;
+  margin: 0 0 1rem;
+  text-shadow: 0 2px 16px rgba(20,37,60,.25);
+}
+.jsvn-hero h1 .accent { color: #ffe2b8; }
+.jsvn-hero__lead {
+  font-size: 1.08rem;
+  color: #f1f5f2;
+  max-width: 30em;
+  margin-bottom: 2rem;
+}
+.jsvn-hero__actions { display: flex; flex-wrap: wrap; gap: 1rem; }
+
+.jsvn-hero__card {
+  background: rgba(255,255,255,.94);
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: var(--jsvn-shadow);
+}
+.jsvn-hero__card h3 {
+  font-size: 1.15rem; margin-bottom: 1.2rem;
+  display:flex; align-items:center; gap:.5em;
+}
+.jsvn-hero__card ul { list-style:none; margin:0; padding:0; }
+.jsvn-hero__card li {
+  display:flex; gap:.8rem; padding:.7rem 0;
+  border-bottom:1px dashed var(--jsvn-line);
+  font-size:.94rem;
+}
+.jsvn-hero__card li:last-child { border-bottom:none; }
+.jsvn-hero__card .date {
+  flex:0 0 auto; color:var(--jsvn-green); font-weight:700; font-family:var(--jsvn-sans);
+  font-size:.82rem; min-width: 5.2em;
+}
+
+/* 装飾の波（ヒーロー下端）*/
+.jsvn-hero__wave { display:block; width:100%; height:auto; margin-bottom:-6px; }
+
+/* ==========================================================================
+   5. ご挨拶 / ミッション
+   ========================================================================== */
+.jsvn-mission__grid {
+  display: grid;
+  grid-template-columns: 1fr 1.1fr;
+  gap: 3.5rem;
+  align-items: center;
+}
+.jsvn-mission__visual {
+  background: linear-gradient(160deg, var(--jsvn-green-soft), #fff);
+  border-radius: var(--jsvn-radius);
+  padding: 2.5rem;
+  box-shadow: var(--jsvn-shadow-sm);
+  position: relative;
+}
+.jsvn-mission__visual blockquote {
+  margin:0; font-family: var(--jsvn-serif);
+  font-size: 1.4rem; line-height: 1.9; color: var(--jsvn-navy);
+}
+.jsvn-mission__visual cite {
+  display:block; margin-top:1.4rem; font-style:normal;
+  font-size:.9rem; color: var(--jsvn-ink-soft);
+}
+.jsvn-mission__body h2 { font-size: clamp(1.5rem, 3vw, 2.1rem); }
+.jsvn-mission__body .lead { font-size:1.05rem; color:var(--jsvn-ink); }
+
+/* ==========================================================================
+   6. 3つの柱（特徴カード）
+   ========================================================================== */
+.jsvn-pillars {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.8rem;
+}
+.jsvn-pillar {
+  background: var(--jsvn-paper);
+  border-radius: var(--jsvn-radius);
+  padding: 2.3rem 1.9rem;
+  box-shadow: var(--jsvn-shadow-sm);
+  border-top: 4px solid var(--jsvn-green);
+  transition: transform .25s ease, box-shadow .25s ease;
+}
+.jsvn-pillar:nth-child(2) { border-top-color: var(--jsvn-coral); }
+.jsvn-pillar:nth-child(3) { border-top-color: var(--jsvn-navy); }
+.jsvn-pillar:hover { transform: translateY(-6px); box-shadow: var(--jsvn-shadow); }
+.jsvn-pillar__icon {
+  width: 60px; height: 60px; border-radius: 16px;
+  display:grid; place-items:center; margin-bottom:1.3rem;
+  background: var(--jsvn-green-soft); color: var(--jsvn-green);
+}
+.jsvn-pillar:nth-child(2) .jsvn-pillar__icon { background: var(--jsvn-coral-soft); color:#c9715a; }
+.jsvn-pillar:nth-child(3) .jsvn-pillar__icon { background:#e4ebf3; color: var(--jsvn-navy); }
+.jsvn-pillar__icon svg { width: 30px; height: 30px; }
+.jsvn-pillar h3 { font-size: 1.25rem; margin-bottom:.6rem; }
+.jsvn-pillar p { font-size:.95rem; color: var(--jsvn-ink-soft); margin:0; }
+
+/* ==========================================================================
+   7. お知らせ
+   ========================================================================== */
+.jsvn-news__list { display:flex; flex-direction:column; gap:0; }
+.jsvn-news__item {
+  display:flex; align-items:center; gap:1.4rem;
+  padding:1.2rem .4rem;
+  border-bottom:1px solid var(--jsvn-line);
+}
+.jsvn-news__item:first-child { border-top:1px solid var(--jsvn-line); }
+.jsvn-news__date {
+  flex:0 0 auto; font-weight:700; color:var(--jsvn-navy);
+  font-size:.9rem; min-width:6.5em;
+}
+.jsvn-news__cat {
+  flex:0 0 auto;
+  font-size:.74rem; font-weight:700; letter-spacing:.05em;
+  color:#fff; background:var(--jsvn-green);
+  padding:.2em 1em; border-radius:999px; min-width:6em; text-align:center;
+}
+.jsvn-news__cat--event { background: var(--jsvn-coral); }
+.jsvn-news__cat--academic { background: var(--jsvn-navy); }
+.jsvn-news__title { font-size:.98rem; color:var(--jsvn-ink); margin:0; }
+.jsvn-news__item:hover .jsvn-news__title { color: var(--jsvn-green); }
+.jsvn-news__more { text-align:center; margin-top:2.5rem; }
+
+/* ==========================================================================
+   8. 入会案内 CTA
+   ========================================================================== */
+.jsvn-join { position: relative; overflow:hidden; }
+.jsvn-join .jsvn-container { position:relative; z-index:1; }
+.jsvn-join__grid {
+  display:grid; grid-template-columns: 1.2fr 1fr; gap:3rem; align-items:center;
+}
+.jsvn-join h2 { color:#fff; font-size: clamp(1.6rem, 3.5vw, 2.4rem); }
+.jsvn-join p { color:#dfe7f0; }
+.jsvn-join__benefits { list-style:none; margin:1.6rem 0 2rem; padding:0; }
+.jsvn-join__benefits li {
+  display:flex; gap:.8rem; align-items:flex-start; padding:.5rem 0; color:#eef2f7;
+}
+.jsvn-join__benefits li::before {
+  content:"✓"; color: var(--jsvn-coral); font-weight:900; flex:0 0 auto;
+}
+.jsvn-join__card {
+  background:#fff; border-radius:16px; padding:2.4rem; text-align:center;
+  box-shadow: var(--jsvn-shadow);
+}
+.jsvn-join__card .price { font-family:var(--jsvn-serif); }
+.jsvn-join__card .price strong { font-size:2.4rem; color:var(--jsvn-green); }
+.jsvn-join__card .note { font-size:.82rem; color:var(--jsvn-ink-soft); }
+
+/* ==========================================================================
+   9. フッター
+   ========================================================================== */
+.jsvn-footer { background: var(--jsvn-navy-deep); color:#aeb9c7; padding: 4rem 0 0; }
+.jsvn-footer a { color:#cdd7e3; }
+.jsvn-footer a:hover { color:#fff; }
+.jsvn-footer__grid {
+  display:grid; grid-template-columns: 1.4fr 1fr 1fr 1fr; gap:2.5rem;
+  padding-bottom:3rem;
+}
+.jsvn-footer__brand .jsvn-brand__name { color:#fff; }
+.jsvn-footer__brand p { font-size:.88rem; margin-top:1rem; max-width:24em; }
+.jsvn-footer h4 { color:#fff; font-size:1rem; margin-bottom:1.1rem; }
+.jsvn-footer ul { list-style:none; margin:0; padding:0; }
+.jsvn-footer li { padding:.35rem 0; font-size:.9rem; }
+.jsvn-footer__bottom {
+  border-top:1px solid rgba(255,255,255,.12);
+  padding:1.5rem 0; font-size:.82rem; text-align:center; color:#8593a4;
+}
+
+/* ==========================================================================
+   10. 汎用ページ（page.php / single.php / archive.php）
+   ========================================================================== */
+.jsvn-pagehero {
+  background: linear-gradient(115deg, var(--jsvn-navy), var(--jsvn-green));
+  color:#fff; padding: 3.5rem 0;
+}
+.jsvn-pagehero h1 { color:#fff; margin:0; font-size: clamp(1.6rem,4vw,2.4rem); }
+.jsvn-breadcrumb { font-size:.82rem; color: rgba(255,255,255,.85); margin-bottom:.6rem; }
+.jsvn-breadcrumb a { color: rgba(255,255,255,.85); }
+.jsvn-breadcrumb a:hover { color:#fff; }
+
+.jsvn-content { padding: 4rem 0; }
+.jsvn-content__layout { display:grid; grid-template-columns: 1fr 300px; gap:3rem; }
+.jsvn-article {
+  background:#fff; border-radius: var(--jsvn-radius);
+  padding: 2.8rem; box-shadow: var(--jsvn-shadow-sm);
+}
+.jsvn-article h2 { font-size:1.6rem; margin-top:2rem; }
+.jsvn-article h3 { font-size:1.3rem; margin-top:1.8rem; }
+.jsvn-article img { border-radius: var(--jsvn-radius); margin: 1.5rem 0; }
+.jsvn-article a { text-decoration: underline; text-underline-offset: 3px; }
+
+.jsvn-sidebar .widget {
+  background:#fff; border-radius: var(--jsvn-radius);
+  padding:1.6rem; margin-bottom:1.6rem; box-shadow: var(--jsvn-shadow-sm);
+}
+.jsvn-sidebar .widget-title {
+  font-size:1.05rem; padding-bottom:.7rem; margin-bottom:1rem;
+  border-bottom:2px solid var(--jsvn-green-soft);
+}
+.jsvn-sidebar ul { list-style:none; margin:0; padding:0; }
+.jsvn-sidebar li { padding:.45rem 0; border-bottom:1px dashed var(--jsvn-line); font-size:.92rem; }
+
+.jsvn-postmeta { color: var(--jsvn-ink-soft); font-size:.85rem; margin-bottom:1.5rem; }
+.jsvn-postmeta .jsvn-cat { color:#fff; background:var(--jsvn-green); padding:.15em .9em; border-radius:999px; font-size:.78rem; }
+
+/* ページネーション */
+.jsvn-pagination { display:flex; gap:.5rem; justify-content:center; margin-top:2.5rem; }
+.jsvn-pagination .page-numbers {
+  display:grid; place-items:center; min-width:42px; height:42px; padding:0 .6rem;
+  border-radius:8px; background:#fff; color:var(--jsvn-navy); font-weight:600;
+  box-shadow: var(--jsvn-shadow-sm);
+}
+.jsvn-pagination .page-numbers.current,
+.jsvn-pagination .page-numbers:hover { background:var(--jsvn-green); color:#fff; }
+
+/* アーカイブのカード */
+.jsvn-cards { display:grid; grid-template-columns: repeat(2, 1fr); gap:1.6rem; }
+.jsvn-card {
+  background:#fff; border-radius: var(--jsvn-radius); overflow:hidden;
+  box-shadow: var(--jsvn-shadow-sm); transition: transform .25s ease, box-shadow .25s ease;
+  display:flex; flex-direction:column;
+}
+.jsvn-card:hover { transform:translateY(-5px); box-shadow: var(--jsvn-shadow); }
+.jsvn-card__thumb { aspect-ratio: 16/9; background: var(--jsvn-green-soft); overflow:hidden; }
+.jsvn-card__thumb img { width:100%; height:100%; object-fit:cover; }
+.jsvn-card__body { padding:1.5rem; flex:1; display:flex; flex-direction:column; }
+.jsvn-card__meta { font-size:.8rem; color:var(--jsvn-ink-soft); margin-bottom:.6rem; }
+.jsvn-card h3 { font-size:1.15rem; margin:0 0 .6rem; }
+.jsvn-card p { font-size:.9rem; color:var(--jsvn-ink-soft); margin:0; }
+
+/* ==========================================================================
+   11. アクセシビリティ補助
+   ========================================================================== */
+.screen-reader-text {
+  position:absolute !important; width:1px; height:1px; overflow:hidden;
+  clip:rect(1px,1px,1px,1px); white-space:nowrap;
+}
+.skip-link {
+  position:absolute; left:-999px; top:0; z-index:200;
+  background:#fff; color:var(--jsvn-navy); padding:.8em 1.2em; border-radius:0 0 8px 0;
+}
+.skip-link:focus { left:0; }
+:focus-visible { outline: 3px solid var(--jsvn-coral); outline-offset: 2px; }
+
+/* ==========================================================================
+   12. レスポンシブ
+   ========================================================================== */
+@media (max-width: 900px) {
+  .jsvn-hero__inner { grid-template-columns: 1fr; gap:2.5rem; padding:4rem 0 4.5rem; }
+  .jsvn-mission__grid { grid-template-columns: 1fr; gap:2.5rem; }
+  .jsvn-pillars { grid-template-columns: 1fr; }
+  .jsvn-join__grid { grid-template-columns: 1fr; gap:2.5rem; }
+  .jsvn-content__layout { grid-template-columns: 1fr; }
+  .jsvn-footer__grid { grid-template-columns: 1fr 1fr; gap:2rem; }
+  .jsvn-cards { grid-template-columns: 1fr; }
+
+  /* モバイルナビ */
+  .jsvn-burger { display:block; }
+  .jsvn-nav {
+    position: fixed; inset: 0 0 0 auto; width: min(80%, 320px);
+    background:#fff; box-shadow: -8px 0 30px rgba(0,0,0,.12);
+    transform: translateX(100%); transition: transform .3s ease;
+    padding: 6rem 2rem 2rem; overflow-y:auto; z-index:90;
+  }
+  .jsvn-nav.is-open { transform: translateX(0); }
+  .jsvn-nav ul { flex-direction:column; gap:.4rem; }
+  .jsvn-nav a { display:block; padding:.8em 0; border-bottom:1px solid var(--jsvn-line); }
+  .jsvn-header__cta .jsvn-btn { display:none; }
+  .jsvn-nav-overlay {
+    position:fixed; inset:0; background:rgba(20,37,60,.45);
+    opacity:0; visibility:hidden; transition:opacity .3s ease; z-index:80;
+  }
+  .jsvn-nav-overlay.is-open { opacity:1; visibility:visible; }
+}
+
+@media (max-width: 560px) {
+  .jsvn-section { padding: 3.5rem 0; }
+  .jsvn-topbar { display:none; }
+  .jsvn-footer__grid { grid-template-columns: 1fr; }
+  .jsvn-news__item { flex-wrap:wrap; gap:.6rem; }
+  .jsvn-news__title { flex-basis:100%; }
+}
+
+/* WordPress 標準クラス（必須）*/
+.alignleft { float:left; margin:.5rem 1.5rem 1rem 0; }
+.alignright { float:right; margin:.5rem 0 1rem 1.5rem; }
+.aligncenter { display:block; margin-inline:auto; }
+.wp-caption { max-width:100%; }
+.wp-caption-text { font-size:.82rem; color:var(--jsvn-ink-soft); text-align:center; }
+.sticky, .gallery-caption, .bypostauthor { display:block; }
