@@ -658,30 +658,30 @@ ul, ol { margin: 0 0 1.2em; padding-left: 1.4em; }
 /* ==========================================================================
    9. フッター
    ========================================================================== */
-.jsvn-footer { background: var(--jsvn-navy-deep); color:#aeb9c7; padding: 4rem 0 0; }
-.jsvn-footer a { color:#cdd7e3; }
-.jsvn-footer a:hover { color:#fff; }
+/* 明るい配色（元のカラーロゴが映える）*/
+.jsvn-footer { background: var(--jsvn-green-soft); color: var(--jsvn-ink-soft); padding: 4rem 0 0; border-top: 4px solid var(--jsvn-green); }
+.jsvn-footer a { color: var(--jsvn-ink); }
+.jsvn-footer a:hover { color: var(--jsvn-green); }
 .jsvn-footer__grid {
   display:grid; grid-template-columns: 1.4fr 1fr 1fr 1fr; gap:2.5rem;
   padding-bottom:3rem;
 }
-.jsvn-footer__brand .jsvn-brand__name { color:#fff; }
-.jsvn-footer__logo { height:46px; width:auto; max-width:240px; display:block; }
-.jsvn-footer__brand p { font-size:.88rem; margin-top:1rem; max-width:24em; }
-.jsvn-footer h4 { color:#fff; font-size:1rem; margin-bottom:1.1rem; }
+.jsvn-footer__logo { height:50px; width:auto; max-width:250px; display:block; }
+.jsvn-footer__brand p { font-size:.88rem; margin-top:1rem; max-width:24em; color: var(--jsvn-ink-soft); }
+.jsvn-footer h4 { color: var(--jsvn-navy); font-size:1rem; margin-bottom:1.1rem; padding-bottom:.5rem; border-bottom:2px solid rgba(31,90,60,.15); }
 .jsvn-footer ul { list-style:none; margin:0; padding:0; }
 .jsvn-footer li { padding:.35rem 0; font-size:.9rem; }
 .jsvn-footer__utility {
-  border-top:1px solid rgba(255,255,255,.12);
+  border-top:1px solid rgba(31,90,60,.15);
 }
 .jsvn-footer__utility .jsvn-container {
   display:flex; flex-wrap:wrap; gap:.4rem 1.4rem; padding:1.2rem 0; font-size:.82rem;
 }
-.jsvn-footer__utility a { color:#aeb9c7; }
-.jsvn-footer__utility a:hover { color:#fff; }
+.jsvn-footer__utility a { color: var(--jsvn-ink-soft); }
+.jsvn-footer__utility a:hover { color: var(--jsvn-green); }
 .jsvn-footer__bottom {
-  border-top:1px solid rgba(255,255,255,.12);
-  padding:1.5rem 0; font-size:.82rem; text-align:center; color:#8593a4;
+  border-top:1px solid rgba(31,90,60,.15);
+  padding:1.5rem 0; font-size:.82rem; text-align:center; color: var(--jsvn-ink-soft);
 }
 
 /* ==========================================================================

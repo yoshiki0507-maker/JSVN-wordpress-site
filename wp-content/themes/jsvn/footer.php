@@ -12,7 +12,7 @@
 		<div class="jsvn-footer__grid">
 
 			<div class="jsvn-footer__brand">
-				<img class="jsvn-footer__logo" src="<?php echo esc_url( get_template_directory_uri() . '/assets/images/logo-white.png' ); ?>" alt="<?php bloginfo( 'name' ); ?>">
+				<img class="jsvn-footer__logo" src="<?php echo esc_url( get_template_directory_uri() . '/assets/images/logo.png' ); ?>" alt="<?php bloginfo( 'name' ); ?>">
 				<p><?php echo esc_html( get_bloginfo( 'description' ) ? get_bloginfo( 'description' ) : '訪問看護の実践と学術を支え、地域で暮らす人々の「その人らしい療養」を支援します。' ); ?></p>
 				<?php if ( function_exists( 'jsvn_sns_icons' ) ) { jsvn_sns_icons(); } ?>
 			</div>
