@@ -48,7 +48,7 @@
 
 		// ウィンドウ拡大時にリセット
 		window.addEventListener('resize', function () {
-			if (window.innerWidth > 900) closeNav();
+			if (window.innerWidth > 1100) closeNav();
 		});
 	});
 })();
