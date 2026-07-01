@@ -198,11 +198,14 @@ ul, ol { margin: 0 0 1.2em; padding-left: 1.4em; }
 }
 /* カスタマイザーからアップロードしたロゴの表示調整 */
 .jsvn-brand .custom-logo-link { display: inline-flex; align-items: center; }
-.jsvn-brand .custom-logo {
-  height: 52px; width: auto; max-width: 260px; display: block;
+.jsvn-brand .custom-logo,
+.jsvn-brand__img {
+  height: 52px; width: auto; max-width: 280px; display: block;
 }
+.jsvn-brand__link { display: inline-flex; align-items: center; }
 @media (max-width: 560px) {
-  .jsvn-brand .custom-logo { height: 42px; max-width: 200px; }
+  .jsvn-brand .custom-logo,
+  .jsvn-brand__img { height: 42px; max-width: 210px; }
 }
 
 .jsvn-brand__text { line-height: 1.3; }

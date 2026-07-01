@@ -49,12 +49,10 @@ $has_utility = has_nav_menu( 'utility' );
 			<?php if ( has_custom_logo() ) : ?>
 				<?php the_custom_logo(); ?>
 			<?php else : ?>
-				<a href="<?php echo esc_url( home_url( '/' ) ); ?>" class="jsvn-brand" style="text-decoration:none;">
-					<span class="jsvn-brand__mark" aria-hidden="true">看</span>
-					<span class="jsvn-brand__text">
-						<span class="jsvn-brand__name"><?php bloginfo( 'name' ); ?></span>
-						<span class="jsvn-brand__en">Japan Society of Visiting Nursing</span>
-					</span>
+				<a href="<?php echo esc_url( home_url( '/' ) ); ?>" class="jsvn-brand__link" style="text-decoration:none;">
+					<img class="jsvn-brand__img"
+						src="<?php echo esc_url( get_template_directory_uri() . '/assets/images/logo.png' ); ?>"
+						alt="<?php bloginfo( 'name' ); ?>">
 				</a>
 			<?php endif; ?>
 		</div>
