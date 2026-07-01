@@ -482,6 +482,86 @@ ul, ol { margin: 0 0 1.2em; padding-left: 1.4em; }
 .jsvn-join__card .note { font-size:.82rem; color:var(--jsvn-ink-soft); }
 
 /* ==========================================================================
+   8b. トップページ（学会サイト型：メインビジュアル＋2カラム）
+   ========================================================================== */
+/* メインビジュアル（控えめなバナー）*/
+.jsvn-visual {
+  background: linear-gradient(120deg, #0e2c1d 0%, #1f5a3c 72%);
+  color: #fff; padding: 2.8rem 0; border-bottom: 3px solid var(--jsvn-gold-line);
+}
+.jsvn-visual__inner { text-align: center; }
+.jsvn-visual__en { color: var(--jsvn-gold-line); letter-spacing: .16em; font-size: .78rem; margin: 0 0 .5rem; }
+.jsvn-visual__title { color: #fff; font-size: clamp(1.7rem, 4vw, 2.5rem); margin: 0 0 .7rem; }
+.jsvn-visual__lead { color: #e6efe9; margin: 0; font-size: 1rem; }
+
+/* 2カラム */
+.jsvn-home { padding: 3rem 0 4rem; }
+.jsvn-home__grid { display: grid; grid-template-columns: 1fr 320px; gap: 2.5rem; align-items: start; }
+.jsvn-home__main { min-width: 0; }
+
+/* お知らせボックス */
+.jsvn-newsbox {
+  background: #fff; border: 1px solid var(--jsvn-line); border-radius: var(--jsvn-radius);
+  overflow: hidden; box-shadow: var(--jsvn-shadow-sm); margin-bottom: 2.2rem;
+}
+.jsvn-newsbox__head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: .9rem 1.4rem; background: var(--jsvn-green-soft); border-bottom: 2px solid var(--jsvn-green);
+}
+.jsvn-newsbox__head h2 { margin: 0; font-size: 1.2rem; color: var(--jsvn-navy); }
+.jsvn-newsbox__head h2::before {
+  content: ""; display: inline-block; width: 8px; height: 18px; background: var(--jsvn-gold);
+  margin-right: .6rem; vertical-align: -3px; border-radius: 2px;
+}
+.jsvn-newsbox__all { font-size: .85rem; font-weight: 700; }
+.jsvn-newsbox .jsvn-news__list { padding: .3rem 1.4rem 1rem; }
+.jsvn-newsbox .jsvn-news__item:first-child { border-top: none; }
+
+/* ごあいさつ */
+.jsvn-home-about {
+  background: #fff; border: 1px solid var(--jsvn-line); border-radius: var(--jsvn-radius);
+  padding: 1.8rem 2rem; box-shadow: var(--jsvn-shadow-sm);
+}
+.jsvn-home-h2 {
+  font-size: 1.3rem; margin: 0 0 1rem; padding-bottom: .6rem;
+  border-bottom: 1px solid var(--jsvn-line); position: relative;
+}
+.jsvn-home-h2::after {
+  content: ""; position: absolute; left: 0; bottom: -1px; width: 84px; height: 3px; background: var(--jsvn-gold);
+}
+.jsvn-home-about p { font-size: .96rem; }
+.jsvn-textlink { font-weight: 700; font-size: .92rem; margin-right: 1.4rem; white-space: nowrap; }
+
+/* サイド：バナー */
+.jsvn-home__side { display: flex; flex-direction: column; gap: .85rem; }
+.jsvn-sidebanner {
+  display: flex; flex-direction: column; gap: .1rem; padding: 1.05rem 1.3rem;
+  background: var(--jsvn-green); color: #fff; border-radius: var(--jsvn-radius);
+  box-shadow: var(--jsvn-shadow-sm); transition: transform .2s ease, background .2s ease;
+}
+.jsvn-sidebanner:hover { transform: translateX(3px); background: var(--jsvn-navy); color: #fff; }
+.jsvn-sidebanner__label { font-weight: 700; font-size: 1rem; }
+.jsvn-sidebanner__en { font-size: .66rem; letter-spacing: .1em; opacity: .8; }
+.jsvn-sidebanner--gold { background: var(--jsvn-gold); }
+.jsvn-sidebanner--gold:hover { background: #9c7532; }
+.jsvn-sidebanner--login { background: #fff; color: var(--jsvn-navy); border: 2px solid var(--jsvn-green); }
+.jsvn-sidebanner--login:hover { background: var(--jsvn-green-soft); color: var(--jsvn-navy); }
+
+/* サイド：サブメニュー */
+.jsvn-sidemenu { border: 1px solid var(--jsvn-line); border-radius: var(--jsvn-radius); background: #fff; overflow: hidden; }
+.jsvn-sidemenu h3 { margin: 0; padding: .8rem 1.2rem; background: var(--jsvn-navy); color: #fff; font-size: .95rem; }
+.jsvn-sidemenu ul { list-style: none; margin: 0; padding: 0; }
+.jsvn-sidemenu li { border-bottom: 1px solid var(--jsvn-line); }
+.jsvn-sidemenu li:last-child { border-bottom: none; }
+.jsvn-sidemenu a { display: block; padding: .7rem 1.2rem; font-size: .9rem; color: var(--jsvn-ink); }
+.jsvn-sidemenu a::before { content: "›"; color: var(--jsvn-gold); margin-right: .5em; font-weight: 700; }
+.jsvn-sidemenu a:hover { background: var(--jsvn-green-soft); color: var(--jsvn-green); }
+
+@media (max-width: 820px) {
+  .jsvn-home__grid { grid-template-columns: 1fr; }
+}
+
+/* ==========================================================================
    9. フッター
    ========================================================================== */
 .jsvn-footer { background: var(--jsvn-navy-deep); color:#aeb9c7; padding: 4rem 0 0; }

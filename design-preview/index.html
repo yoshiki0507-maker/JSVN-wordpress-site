@@ -492,6 +492,86 @@ ul, ol { margin: 0 0 1.2em; padding-left: 1.4em; }
 .jsvn-join__card .note { font-size:.82rem; color:var(--jsvn-ink-soft); }
 
 /* ==========================================================================
+   8b. トップページ（学会サイト型：メインビジュアル＋2カラム）
+   ========================================================================== */
+/* メインビジュアル（控えめなバナー）*/
+.jsvn-visual {
+  background: linear-gradient(120deg, #0e2c1d 0%, #1f5a3c 72%);
+  color: #fff; padding: 2.8rem 0; border-bottom: 3px solid var(--jsvn-gold-line);
+}
+.jsvn-visual__inner { text-align: center; }
+.jsvn-visual__en { color: var(--jsvn-gold-line); letter-spacing: .16em; font-size: .78rem; margin: 0 0 .5rem; }
+.jsvn-visual__title { color: #fff; font-size: clamp(1.7rem, 4vw, 2.5rem); margin: 0 0 .7rem; }
+.jsvn-visual__lead { color: #e6efe9; margin: 0; font-size: 1rem; }
+
+/* 2カラム */
+.jsvn-home { padding: 3rem 0 4rem; }
+.jsvn-home__grid { display: grid; grid-template-columns: 1fr 320px; gap: 2.5rem; align-items: start; }
+.jsvn-home__main { min-width: 0; }
+
+/* お知らせボックス */
+.jsvn-newsbox {
+  background: #fff; border: 1px solid var(--jsvn-line); border-radius: var(--jsvn-radius);
+  overflow: hidden; box-shadow: var(--jsvn-shadow-sm); margin-bottom: 2.2rem;
+}
+.jsvn-newsbox__head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: .9rem 1.4rem; background: var(--jsvn-green-soft); border-bottom: 2px solid var(--jsvn-green);
+}
+.jsvn-newsbox__head h2 { margin: 0; font-size: 1.2rem; color: var(--jsvn-navy); }
+.jsvn-newsbox__head h2::before {
+  content: ""; display: inline-block; width: 8px; height: 18px; background: var(--jsvn-gold);
+  margin-right: .6rem; vertical-align: -3px; border-radius: 2px;
+}
+.jsvn-newsbox__all { font-size: .85rem; font-weight: 700; }
+.jsvn-newsbox .jsvn-news__list { padding: .3rem 1.4rem 1rem; }
+.jsvn-newsbox .jsvn-news__item:first-child { border-top: none; }
+
+/* ごあいさつ */
+.jsvn-home-about {
+  background: #fff; border: 1px solid var(--jsvn-line); border-radius: var(--jsvn-radius);
+  padding: 1.8rem 2rem; box-shadow: var(--jsvn-shadow-sm);
+}
+.jsvn-home-h2 {
+  font-size: 1.3rem; margin: 0 0 1rem; padding-bottom: .6rem;
+  border-bottom: 1px solid var(--jsvn-line); position: relative;
+}
+.jsvn-home-h2::after {
+  content: ""; position: absolute; left: 0; bottom: -1px; width: 84px; height: 3px; background: var(--jsvn-gold);
+}
+.jsvn-home-about p { font-size: .96rem; }
+.jsvn-textlink { font-weight: 700; font-size: .92rem; margin-right: 1.4rem; white-space: nowrap; }
+
+/* サイド：バナー */
+.jsvn-home__side { display: flex; flex-direction: column; gap: .85rem; }
+.jsvn-sidebanner {
+  display: flex; flex-direction: column; gap: .1rem; padding: 1.05rem 1.3rem;
+  background: var(--jsvn-green); color: #fff; border-radius: var(--jsvn-radius);
+  box-shadow: var(--jsvn-shadow-sm); transition: transform .2s ease, background .2s ease;
+}
+.jsvn-sidebanner:hover { transform: translateX(3px); background: var(--jsvn-navy); color: #fff; }
+.jsvn-sidebanner__label { font-weight: 700; font-size: 1rem; }
+.jsvn-sidebanner__en { font-size: .66rem; letter-spacing: .1em; opacity: .8; }
+.jsvn-sidebanner--gold { background: var(--jsvn-gold); }
+.jsvn-sidebanner--gold:hover { background: #9c7532; }
+.jsvn-sidebanner--login { background: #fff; color: var(--jsvn-navy); border: 2px solid var(--jsvn-green); }
+.jsvn-sidebanner--login:hover { background: var(--jsvn-green-soft); color: var(--jsvn-navy); }
+
+/* サイド：サブメニュー */
+.jsvn-sidemenu { border: 1px solid var(--jsvn-line); border-radius: var(--jsvn-radius); background: #fff; overflow: hidden; }
+.jsvn-sidemenu h3 { margin: 0; padding: .8rem 1.2rem; background: var(--jsvn-navy); color: #fff; font-size: .95rem; }
+.jsvn-sidemenu ul { list-style: none; margin: 0; padding: 0; }
+.jsvn-sidemenu li { border-bottom: 1px solid var(--jsvn-line); }
+.jsvn-sidemenu li:last-child { border-bottom: none; }
+.jsvn-sidemenu a { display: block; padding: .7rem 1.2rem; font-size: .9rem; color: var(--jsvn-ink); }
+.jsvn-sidemenu a::before { content: "›"; color: var(--jsvn-gold); margin-right: .5em; font-weight: 700; }
+.jsvn-sidemenu a:hover { background: var(--jsvn-green-soft); color: var(--jsvn-green); }
+
+@media (max-width: 820px) {
+  .jsvn-home__grid { grid-template-columns: 1fr; }
+}
+
+/* ==========================================================================
    9. フッター
    ========================================================================== */
 .jsvn-footer { background: var(--jsvn-navy-deep); color:#aeb9c7; padding: 4rem 0 0; }
@@ -733,71 +813,58 @@ ul, ol { margin: 0 0 1.2em; padding-left: 1.4em; }
 <main id="jsvn-main">
 
 <div class="jsvn-page" id="page-home">
-<section class="jsvn-hero">
-  <div class="jsvn-container jsvn-hero__inner">
-    <div class="jsvn-hero__copy">
-      <span class="jsvn-hero__badge">🌿 Society for Visiting Nursing</span>
-      <h1>あたたかなケアを、<br><span class="accent">確かな学術</span>で支える。</h1>
-      <p class="jsvn-hero__lead">日本訪問看護学会は、在宅で療養する人とその家族に寄り添う訪問看護の実践を、研究・教育・連携の力で前へ進めるための学会です。現場の知恵とエビデンスをつなぎ、「その人らしい暮らし」を地域で支えます。</p>
-      <div class="jsvn-hero__actions">
-        <a class="jsvn-btn jsvn-btn--coral" href="#" data-page="join">入会のご案内</a>
-        <a class="jsvn-btn jsvn-btn--ghost-light" href="#" data-page="about">学会について</a>
+
+<section class="jsvn-visual"><div class="jsvn-container"><div class="jsvn-visual__inner">
+  <p class="jsvn-visual__en">The Japanese Society of Visiting Nursing</p>
+  <h1 class="jsvn-visual__title">日本訪問看護学会</h1>
+  <p class="jsvn-visual__lead">訪問看護の実践と学術をつなぎ、地域で暮らす人々の療養生活を支えます。</p>
+</div></div></section>
+
+<div class="jsvn-home"><div class="jsvn-container jsvn-home__grid">
+
+  <main class="jsvn-home__main">
+    <section class="jsvn-newsbox">
+      <div class="jsvn-newsbox__head">
+        <h2>お知らせ</h2>
+        <a class="jsvn-newsbox__all" href="#" data-page="news">一覧へ &rsaquo;</a>
       </div>
-    </div>
-    <div class="jsvn-hero__card">
-      <h3>📌 新着のお知らせ</h3>
+      <div class='jsvn-news__list'><div class='jsvn-news__item'><span class='jsvn-news__date'>2026.06.20</span><span class='jsvn-news__cat'>お知らせ</span><span class='jsvn-news__title'>会員募集を開始いたしました</span></div><div class='jsvn-news__item'><span class='jsvn-news__date'>2026.06.15</span><span class='jsvn-news__cat jsvn-news__cat--academic'>学術大会</span><span class='jsvn-news__title'>第1回学術集会の開催が決定しました</span></div><div class='jsvn-news__item'><span class='jsvn-news__date'>2026.06.01</span><span class='jsvn-news__cat jsvn-news__cat--event'>イベント</span><span class='jsvn-news__title'>設立記念シンポジウムを開催します</span></div><div class='jsvn-news__item'><span class='jsvn-news__date'>2026.05.20</span><span class='jsvn-news__cat'>お知らせ</span><span class='jsvn-news__title'>公式サイトを公開しました</span></div></div>
+    </section>
+
+    <section class="jsvn-home-about">
+      <h2 class="jsvn-home-h2">ごあいさつ</h2>
+      <p>高齢化と在宅医療の広がりのなかで、訪問看護が担う役割はますます大きくなっています。日本訪問看護学会は、現場で積み重ねられる実践知を研究という形で体系化し、温かなまなざしと確かな科学的根拠の両輪で、地域で暮らす一人ひとりの療養生活を支えます。</p>
+      <p>職種や所属を越えて学び合える「開かれた学術の場」を大切にします。訪問看護に関わるすべての方の参画を、心よりお待ちしています。</p>
+      <p style="margin:0;">
+        <a class="jsvn-textlink" href="#" data-page="about-greeting">理事長挨拶を読む &rsaquo;</a>
+        <a class="jsvn-textlink" href="#" data-page="about">学会概要 &rsaquo;</a>
+      </p>
+    </section>
+  </main>
+
+  <aside class="jsvn-home__side">
+    <a class="jsvn-sidebanner" href="#" data-page="events"><span class="jsvn-sidebanner__label">学術大会・研究会</span><span class="jsvn-sidebanner__en">ACADEMIC MEETING</span></a>
+    <a class="jsvn-sidebanner jsvn-sidebanner--gold" href="#" data-page="join"><span class="jsvn-sidebanner__label">入会のご案内</span><span class="jsvn-sidebanner__en">MEMBERSHIP</span></a>
+    <a class="jsvn-sidebanner" href="#" data-page="newsletter"><span class="jsvn-sidebanner__label">学会誌・ニュースレター</span><span class="jsvn-sidebanner__en">JOURNAL &amp; NEWSLETTER</span></a>
+    <a class="jsvn-sidebanner jsvn-sidebanner--login" href="#" data-page="gakkai"><span class="jsvn-sidebanner__label">会員ログイン（学会バンク）</span><span class="jsvn-sidebanner__en">MEMBER LOGIN</span></a>
+
+    <nav class="jsvn-sidemenu" aria-label="サブメニュー">
+      <h3>メニュー</h3>
       <ul>
-        <li><span class="date">2026.06.20</span><a href="#" data-page="news">会員募集を開始いたしました</a></li>
-        <li><span class="date">2026.06.15</span><a href="#" data-page="news">第1回学術集会の開催日程が決定しました</a></li>
-        <li><span class="date">2026.06.01</span><a href="#" data-page="news">設立準備委員会を発足しました</a></li>
-        <li><span class="date">2026.05.20</span><a href="#" data-page="news">公式サイトを公開しました</a></li>
+        <li><a href="#" data-page="about-greeting">理事長挨拶</a></li>
+        <li><a href="#" data-page="about">学会概要</a></li>
+        <li><a href="#" data-page="articles">定款</a></li>
+        <li><a href="#" data-page="officers">役員・代議員・名誉会員紹介</a></li>
+        <li><a href="#" data-page="ethics-code">倫理綱領・各種規程</a></li>
+        <li><a href="#" data-page="balance-sheet">情報公開（貸借対照表）</a></li>
+        <li><a href="#" data-page="visiting-nursing">訪問看護とは？</a></li>
+        <li><a href="#" data-page="awards">表彰</a></li>
+        <li><a href="#" data-page="contact">お問い合わせ</a></li>
       </ul>
-    </div>
-  </div>
-  <svg class="jsvn-hero__wave" viewBox="0 0 1440 80" preserveAspectRatio="none" aria-hidden="true"><path fill="#f8f5ee" d="M0,40 C240,90 480,0 720,30 C960,60 1200,90 1440,40 L1440,80 L0,80 Z"></path></svg>
-</section>
+    </nav>
+  </aside>
 
-<section class="jsvn-section jsvn-mission"><div class="jsvn-container"><div class="jsvn-mission__grid">
-  <div class="jsvn-mission__visual"><blockquote>「治す」だけでなく、<br>「その人らしく生ききる」を、<br>看護の力で支えたい。</blockquote><cite>― 日本訪問看護学会 設立準備委員会</cite></div>
-  <div class="jsvn-mission__body">
-    <span class="jsvn-eyebrow" style="color:var(--jsvn-gold);font-weight:700;letter-spacing:.2em;">GREETING &amp; MISSION</span>
-    <h2>ご挨拶</h2>
-    <p class="lead">高齢化と在宅医療の広がりのなかで、訪問看護が担う役割はますます大きくなっています。</p>
-    <p>私たちは、現場で積み重ねられる実践知を、研究という形で言語化・体系化し、次世代の看護職へと受け継いでいくことを目指します。温かなまなざしと、確かな科学的根拠。その両輪で、地域で暮らす一人ひとりの療養生活を支えてまいります。</p>
-    <a class="jsvn-btn jsvn-btn--primary" href="#" data-page="about-greeting">理事長挨拶を読む</a>
-  </div>
-</div></div></section>
-
-<section class="jsvn-section jsvn-section--green"><div class="jsvn-container">
-  <div class="jsvn-section-head"><span class="jsvn-eyebrow">OUR PILLARS</span><h2>学会がめざす3つの柱</h2></div>
-  <div class="jsvn-pillars">
-    <article class="jsvn-pillar"><div class="jsvn-pillar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-4.5-9.5-9A5.5 5.5 0 0 1 12 7a5.5 5.5 0 0 1 9.5 5C19 16.5 12 21 12 21z"/></svg></div><h3>実践を支える学術研究</h3><p>現場のケアをエビデンスへ。多施設・多職種で取り組む研究を推進し、訪問看護の質の向上に貢献します。</p></article>
-    <article class="jsvn-pillar"><div class="jsvn-pillar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10L12 5 2 10l10 5 10-5z"/><path d="M6 12v5c3 2 9 2 12 0v-5"/></svg></div><h3>次世代を育む人材育成</h3><p>学術集会・研修・認定制度を通じて、訪問看護を担う人材の学びと成長を、生涯にわたって支援します。</p></article>
-    <article class="jsvn-pillar"><div class="jsvn-pillar__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M2 21v-1a6 6 0 0 1 12 0v1"/><path d="M16 21v-1a5 5 0 0 1 6-4.6"/></svg></div><h3>地域をつなぐ多職種連携</h3><p>医療・介護・福祉、そして地域社会へ。垣根を越えた連携の場をつくり、在宅ケアのネットワークを広げます。</p></article>
-  </div>
-</div></section>
-
-<section class="jsvn-section"><div class="jsvn-container">
-  <div class="jsvn-section-head"><span class="jsvn-eyebrow">NEWS &amp; TOPICS</span><h2>お知らせ</h2></div>
-  <div class='jsvn-news__list'><div class='jsvn-news__item'><span class='jsvn-news__date'>2026.06.20</span><span class='jsvn-news__cat'>お知らせ</span><span class='jsvn-news__title'>会員募集を開始いたしました</span></div><div class='jsvn-news__item'><span class='jsvn-news__date'>2026.06.15</span><span class='jsvn-news__cat jsvn-news__cat--academic'>学術大会</span><span class='jsvn-news__title'>第1回学術集会の開催が決定しました</span></div><div class='jsvn-news__item'><span class='jsvn-news__date'>2026.06.01</span><span class='jsvn-news__cat jsvn-news__cat--event'>イベント</span><span class='jsvn-news__title'>設立記念シンポジウムを開催します</span></div><div class='jsvn-news__item'><span class='jsvn-news__date'>2026.05.20</span><span class='jsvn-news__cat'>お知らせ</span><span class='jsvn-news__title'>公式サイトを公開しました</span></div></div>
-  <div class="jsvn-news__more"><a class="jsvn-btn jsvn-btn--outline" href="#" data-page="news">お知らせ一覧へ</a></div>
-</div></section>
-
-<section class="jsvn-section jsvn-section--navy jsvn-join"><div class="jsvn-container"><div class="jsvn-join__grid">
-  <div class="jsvn-join__lead">
-    <span class="jsvn-eyebrow" style="color:var(--jsvn-coral-soft);">MEMBERSHIP</span>
-    <h2>仲間として、<br>一緒に訪問看護の未来を。</h2>
-    <p>入会すると、学術集会への参加や学会誌の購読、研修・認定制度の利用など、学びと交流の機会が広がります。</p>
-    <ul class="jsvn-join__benefits"><li>学術集会・研究会への会員価格での参加</li><li>学会誌・最新研究情報の購読</li><li>研修プログラム／認定制度の利用</li><li>多職種・全国の仲間とのネットワーク</li></ul>
-  </div>
-  <div class="jsvn-join__card">
-    <p style="margin-bottom:.4rem;color:var(--jsvn-ink-soft);font-weight:700;">年会費（予定）</p>
-    <p class="price"><strong>5,000</strong><span style="color:var(--jsvn-ink-soft);">円 / 年</span></p>
-    <p class="note">※ 正会員の場合。学生会員・賛助会員の区分もご用意予定です。</p>
-    <a class="jsvn-btn jsvn-btn--coral" href="#" data-page="join" style="width:100%;justify-content:center;margin-top:1rem;">入会手続きへ進む</a>
-    <a class="jsvn-btn jsvn-btn--outline" href="#" data-page="contact" style="width:100%;justify-content:center;margin-top:.8rem;border-color:var(--jsvn-line);">まずは問い合わせる</a>
-  </div>
-</div></div></section>
+</div></div>
 </div><div class="jsvn-page" id="page-about-greeting" hidden><section class="jsvn-pagehero"><div class="jsvn-container"><nav class="jsvn-breadcrumb"><a href="#" data-page="home">ホーム</a> &rsaquo; <span>学会について</span> &rsaquo; <span>理事長挨拶</span></nav><h1>理事長挨拶</h1></div></section><div class="jsvn-content"><div class="jsvn-container jsvn-content__layout"><article class="jsvn-article"><p>このたびは、日本訪問看護学会のホームページをご覧いただき、誠にありがとうございます。</p><blockquote>「治す」だけでなく、「その人らしく生ききる」を、看護の力で支えたい。</blockquote><p>在宅医療の広がりとともに、訪問看護が担う役割はますます重要になっています。本会は、現場で積み重ねられる実践知と、科学的根拠（エビデンス）を結び、訪問看護の質の向上と、地域で暮らす方々の療養生活を支えてまいります。</p><p>会員の皆さまとともに、温かく、そして学術的に確かな学会を育てていきたいと考えております。どうぞよろしくお願い申し上げます。</p><p style='text-align:right;'>日本訪問看護学会　理事長　○○　○○</p></article><aside class="jsvn-sidebar"><section class="widget"><h3 class="widget-title">学会について</h3><ul><li><a href="#" data-page="about-greeting">理事長挨拶</a></li><li><a href="#" data-page="about">学会概要</a></li><li><a href="#" data-page="articles">定款</a></li><li><a href="#" data-page="officers">役員・代議員・名誉会員紹介</a></li></ul></section><section class="widget"><h3 class="widget-title">入会のご案内</h3><p style="font-size:.9rem;color:var(--jsvn-ink-soft);">訪問看護に関わるすべての方を歓迎します。</p><a class="jsvn-btn jsvn-btn--coral" href="#" data-page="join" style="width:100%;justify-content:center;">入会案内を見る</a></section></aside></div></div></div><div class="jsvn-page" id="page-about" hidden><section class="jsvn-pagehero"><div class="jsvn-container"><nav class="jsvn-breadcrumb"><a href="#" data-page="home">ホーム</a> &rsaquo; <span>学会について</span> &rsaquo; <span>学会概要</span></nav><h1>学会概要</h1></div></section><div class="jsvn-content"><div class="jsvn-container jsvn-content__layout"><article class="jsvn-article"><p>日本訪問看護学会の概要は以下のとおりです。</p><table><tbody><tr><th>名称</th><td>日本訪問看護学会（The Japanese Society of Visiting Nursing）</td></tr><tr><th>設立</th><td>2026年（設立準備中）</td></tr><tr><th>目的</th><td>訪問看護に関する学術研究の発展、人材育成、多職種連携の推進</td></tr><tr><th>主な活動</th><td>学術大会の開催、学会誌・ニュースレターの発行、研修・認定、表彰</td></tr><tr><th>事務局</th><td>（準備中）</td></tr></tbody></table></article><aside class="jsvn-sidebar"><section class="widget"><h3 class="widget-title">学会について</h3><ul><li><a href="#" data-page="about-greeting">理事長挨拶</a></li><li><a href="#" data-page="about">学会概要</a></li><li><a href="#" data-page="articles">定款</a></li><li><a href="#" data-page="officers">役員・代議員・名誉会員紹介</a></li></ul></section><section class="widget"><h3 class="widget-title">入会のご案内</h3><p style="font-size:.9rem;color:var(--jsvn-ink-soft);">訪問看護に関わるすべての方を歓迎します。</p><a class="jsvn-btn jsvn-btn--coral" href="#" data-page="join" style="width:100%;justify-content:center;">入会案内を見る</a></section></aside></div></div></div><div class="jsvn-page" id="page-articles" hidden><section class="jsvn-pagehero"><div class="jsvn-container"><nav class="jsvn-breadcrumb"><a href="#" data-page="home">ホーム</a> &rsaquo; <span>学会について</span> &rsaquo; <span>定款</span></nav><h1>定款</h1></div></section><div class="jsvn-content"><div class="jsvn-container jsvn-content__layout"><article class="jsvn-article"><h2>第1章　総則</h2><p>（名称）第1条　本会は、日本訪問看護学会と称する。</p><p>（目的）第2条　本会は、訪問看護に関する学術の発展に寄与し、もって国民の健康と福祉の向上に貢献することを目的とする。</p><h2>第2章　会員</h2><p>第3条　本会の会員は、正会員・学生会員・賛助会員および名誉会員とする。</p><h2>第3章　役員及び代議員</h2><p>第4条　本会に、理事長、副理事長、理事、監事および代議員を置く。</p><p><em>※ 定款の全文は準備中です。確定後に全条文を掲載します。</em></p></article><aside class="jsvn-sidebar"><section class="widget"><h3 class="widget-title">学会について</h3><ul><li><a href="#" data-page="about-greeting">理事長挨拶</a></li><li><a href="#" data-page="about">学会概要</a></li><li><a href="#" data-page="articles">定款</a></li><li><a href="#" data-page="officers">役員・代議員・名誉会員紹介</a></li></ul></section><section class="widget"><h3 class="widget-title">入会のご案内</h3><p style="font-size:.9rem;color:var(--jsvn-ink-soft);">訪問看護に関わるすべての方を歓迎します。</p><a class="jsvn-btn jsvn-btn--coral" href="#" data-page="join" style="width:100%;justify-content:center;">入会案内を見る</a></section></aside></div></div></div><div class="jsvn-page" id="page-officers" hidden><section class="jsvn-pagehero"><div class="jsvn-container"><nav class="jsvn-breadcrumb"><a href="#" data-page="home">ホーム</a> &rsaquo; <span>学会について</span> &rsaquo; <span>役員・代議員・名誉会員紹介</span></nav><h1>役員・代議員・名誉会員紹介</h1></div></section><div class="jsvn-content"><div class="jsvn-container jsvn-content__layout"><article class="jsvn-article"><h2>役員</h2><table><tbody><tr><th>理事長</th><td>○○　○○</td></tr><tr><th>副理事長</th><td>○○　○○</td></tr><tr><th>理事</th><td>（準備中）</td></tr><tr><th>監事</th><td>（準備中）</td></tr></tbody></table><h2>代議員</h2><p>（準備中）</p><h2>名誉会員</h2><p>（準備中）</p></article><aside class="jsvn-sidebar"><section class="widget"><h3 class="widget-title">学会について</h3><ul><li><a href="#" data-page="about-greeting">理事長挨拶</a></li><li><a href="#" data-page="about">学会概要</a></li><li><a href="#" data-page="articles">定款</a></li><li><a href="#" data-page="officers">役員・代議員・名誉会員紹介</a></li></ul></section><section class="widget"><h3 class="widget-title">入会のご案内</h3><p style="font-size:.9rem;color:var(--jsvn-ink-soft);">訪問看護に関わるすべての方を歓迎します。</p><a class="jsvn-btn jsvn-btn--coral" href="#" data-page="join" style="width:100%;justify-content:center;">入会案内を見る</a></section></aside></div></div></div><div class="jsvn-page" id="page-election-rules" hidden><section class="jsvn-pagehero"><div class="jsvn-container"><nav class="jsvn-breadcrumb"><a href="#" data-page="home">ホーム</a> &rsaquo; <span>学会について</span> &rsaquo; <span>代議員・役員選出規定</span></nav><h1>代議員・役員選出規定</h1></div></section><div class="jsvn-content"><div class="jsvn-container jsvn-content__layout"><article class="jsvn-article"><p>本規定は、日本訪問看護学会定款に基づき、代議員および役員の選出方法について定める。</p><h2>第1条（代議員の選出）</h2><p>代議員は、正会員の中から選挙により選出する。（準備中）</p><h2>第2条（役員の選出）</h2><p>理事および監事は、代議員会において選出する。（準備中）</p><h2>第3条（任期）</h2><p>役員および代議員の任期は2年とし、再任を妨げない。（準備中）</p></article><aside class="jsvn-sidebar"><section class="widget"><h3 class="widget-title">学会について</h3><ul><li><a href="#" data-page="about-greeting">理事長挨拶</a></li><li><a href="#" data-page="about">学会概要</a></li><li><a href="#" data-page="articles">定款</a></li><li><a href="#" data-page="officers">役員・代議員・名誉会員紹介</a></li></ul></section><section class="widget"><h3 class="widget-title">入会のご案内</h3><p style="font-size:.9rem;color:var(--jsvn-ink-soft);">訪問看護に関わるすべての方を歓迎します。</p><a class="jsvn-btn jsvn-btn--coral" href="#" data-page="join" style="width:100%;justify-content:center;">入会案内を見る</a></section></aside></div></div></div><div class="jsvn-page" id="page-ethics-code" hidden><section class="jsvn-pagehero"><div class="jsvn-container"><nav class="jsvn-breadcrumb"><a href="#" data-page="home">ホーム</a> &rsaquo; <span>規程・倫理</span> &rsaquo; <span>倫理綱領</span></nav><h1>倫理綱領</h1></div></section><div class="jsvn-content"><div class="jsvn-container jsvn-content__layout"><article class="jsvn-article"><p>日本訪問看護学会会員は、訪問看護の対象となるすべての人の尊厳と権利を尊重し、専門職としての倫理を遵守する。</p><ol><li>対象者の尊厳と自己決定を尊重する。</li><li>対象者およびその家族の価値観・生活を尊重し、寄り添う。</li><li>専門的知識と技術の維持・向上に努める。</li><li>研究にあたっては倫理的配慮を最優先し、対象者を保護する。</li><li>多職種と協働し、地域の看護の発展に貢献する。</li></ol></article><aside class="jsvn-sidebar"><section class="widget"><h3 class="widget-title">学会について</h3><ul><li><a href="#" data-page="about-greeting">理事長挨拶</a></li><li><a href="#" data-page="about">学会概要</a></li><li><a href="#" data-page="articles">定款</a></li><li><a href="#" data-page="officers">役員・代議員・名誉会員紹介</a></li></ul></section><section class="widget"><h3 class="widget-title">入会のご案内</h3><p style="font-size:.9rem;color:var(--jsvn-ink-soft);">訪問看護に関わるすべての方を歓迎します。</p><a class="jsvn-btn jsvn-btn--coral" href="#" data-page="join" style="width:100%;justify-content:center;">入会案内を見る</a></section></aside></div></div></div><div class="jsvn-page" id="page-scientist-conduct" hidden><section class="jsvn-pagehero"><div class="jsvn-container"><nav class="jsvn-breadcrumb"><a href="#" data-page="home">ホーム</a> &rsaquo; <span>規程・倫理</span> &rsaquo; <span>科学者の行動規範</span></nav><h1>科学者の行動規範</h1></div></section><div class="jsvn-content"><div class="jsvn-container jsvn-content__layout"><article class="jsvn-article"><p>本会会員は、研究者・専門職として、社会からの信頼と負託に応えるため、誠実かつ公正に行動する。</p><h2>1. 研究の自由と責任</h2><p>研究の自由を享受するとともに、その成果が社会に及ぼす影響に責任を持つ。</p><h2>2. 研究活動における誠実性</h2><p>捏造・改ざん・盗用などの研究不正を行わない。</p><h2>3. 利益相反への配慮</h2><p>利益相反を適切に管理・開示する。（準備中）</p></article><aside class="jsvn-sidebar"><section class="widget"><h3 class="widget-title">学会について</h3><ul><li><a href="#" data-page="about-greeting">理事長挨拶</a></li><li><a href="#" data-page="about">学会概要</a></li><li><a href="#" data-page="articles">定款</a></li><li><a href="#" data-page="officers">役員・代議員・名誉会員紹介</a></li></ul></section><section class="widget"><h3 class="widget-title">入会のご案内</h3><p style="font-size:.9rem;color:var(--jsvn-ink-soft);">訪問看護に関わるすべての方を歓迎します。</p><a class="jsvn-btn jsvn-btn--coral" href="#" data-page="join" style="width:100%;justify-content:center;">入会案内を見る</a></section></aside></div></div></div><div class="jsvn-page" id="page-research-ethics" hidden><section class="jsvn-pagehero"><div class="jsvn-container"><nav class="jsvn-breadcrumb"><a href="#" data-page="home">ホーム</a> &rsaquo; <span>規程・倫理</span> &rsaquo; <span>研究倫理ガイドライン</span></nav><h1>研究倫理ガイドライン</h1></div></section><div class="jsvn-content"><div class="jsvn-container jsvn-content__layout"><article class="jsvn-article"><p>本ガイドラインは、訪問看護に関する研究を行う会員が遵守すべき倫理的事項を示す。</p><h2>1. 研究対象者への配慮</h2><p>インフォームド・コンセントを取得し、対象者の自己決定権を尊重する。</p><h2>2. 個人情報の保護</h2><p>研究で知り得た個人情報を厳重に管理し、目的外に使用しない。</p><h2>3. 倫理審査</h2><p>研究の実施にあたっては、所属機関等の倫理審査委員会の承認を得る。（準備中）</p></article><aside class="jsvn-sidebar"><section class="widget"><h3 class="widget-title">学会について</h3><ul><li><a href="#" data-page="about-greeting">理事長挨拶</a></li><li><a href="#" data-page="about">学会概要</a></li><li><a href="#" data-page="articles">定款</a></li><li><a href="#" data-page="officers">役員・代議員・名誉会員紹介</a></li></ul></section><section class="widget"><h3 class="widget-title">入会のご案内</h3><p style="font-size:.9rem;color:var(--jsvn-ink-soft);">訪問看護に関わるすべての方を歓迎します。</p><a class="jsvn-btn jsvn-btn--coral" href="#" data-page="join" style="width:100%;justify-content:center;">入会案内を見る</a></section></aside></div></div></div><div class="jsvn-page" id="page-balance-sheet" hidden><section class="jsvn-pagehero"><div class="jsvn-container"><nav class="jsvn-breadcrumb"><a href="#" data-page="home">ホーム</a> &rsaquo; <span>情報公開</span> &rsaquo; <span>貸借対照表</span></nav><h1>貸借対照表</h1></div></section><div class="jsvn-content"><div class="jsvn-container jsvn-content__layout"><article class="jsvn-article"><p>本会は、財務の透明性を確保するため、事業年度ごとの財務諸表を公開します。</p><table><tbody><tr><th>資産の部</th><td>流動資産・固定資産（準備中）</td></tr><tr><th>負債の部</th><td>流動負債・固定負債（準備中）</td></tr><tr><th>正味財産の部</th><td>（準備中）</td></tr></tbody></table><p><em>※ 貸借対照表・活動計算書（PDF）を年度ごとに掲載予定です。</em></p></article><aside class="jsvn-sidebar"><section class="widget"><h3 class="widget-title">学会について</h3><ul><li><a href="#" data-page="about-greeting">理事長挨拶</a></li><li><a href="#" data-page="about">学会概要</a></li><li><a href="#" data-page="articles">定款</a></li><li><a href="#" data-page="officers">役員・代議員・名誉会員紹介</a></li></ul></section><section class="widget"><h3 class="widget-title">入会のご案内</h3><p style="font-size:.9rem;color:var(--jsvn-ink-soft);">訪問看護に関わるすべての方を歓迎します。</p><a class="jsvn-btn jsvn-btn--coral" href="#" data-page="join" style="width:100%;justify-content:center;">入会案内を見る</a></section></aside></div></div></div><div class="jsvn-page" id="page-visiting-nursing" hidden><section class="jsvn-pagehero"><div class="jsvn-container"><nav class="jsvn-breadcrumb"><a href="#" data-page="home">ホーム</a> &rsaquo; <span>訪問看護とは？</span></nav><h1>訪問看護とは？</h1></div></section><div class="jsvn-content"><div class="jsvn-container jsvn-content__layout"><article class="jsvn-article"><p>訪問看護とは、看護師などが利用者のご自宅を訪問し、主治医の指示や多職種との連携のもとで、その人が住み慣れた地域・自宅で自分らしく療養生活を送れるように支える看護サービスです。</p><p>病気や障がい、加齢などで通院が難しい方でも、赤ちゃんからご高齢の方まで幅広く利用できます。医療・介護・福祉と連携し、地域での暮らしを支えます。</p><h2>訪問看護でできること</h2><ul><li>健康状態のチェック・病状の観察</li><li>医療的な処置やケア（点滴・カテーテル管理・褥瘡ケアなど）</li><li>服薬の管理・支援</li><li>療養生活・介護のご相談</li><li>ご本人・ご家族の精神的な支え</li><li>看取りの支援</li></ul><h2>だれが利用できるの？</h2><p>赤ちゃんからご高齢の方まで、主治医が訪問看護を必要と認めた方が利用できます。医療保険・介護保険が適用される場合があります。</p></article><aside class="jsvn-sidebar"><section class="widget"><h3 class="widget-title">学会について</h3><ul><li><a href="#" data-page="about-greeting">理事長挨拶</a></li><li><a href="#" data-page="about">学会概要</a></li><li><a href="#" data-page="articles">定款</a></li><li><a href="#" data-page="officers">役員・代議員・名誉会員紹介</a></li></ul></section><section class="widget"><h3 class="widget-title">入会のご案内</h3><p style="font-size:.9rem;color:var(--jsvn-ink-soft);">訪問看護に関わるすべての方を歓迎します。</p><a class="jsvn-btn jsvn-btn--coral" href="#" data-page="join" style="width:100%;justify-content:center;">入会案内を見る</a></section></aside></div></div></div><div class="jsvn-page" id="page-events" hidden><section class="jsvn-pagehero"><div class="jsvn-container"><nav class="jsvn-breadcrumb"><a href="#" data-page="home">ホーム</a> &rsaquo; <span>学術活動</span> &rsaquo; <span>学術大会・研究会</span></nav><h1>学術大会・研究会</h1></div></section><div class="jsvn-content"><div class="jsvn-container jsvn-content__layout"><article class="jsvn-article"><p>本会が主催する学術大会・研究会のご案内です。</p><h2>第1回 日本訪問看護学会 学術集会</h2><table><tbody><tr><th>会期</th><td>2027年 ○月○日（予定）</td></tr><tr><th>会場</th><td>（準備中）</td></tr><tr><th>テーマ</th><td>あたたかなケアを、確かな学術で</td></tr></tbody></table><p><em>※ 開催概要・演題募集は準備中です。</em></p></article><aside class="jsvn-sidebar"><section class="widget"><h3 class="widget-title">学会について</h3><ul><li><a href="#" data-page="about-greeting">理事長挨拶</a></li><li><a href="#" data-page="about">学会概要</a></li><li><a href="#" data-page="articles">定款</a></li><li><a href="#" data-page="officers">役員・代議員・名誉会員紹介</a></li></ul></section><section class="widget"><h3 class="widget-title">入会のご案内</h3><p style="font-size:.9rem;color:var(--jsvn-ink-soft);">訪問看護に関わるすべての方を歓迎します。</p><a class="jsvn-btn jsvn-btn--coral" href="#" data-page="join" style="width:100%;justify-content:center;">入会案内を見る</a></section></aside></div></div></div><div class="jsvn-page" id="page-newsletter" hidden><section class="jsvn-pagehero"><div class="jsvn-container"><nav class="jsvn-breadcrumb"><a href="#" data-page="home">ホーム</a> &rsaquo; <span>学術活動</span> &rsaquo; <span>ニュースレター</span></nav><h1>ニュースレター</h1></div></section><div class="jsvn-content"><div class="jsvn-container jsvn-content__layout"><article class="jsvn-article"><p>会員向けにニュースレターを発行予定です。発行後、こちらにバックナンバーを掲載します。</p><table><tbody><tr><th>創刊準備号</th><td>2026年 発行予定</td></tr><tr><th>Vol.1</th><td>（準備中）</td></tr></tbody></table></article><aside class="jsvn-sidebar"><section class="widget"><h3 class="widget-title">学会について</h3><ul><li><a href="#" data-page="about-greeting">理事長挨拶</a></li><li><a href="#" data-page="about">学会概要</a></li><li><a href="#" data-page="articles">定款</a></li><li><a href="#" data-page="officers">役員・代議員・名誉会員紹介</a></li></ul></section><section class="widget"><h3 class="widget-title">入会のご案内</h3><p style="font-size:.9rem;color:var(--jsvn-ink-soft);">訪問看護に関わるすべての方を歓迎します。</p><a class="jsvn-btn jsvn-btn--coral" href="#" data-page="join" style="width:100%;justify-content:center;">入会案内を見る</a></section></aside></div></div></div><div class="jsvn-page" id="page-awards" hidden><section class="jsvn-pagehero"><div class="jsvn-container"><nav class="jsvn-breadcrumb"><a href="#" data-page="home">ホーム</a> &rsaquo; <span>学術活動</span> &rsaquo; <span>表彰</span></nav><h1>表彰</h1></div></section><div class="jsvn-content"><div class="jsvn-container jsvn-content__layout"><article class="jsvn-article"><p>訪問看護の実践・研究に顕著な貢献をされた方を表彰します。</p><h2>表彰の種類</h2><ul><li><strong>学会賞</strong> … 優れた研究業績に対して</li><li><strong>奨励賞</strong> … 将来が期待される若手研究者に対して</li><li><strong>実践功労賞</strong> … 訪問看護の実践・普及への貢献に対して</li></ul><p><em>※ 応募要項・選考方法は準備中です。</em></p></article><aside class="jsvn-sidebar"><section class="widget"><h3 class="widget-title">学会について</h3><ul><li><a href="#" data-page="about-greeting">理事長挨拶</a></li><li><a href="#" data-page="about">学会概要</a></li><li><a href="#" data-page="articles">定款</a></li><li><a href="#" data-page="officers">役員・代議員・名誉会員紹介</a></li></ul></section><section class="widget"><h3 class="widget-title">入会のご案内</h3><p style="font-size:.9rem;color:var(--jsvn-ink-soft);">訪問看護に関わるすべての方を歓迎します。</p><a class="jsvn-btn jsvn-btn--coral" href="#" data-page="join" style="width:100%;justify-content:center;">入会案内を見る</a></section></aside></div></div></div><div class="jsvn-page" id="page-news" hidden><section class="jsvn-pagehero"><div class="jsvn-container"><nav class="jsvn-breadcrumb"><a href="#" data-page="home">ホーム</a> &rsaquo; <span>お知らせ</span></nav><h1>お知らせ</h1></div></section><div class="jsvn-content"><div class="jsvn-container jsvn-content__layout"><article class="jsvn-article"><div class='jsvn-news__list'><div class='jsvn-news__item'><span class='jsvn-news__date'>2026.06.20</span><span class='jsvn-news__cat'>お知らせ</span><span class='jsvn-news__title'>会員募集を開始いたしました</span></div><div class='jsvn-news__item'><span class='jsvn-news__date'>2026.06.15</span><span class='jsvn-news__cat jsvn-news__cat--academic'>学術大会</span><span class='jsvn-news__title'>第1回学術集会の開催が決定しました</span></div><div class='jsvn-news__item'><span class='jsvn-news__date'>2026.06.01</span><span class='jsvn-news__cat jsvn-news__cat--event'>イベント</span><span class='jsvn-news__title'>設立記念シンポジウムを開催します</span></div><div class='jsvn-news__item'><span class='jsvn-news__date'>2026.05.20</span><span class='jsvn-news__cat'>お知らせ</span><span class='jsvn-news__title'>公式サイトを公開しました</span></div></div></article><aside class="jsvn-sidebar"><section class="widget"><h3 class="widget-title">学会について</h3><ul><li><a href="#" data-page="about-greeting">理事長挨拶</a></li><li><a href="#" data-page="about">学会概要</a></li><li><a href="#" data-page="articles">定款</a></li><li><a href="#" data-page="officers">役員・代議員・名誉会員紹介</a></li></ul></section><section class="widget"><h3 class="widget-title">入会のご案内</h3><p style="font-size:.9rem;color:var(--jsvn-ink-soft);">訪問看護に関わるすべての方を歓迎します。</p><a class="jsvn-btn jsvn-btn--coral" href="#" data-page="join" style="width:100%;justify-content:center;">入会案内を見る</a></section></aside></div></div></div><div class="jsvn-page" id="page-join" hidden><section class="jsvn-pagehero"><div class="jsvn-container"><nav class="jsvn-breadcrumb"><a href="#" data-page="home">ホーム</a> &rsaquo; <span>入会のご案内</span></nav><h1>入会のご案内</h1></div></section><div class="jsvn-content"><div class="jsvn-container jsvn-content__layout"><article class="jsvn-article"><p>訪問看護に関わるすべての方を歓迎します。職種・経験は問いません。</p><h2>会員種別と年会費（予定）</h2><table><tbody><tr><th>正会員</th><td>年会費 5,000円 … 訪問看護に携わる方・研究者</td></tr><tr><th>学生会員</th><td>年会費 2,000円 … 学生の方</td></tr><tr><th>賛助会員</th><td>1口 10,000円 … 本会の趣旨に賛同する個人・団体</td></tr></tbody></table><h2>会員特典</h2><ul><li>学術集会・研究会への会員価格での参加</li><li>学会誌・ニュースレターの購読</li><li>研修プログラム／認定制度の利用</li><li>多職種・全国の仲間とのネットワーク</li></ul><h2>お手続き</h2><p>入会手続きは会員管理システム「<strong>学会バンク</strong>」を通じて行う予定です。準備が整い次第、こちらにお申し込みリンクを掲載します。</p><p><a class='jsvn-btn jsvn-btn--coral' href='#' data-page='gakkai' style='text-decoration:none;'>学会バンクで入会手続き（準備中）</a></p></article><aside class="jsvn-sidebar"><section class="widget"><h3 class="widget-title">学会について</h3><ul><li><a href="#" data-page="about-greeting">理事長挨拶</a></li><li><a href="#" data-page="about">学会概要</a></li><li><a href="#" data-page="articles">定款</a></li><li><a href="#" data-page="officers">役員・代議員・名誉会員紹介</a></li></ul></section><section class="widget"><h3 class="widget-title">入会のご案内</h3><p style="font-size:.9rem;color:var(--jsvn-ink-soft);">訪問看護に関わるすべての方を歓迎します。</p><a class="jsvn-btn jsvn-btn--coral" href="#" data-page="join" style="width:100%;justify-content:center;">入会案内を見る</a></section></aside></div></div></div><div class="jsvn-page" id="page-contact" hidden><section class="jsvn-pagehero"><div class="jsvn-container"><nav class="jsvn-breadcrumb"><a href="#" data-page="home">ホーム</a> &rsaquo; <span>お問い合わせ</span></nav><h1>お問い合わせ</h1></div></section><div class="jsvn-content"><div class="jsvn-container jsvn-content__layout"><article class="jsvn-article"><p>本会へのお問い合わせは、以下よりお願いいたします。</p><table><tbody><tr><th>お問い合わせ先</th><td>日本訪問看護学会 事務局（準備中）</td></tr><tr><th>メール</th><td>（準備中）</td></tr></tbody></table><p>今後、お問い合わせフォームを設置予定です。</p></article><aside class="jsvn-sidebar"><section class="widget"><h3 class="widget-title">学会について</h3><ul><li><a href="#" data-page="about-greeting">理事長挨拶</a></li><li><a href="#" data-page="about">学会概要</a></li><li><a href="#" data-page="articles">定款</a></li><li><a href="#" data-page="officers">役員・代議員・名誉会員紹介</a></li></ul></section><section class="widget"><h3 class="widget-title">入会のご案内</h3><p style="font-size:.9rem;color:var(--jsvn-ink-soft);">訪問看護に関わるすべての方を歓迎します。</p><a class="jsvn-btn jsvn-btn--coral" href="#" data-page="join" style="width:100%;justify-content:center;">入会案内を見る</a></section></aside></div></div></div><div class="jsvn-page" id="page-gakkai" hidden><section class="jsvn-pagehero"><div class="jsvn-container"><nav class="jsvn-breadcrumb"><a href="#" data-page="home">ホーム</a> &rsaquo; <span>会員ログイン（学会バンク）</span></nav><h1>会員ログイン（学会バンク）</h1></div></section><div class="jsvn-content"><div class="jsvn-container jsvn-content__layout"><article class="jsvn-article"><p>本会の会員管理・会費決済・大会参加登録などは、会員管理システム「<strong>学会バンク</strong>」を利用する予定です。</p><blockquote>学会バンクの会員ページ（ログイン画面）の準備が整い次第、このボタンから接続できるようになります。</blockquote><h2>学会バンクでできること（予定）</h2><ul><li>会員情報の登録・変更</li><li>年会費のオンライン決済</li><li>学術大会の参加申込</li><li>各種証明書の発行</li></ul><p style='color:var(--jsvn-ink-soft);font-size:.9rem;'>※ このプレビューではリンク先URLは未設定です。実際のサイトでは、管理画面［外観 &rsaquo; カスタマイズ &rsaquo; 会員・学会バンク］でログインURLを設定します。</p></article><aside class="jsvn-sidebar"><section class="widget"><h3 class="widget-title">学会について</h3><ul><li><a href="#" data-page="about-greeting">理事長挨拶</a></li><li><a href="#" data-page="about">学会概要</a></li><li><a href="#" data-page="articles">定款</a></li><li><a href="#" data-page="officers">役員・代議員・名誉会員紹介</a></li></ul></section><section class="widget"><h3 class="widget-title">入会のご案内</h3><p style="font-size:.9rem;color:var(--jsvn-ink-soft);">訪問看護に関わるすべての方を歓迎します。</p><a class="jsvn-btn jsvn-btn--coral" href="#" data-page="join" style="width:100%;justify-content:center;">入会案内を見る</a></section></aside></div></div></div>
 </main>
 
