@@ -23,21 +23,23 @@ Tags: academic, society, healthcare, nursing, custom-menu, featured-images, tran
    ========================================================================== */
 :root {
   /* Brand colors */
-  --jsvn-green:        #2f7d63; /* 訪問看護を象徴する深いグリーン（健康・ケア）*/
-  --jsvn-green-light:  #5aa589;
-  --jsvn-green-soft:   #e6f1ec; /* 背景に敷く淡いグリーン */
-  --jsvn-navy:         #1f3a5f; /* 学術的な信頼感を出すネイビー */
-  --jsvn-navy-deep:    #14253c;
-  --jsvn-coral:        #e08a6e; /* 温もりのアクセント */
-  --jsvn-coral-soft:   #f5d9cf;
-  --jsvn-gold:         #c79a4b; /* 学術賞・格式を添えるゴールド */
+  /* --- 緑＋金／学術・格式寄り（ロゴに調和）--- */
+  --jsvn-green:        #1f5a3c; /* 基調となる深い森グリーン（ロゴの葉の色）*/
+  --jsvn-green-light:  #3f7d5b;
+  --jsvn-green-soft:   #e8f0ea; /* 背景に敷く淡いグリーン */
+  --jsvn-navy:         #163d29; /* 見出し・濃色面に使う最も深い緑（旧ネイビーを深緑へ）*/
+  --jsvn-navy-deep:    #0e2c1d; /* フッター等の最深色 */
+  --jsvn-coral:        #b58a3e; /* 温もり／格式のアクセント＝金（ロゴの実の色）*/
+  --jsvn-coral-soft:   #efe3c6; /* 淡い金 */
+  --jsvn-gold:         #b58a3e; /* 学術賞・格式を添えるゴールド */
+  --jsvn-gold-line:    #cbb075; /* 金のヘアライン */
 
   /* Neutrals */
-  --jsvn-cream:        #faf6ef; /* 全体の地色（温かみのあるオフホワイト）*/
+  --jsvn-cream:        #f8f5ee; /* 全体の地色（落ち着いたオフホワイト）*/
   --jsvn-paper:        #ffffff;
-  --jsvn-ink:          #25303b; /* 本文テキスト */
-  --jsvn-ink-soft:     #54616d;
-  --jsvn-line:         #e7ded2; /* 罫線 */
+  --jsvn-ink:          #263029; /* 本文テキスト（わずかに緑みのある墨）*/
+  --jsvn-ink-soft:     #5b6960;
+  --jsvn-line:         #e4ddcd; /* 罫線 */
 
   /* Typography */
   --jsvn-serif: "Noto Serif JP", "Yu Mincho", "YuMincho", "Hiragino Mincho ProN", serif;
@@ -45,9 +47,9 @@ Tags: academic, society, healthcare, nursing, custom-menu, featured-images, tran
 
   /* Layout */
   --jsvn-maxw: 1160px;
-  --jsvn-radius: 10px;
-  --jsvn-shadow: 0 8px 30px rgba(31, 58, 95, 0.08);
-  --jsvn-shadow-sm: 0 4px 14px rgba(31, 58, 95, 0.06);
+  --jsvn-radius: 6px;  /* 角丸を控えめにして格式・端正な印象へ */
+  --jsvn-shadow: 0 10px 34px rgba(22, 61, 41, 0.10);
+  --jsvn-shadow-sm: 0 4px 14px rgba(22, 61, 41, 0.07);
 }
 
 /* ==========================================================================
@@ -107,7 +109,7 @@ ul, ol { margin: 0 0 1.2em; padding-left: 1.4em; }
   font-family: var(--jsvn-sans);
   font-size: .8rem;
   letter-spacing: .22em;
-  color: var(--jsvn-green);
+  color: var(--jsvn-gold);
   font-weight: 700;
   margin-bottom: .9rem;
 }
@@ -291,9 +293,15 @@ ul, ol { margin: 0 0 1.2em; padding-left: 1.4em; }
 .jsvn-hero {
   position: relative;
   background:
-    linear-gradient(115deg, rgba(31,58,95,.72), rgba(47,125,99,.55)),
-    radial-gradient(120% 120% at 80% 10%, #cfe6db 0%, #f4ede2 55%);
+    linear-gradient(120deg, rgba(14,44,29,.90) 0%, rgba(31,90,60,.78) 55%, rgba(31,90,60,.62) 100%),
+    radial-gradient(130% 120% at 85% 12%, #d7e6dc 0%, #eef3ea 60%);
   overflow: hidden;
+}
+/* 金のヘアラインで格式を添える */
+.jsvn-hero::before {
+  content: ""; position: absolute; left: 0; right: 0; top: 0; height: 3px;
+  background: linear-gradient(90deg, transparent, var(--jsvn-gold-line), transparent);
+  z-index: 2;
 }
 .jsvn-hero__inner {
   display: grid;

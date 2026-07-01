@@ -74,7 +74,7 @@ get_header();
 
 	<!-- 下端の波（温かみのある曲線で次セクションへ）-->
 	<svg class="jsvn-hero__wave" viewBox="0 0 1440 80" preserveAspectRatio="none" aria-hidden="true">
-		<path fill="#faf6ef" d="M0,40 C240,90 480,0 720,30 C960,60 1200,90 1440,40 L1440,80 L0,80 Z"></path>
+		<path fill="#f8f5ee" d="M0,40 C240,90 480,0 720,30 C960,60 1200,90 1440,40 L1440,80 L0,80 Z"></path>
 	</svg>
 </section>
 
@@ -93,7 +93,7 @@ get_header();
 			</div>
 
 			<div class="jsvn-mission__body">
-				<span class="jsvn-eyebrow" style="color:var(--jsvn-green);font-weight:700;letter-spacing:.2em;">GREETING &amp; MISSION</span>
+				<span class="jsvn-eyebrow" style="color:var(--jsvn-gold);font-weight:700;letter-spacing:.2em;">GREETING &amp; MISSION</span>
 				<h2>ご挨拶</h2>
 				<p class="lead">
 					高齢化と在宅医療の広がりのなかで、訪問看護が担う役割はますます大きくなっています。
