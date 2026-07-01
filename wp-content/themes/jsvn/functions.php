@@ -350,6 +350,7 @@ function jsvn_menu_structure() {
 			'children' => array(
 				array( 'label' => '理事長挨拶', 'url' => home_url( '/about-greeting/' ) ),
 				array( 'label' => '学会概要', 'url' => home_url( '/about/' ) ),
+				array( 'label' => '会員数・会員分布', 'url' => home_url( '/members/' ) ),
 				array( 'label' => '定款・規程', 'url' => home_url( '/articles/' ) ),
 				array( 'label' => '役員・代議員・名誉会員紹介', 'url' => home_url( '/officers/' ) ),
 				array( 'label' => '代議員・役員選出規定', 'url' => home_url( '/election-rules/' ) ),
@@ -488,6 +489,10 @@ function jsvn_seed_pages() {
 		),
 
 		// --- 追加ページ（他学会サイトの定番構成に合わせて拡充）---
+		'members' => array(
+			'title'   => '会員数・会員分布',
+			'content' => "<p>日本訪問看護学会の会員は全国に広がっています。都道府県別の会員数を地図でご覧いただけます。</p>",
+		),
 		'committees' => array(
 			'title'   => '委員会・部会',
 			'content' => "<p>本会は、目的を達成するために各種委員会・部会を設置し、学術・教育・広報・倫理などの活動を行います。</p>\n<ul>\n<li>学術委員会</li>\n<li>編集委員会（学会誌）</li>\n<li>倫理委員会</li>\n<li>利益相反（COI）委員会</li>\n<li>教育・研修委員会</li>\n<li>広報委員会</li>\n</ul>\n<p><em>※ 各委員会の構成・活動内容は準備中です。</em></p>",
@@ -820,4 +825,90 @@ function jsvn_sns_icons( $extra_class = '' ) {
 		echo '<a class="jsvn-sns__link jsvn-sns__link--' . esc_attr( $key ) . '" href="' . esc_url( $url ) . '" target="_blank" rel="noopener" aria-label="' . esc_attr( $names[ $key ] ) . '">' . jsvn_sns_icon( $key ) . '</a>';
 	}
 	echo '</div>';
+}
+
+/* =============================================================
+ *  会員数マップ（都道府県別の会員数を日本地図で可視化）
+ * ============================================================= */
+
+/**
+ * 都道府県別の会員数（サンプル）。
+ * 実データは管理画面入力や学会バンク連携に置き換え可能。
+ * jsvn_member_counts フィルターで上書きできます。
+ */
+function jsvn_member_counts() {
+	$counts = array(
+		'北海道' => 86, '青森県' => 12, '秋田県' => 9, '岩手県' => 11, '山形県' => 10, '宮城県' => 24,
+		'新潟県' => 18, '福島県' => 16, '長野県' => 20, '群馬県' => 15, '栃木県' => 14, '茨城県' => 19,
+		'富山県' => 8, '石川県' => 10, '福井県' => 7, '山梨県' => 7, '埼玉県' => 38, '千葉県' => 34,
+		'岐阜県' => 13, '滋賀県' => 9, '東京都' => 120, '神奈川県' => 64, '静岡県' => 26, '愛知県' => 52,
+		'三重県' => 12, '京都府' => 28, '兵庫県' => 40, '奈良県' => 11, '大阪府' => 78, '和歌山県' => 8,
+		'鳥取県' => 5, '岡山県' => 17, '島根県' => 6, '広島県' => 25, '山口県' => 12, '香川県' => 9,
+		'徳島県' => 7, '愛媛県' => 11, '高知県' => 6, '福岡県' => 44, '大分県' => 10, '佐賀県' => 6,
+		'熊本県' => 15, '宮崎県' => 8, '長崎県' => 10, '鹿児島県' => 12, '沖縄県' => 9,
+	);
+	return apply_filters( 'jsvn_member_counts', $counts );
+}
+
+/**
+ * 会員数に応じた塗り色（シーケンシャル緑）
+ */
+function jsvn_member_color( $v ) {
+	$ramp = array( '#e6f0ea', '#bcdcca', '#84c0a1', '#409072', '#1f5a3c' );
+	$b = ( $v < 10 ) ? 0 : ( ( $v < 20 ) ? 1 : ( ( $v < 40 ) ? 2 : ( ( $v < 70 ) ? 3 : 4 ) ) );
+	return $ramp[ $b ];
+}
+
+/**
+ * 会員数マップのセクションを出力
+ */
+function jsvn_render_member_map() {
+	$file = get_template_directory() . '/inc/japan-map-paths.php';
+	if ( ! file_exists( $file ) ) {
+		return;
+	}
+	$data   = include $file;
+	$counts = jsvn_member_counts();
+	$total  = array_sum( $counts );
+
+	// --- 地図SVG ---
+	$svg  = '<svg viewBox="' . esc_attr( $data['viewbox'] ) . '" xmlns="http://www.w3.org/2000/svg" class="jsvn-jpmap" role="img" aria-label="都道府県別の会員数">';
+	foreach ( $data['paths'] as $nm => $d ) {
+		$v    = isset( $counts[ $nm ] ) ? (int) $counts[ $nm ] : 0;
+		$svg .= '<path d="' . esc_attr( $d ) . '" fill="' . esc_attr( jsvn_member_color( $v ) ) . '" stroke="#ffffff" stroke-width="0.7" class="jsvn-pref" data-n="' . esc_attr( $nm ) . '" data-v="' . esc_attr( $v ) . '"><title>' . esc_html( $nm . '：' . $v . '名' ) . '</title></path>';
+	}
+	$ins  = $data['inset'];
+	$svg .= '<rect x="' . esc_attr( $ins['x'] ) . '" y="' . esc_attr( $ins['y'] ) . '" width="' . esc_attr( $ins['w'] ) . '" height="' . esc_attr( $ins['h'] ) . '" fill="none" stroke="#cbb075" stroke-width="1" stroke-dasharray="4 3" rx="6"/>';
+	$svg .= '<text x="' . esc_attr( $ins['lx'] ) . '" y="' . esc_attr( $ins['ly'] ) . '" font-size="11" fill="#5b6960">沖縄</text>';
+	$svg .= '</svg>';
+
+	// --- 上位ランキング ---
+	arsort( $counts );
+	$top  = array_slice( $counts, 0, 8, true );
+	$rows = '';
+	$i    = 1;
+	foreach ( $top as $nm => $v ) {
+		$rows .= '<tr><td>' . $i . '</td><td>' . esc_html( $nm ) . '</td><td><b>' . esc_html( $v ) . '</b>名</td></tr>';
+		$i++;
+	}
+
+	// --- 凡例 ---
+	$ramp   = array( '#e6f0ea', '#bcdcca', '#84c0a1', '#409072', '#1f5a3c' );
+	$labels = array( '〜9名', '10〜19名', '20〜39名', '40〜69名', '70名以上' );
+	$legend = '';
+	foreach ( $labels as $k => $lab ) {
+		$legend .= '<span class="jsvn-mlg"><i style="background:' . $ramp[ $k ] . '"></i>' . esc_html( $lab ) . '</span>';
+	}
+
+	echo '<div class="jsvn-members">';
+	echo '<div class="jsvn-members__stats">';
+	echo '<div class="jsvn-mstat"><span class="jsvn-mstat__n">' . esc_html( number_format( $total ) ) . '<small>名</small></span><span class="jsvn-mstat__l">会員総数</span></div>';
+	echo '<div class="jsvn-mstat jsvn-mstat--gold"><span class="jsvn-mstat__n">47<small>都道府県</small></span><span class="jsvn-mstat__l">活動エリア</span></div>';
+	echo '<div class="jsvn-mstat"><span class="jsvn-mstat__n">全国</span><span class="jsvn-mstat__l">会員在籍</span></div>';
+	echo '</div>';
+	echo '<div class="jsvn-members__grid">';
+	echo '<div class="jsvn-members__mapwrap">' . $svg . '<div class="jsvn-members__legend">' . $legend . '</div></div>';
+	echo '<aside class="jsvn-members__side"><h3>会員数の多い都道府県</h3><table class="jsvn-mtop"><tbody>' . $rows . '</tbody></table>';
+	echo '<p class="jsvn-mnote">※ 各都道府県にカーソルを合わせると人数が表示されます。数値は会員データ（学会バンク等）との連携、または管理画面からの入力で更新できます。</p></aside>';
+	echo '</div></div>';
 }

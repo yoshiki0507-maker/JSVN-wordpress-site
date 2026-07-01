@@ -727,6 +727,35 @@ ul, ol { margin: 0 0 1.2em; padding-left: 1.4em; }
 @media (max-width: 560px) { .jsvn-blog__list { grid-template-columns: 1fr; } }
 
 /* ==========================================================================
+   8e. 会員数マップ（都道府県別）
+   ========================================================================== */
+.jsvn-members__stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 2rem; }
+.jsvn-mstat { background: #fff; border: 1px solid var(--jsvn-line); border-top: 4px solid var(--jsvn-green); border-radius: 8px; padding: 1.3rem; text-align: center; box-shadow: var(--jsvn-shadow-sm); }
+.jsvn-mstat--gold { border-top-color: var(--jsvn-gold); }
+.jsvn-mstat__n { display: block; font-family: var(--jsvn-serif); font-size: 2.4rem; font-weight: 600; color: var(--jsvn-green); line-height: 1; }
+.jsvn-mstat--gold .jsvn-mstat__n { color: #a9812f; }
+.jsvn-mstat__n small { font-size: 1rem; margin-left: .2em; color: var(--jsvn-ink-soft); }
+.jsvn-mstat__l { display: block; font-size: .85rem; color: var(--jsvn-ink-soft); margin-top: .5rem; letter-spacing: .05em; }
+.jsvn-members__grid { display: grid; grid-template-columns: 1fr 270px; gap: 2rem; align-items: start; }
+.jsvn-members__mapwrap { min-width: 0; }
+.jsvn-jpmap { width: 100%; height: auto; display: block; }
+.jsvn-pref { transition: fill .12s ease; cursor: default; }
+.jsvn-pref:hover { fill: var(--jsvn-gold) !important; }
+.jsvn-members__legend { display: flex; flex-wrap: wrap; gap: .5rem 1.2rem; margin-top: 1rem; justify-content: center; }
+.jsvn-mlg { display: flex; align-items: center; gap: .5rem; font-size: .82rem; color: var(--jsvn-ink-soft); }
+.jsvn-mlg i { width: 20px; height: 14px; border-radius: 3px; display: inline-block; border: 1px solid rgba(0,0,0,.06); }
+.jsvn-members__side h3 { font-size: 1.05rem; color: var(--jsvn-navy); margin: .2rem 0 .8rem; padding-bottom: .5rem; border-bottom: 2px solid var(--jsvn-green-soft); }
+.jsvn-mtop { width: 100%; border-collapse: collapse; font-size: .92rem; }
+.jsvn-mtop td { padding: .5rem .3rem; border-bottom: 1px solid var(--jsvn-line); }
+.jsvn-mtop td:first-child { color: var(--jsvn-gold); font-weight: 700; width: 1.7em; }
+.jsvn-mtop td:last-child { text-align: right; }
+.jsvn-mnote { font-size: .8rem; color: var(--jsvn-ink-soft); margin-top: 1.2rem; padding-top: 1rem; border-top: 1px solid var(--jsvn-line); }
+@media (max-width: 820px) {
+  .jsvn-members__grid { grid-template-columns: 1fr; }
+  .jsvn-members__stats { grid-template-columns: 1fr 1fr; }
+}
+
+/* ==========================================================================
    9. フッター
    ========================================================================== */
 /* 明るい配色（元のカラーロゴが映える／淡いゴールド）*/
