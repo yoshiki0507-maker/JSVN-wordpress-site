@@ -111,6 +111,17 @@ function jsvn_widgets() {
 		'before_title'  => '<h3 class="widget-title">',
 		'after_title'   => '</h3>',
 	) );
+
+	// トップページ右サイドの「協賛企業・企業バナー」枠
+	register_sidebar( array(
+		'name'          => __( '協賛企業バナー（トップ右）', 'jsvn' ),
+		'id'            => 'sponsors',
+		'description'   => __( 'トップページ右側に表示される企業様用のバナー・リンク枠です。画像ウィジェットやカスタムHTMLで企業バナーを追加できます。', 'jsvn' ),
+		'before_widget' => '',
+		'after_widget'  => '',
+		'before_title'  => '',
+		'after_title'   => '',
+	) );
 }
 add_action( 'widgets_init', 'jsvn_widgets' );
 

@@ -484,15 +484,37 @@ ul, ol { margin: 0 0 1.2em; padding-left: 1.4em; }
 /* ==========================================================================
    8b. トップページ（学会サイト型：メインビジュアル＋2カラム）
    ========================================================================== */
-/* メインビジュアル（控えめなバナー）*/
+/* メインビジュアル（クスノキのイラスト・高級感）*/
 .jsvn-visual {
-  background: linear-gradient(120deg, #0e2c1d 0%, #1f5a3c 72%);
-  color: #fff; padding: 2.8rem 0; border-bottom: 3px solid var(--jsvn-gold-line);
+  background: linear-gradient(120deg, #0b2418 0%, #14402a 55%, #1f5a3c 100%);
+  color: #fff; border-bottom: 3px solid var(--jsvn-gold-line);
+  position: relative; overflow: hidden;
 }
-.jsvn-visual__inner { text-align: center; }
-.jsvn-visual__en { color: var(--jsvn-gold-line); letter-spacing: .16em; font-size: .78rem; margin: 0 0 .5rem; }
-.jsvn-visual__title { color: #fff; font-size: clamp(1.7rem, 4vw, 2.5rem); margin: 0 0 .7rem; }
-.jsvn-visual__lead { color: #e6efe9; margin: 0; font-size: 1rem; }
+.jsvn-visual::after { /* 金の上辺ライン */
+  content: ""; position: absolute; left: 0; right: 0; top: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--jsvn-gold-line), transparent);
+}
+.jsvn-visual__inner {
+  display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: 1.5rem;
+  min-height: 400px;
+}
+.jsvn-visual__copy { padding: 3rem 0; position: relative; z-index: 2; }
+.jsvn-visual__en { color: var(--jsvn-gold-line); letter-spacing: .18em; font-size: .8rem; margin: 0 0 .9rem; }
+.jsvn-visual__title {
+  color: #fff; font-size: clamp(1.9rem, 4.5vw, 3rem); margin: 0 0 1rem; line-height: 1.35;
+  text-shadow: 0 2px 24px rgba(0,0,0,.35);
+}
+.jsvn-visual__lead { color: #e6efe9; margin: 0; font-size: 1.02rem; max-width: 26em; }
+.jsvn-visual__art { position: relative; z-index: 1; align-self: end; }
+.jsvn-tree { display: block; width: 100%; max-width: 560px; height: auto; margin: 0 0 -3px auto; }
+
+@media (max-width: 820px) {
+  .jsvn-visual__inner { grid-template-columns: 1fr; min-height: 0; }
+  .jsvn-visual__art { position: absolute; inset: 0; opacity: .16; align-self: center; }
+  .jsvn-tree { max-width: none; width: 140%; margin: 0 -20%; }
+  .jsvn-visual__copy { text-align: center; padding: 3rem 0; }
+  .jsvn-visual__lead { margin-inline: auto; }
+}
 
 /* 2カラム */
 .jsvn-home { padding: 3rem 0 4rem; }
@@ -546,6 +568,22 @@ ul, ol { margin: 0 0 1.2em; padding-left: 1.4em; }
 .jsvn-sidebanner--gold:hover { background: #9c7532; }
 .jsvn-sidebanner--login { background: #fff; color: var(--jsvn-navy); border: 2px solid var(--jsvn-green); }
 .jsvn-sidebanner--login:hover { background: var(--jsvn-green-soft); color: var(--jsvn-navy); }
+
+/* サイド：協賛企業・企業バナー枠 */
+.jsvn-sponsors { border: 1px solid var(--jsvn-line); border-radius: var(--jsvn-radius); background: #fff; overflow: hidden; }
+.jsvn-sponsors__head {
+  margin: 0; padding: .8rem 1.2rem; font-size: .95rem; color: #fff;
+  background: linear-gradient(90deg, var(--jsvn-gold), #a9812f);
+}
+.jsvn-sponsors__body { padding: 1rem; display: flex; flex-direction: column; gap: .7rem; }
+.jsvn-sponsor {
+  display: grid; place-items: center; min-height: 66px; padding: .6rem 1rem;
+  border: 1px solid var(--jsvn-line); border-radius: 6px; background: var(--jsvn-cream);
+  color: var(--jsvn-ink-soft); font-size: .85rem; text-align: center; transition: box-shadow .2s ease, transform .2s ease;
+}
+.jsvn-sponsor:hover { box-shadow: var(--jsvn-shadow-sm); transform: translateY(-2px); color: var(--jsvn-green); }
+.jsvn-sponsor img { max-height: 48px; width: auto; }
+.jsvn-sponsors__more { display: block; text-align: center; padding: .3rem 0 .2rem; font-size: .84rem; font-weight: 700; }
 
 /* サイド：サブメニュー */
 .jsvn-sidemenu { border: 1px solid var(--jsvn-line); border-radius: var(--jsvn-radius); background: #fff; overflow: hidden; }

@@ -494,15 +494,37 @@ ul, ol { margin: 0 0 1.2em; padding-left: 1.4em; }
 /* ==========================================================================
    8b. トップページ（学会サイト型：メインビジュアル＋2カラム）
    ========================================================================== */
-/* メインビジュアル（控えめなバナー）*/
+/* メインビジュアル（クスノキのイラスト・高級感）*/
 .jsvn-visual {
-  background: linear-gradient(120deg, #0e2c1d 0%, #1f5a3c 72%);
-  color: #fff; padding: 2.8rem 0; border-bottom: 3px solid var(--jsvn-gold-line);
+  background: linear-gradient(120deg, #0b2418 0%, #14402a 55%, #1f5a3c 100%);
+  color: #fff; border-bottom: 3px solid var(--jsvn-gold-line);
+  position: relative; overflow: hidden;
 }
-.jsvn-visual__inner { text-align: center; }
-.jsvn-visual__en { color: var(--jsvn-gold-line); letter-spacing: .16em; font-size: .78rem; margin: 0 0 .5rem; }
-.jsvn-visual__title { color: #fff; font-size: clamp(1.7rem, 4vw, 2.5rem); margin: 0 0 .7rem; }
-.jsvn-visual__lead { color: #e6efe9; margin: 0; font-size: 1rem; }
+.jsvn-visual::after { /* 金の上辺ライン */
+  content: ""; position: absolute; left: 0; right: 0; top: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--jsvn-gold-line), transparent);
+}
+.jsvn-visual__inner {
+  display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: 1.5rem;
+  min-height: 400px;
+}
+.jsvn-visual__copy { padding: 3rem 0; position: relative; z-index: 2; }
+.jsvn-visual__en { color: var(--jsvn-gold-line); letter-spacing: .18em; font-size: .8rem; margin: 0 0 .9rem; }
+.jsvn-visual__title {
+  color: #fff; font-size: clamp(1.9rem, 4.5vw, 3rem); margin: 0 0 1rem; line-height: 1.35;
+  text-shadow: 0 2px 24px rgba(0,0,0,.35);
+}
+.jsvn-visual__lead { color: #e6efe9; margin: 0; font-size: 1.02rem; max-width: 26em; }
+.jsvn-visual__art { position: relative; z-index: 1; align-self: end; }
+.jsvn-tree { display: block; width: 100%; max-width: 560px; height: auto; margin: 0 0 -3px auto; }
+
+@media (max-width: 820px) {
+  .jsvn-visual__inner { grid-template-columns: 1fr; min-height: 0; }
+  .jsvn-visual__art { position: absolute; inset: 0; opacity: .16; align-self: center; }
+  .jsvn-tree { max-width: none; width: 140%; margin: 0 -20%; }
+  .jsvn-visual__copy { text-align: center; padding: 3rem 0; }
+  .jsvn-visual__lead { margin-inline: auto; }
+}
 
 /* 2カラム */
 .jsvn-home { padding: 3rem 0 4rem; }
@@ -556,6 +578,22 @@ ul, ol { margin: 0 0 1.2em; padding-left: 1.4em; }
 .jsvn-sidebanner--gold:hover { background: #9c7532; }
 .jsvn-sidebanner--login { background: #fff; color: var(--jsvn-navy); border: 2px solid var(--jsvn-green); }
 .jsvn-sidebanner--login:hover { background: var(--jsvn-green-soft); color: var(--jsvn-navy); }
+
+/* サイド：協賛企業・企業バナー枠 */
+.jsvn-sponsors { border: 1px solid var(--jsvn-line); border-radius: var(--jsvn-radius); background: #fff; overflow: hidden; }
+.jsvn-sponsors__head {
+  margin: 0; padding: .8rem 1.2rem; font-size: .95rem; color: #fff;
+  background: linear-gradient(90deg, var(--jsvn-gold), #a9812f);
+}
+.jsvn-sponsors__body { padding: 1rem; display: flex; flex-direction: column; gap: .7rem; }
+.jsvn-sponsor {
+  display: grid; place-items: center; min-height: 66px; padding: .6rem 1rem;
+  border: 1px solid var(--jsvn-line); border-radius: 6px; background: var(--jsvn-cream);
+  color: var(--jsvn-ink-soft); font-size: .85rem; text-align: center; transition: box-shadow .2s ease, transform .2s ease;
+}
+.jsvn-sponsor:hover { box-shadow: var(--jsvn-shadow-sm); transform: translateY(-2px); color: var(--jsvn-green); }
+.jsvn-sponsor img { max-height: 48px; width: auto; }
+.jsvn-sponsors__more { display: block; text-align: center; padding: .3rem 0 .2rem; font-size: .84rem; font-weight: 700; }
 
 /* サイド：サブメニュー */
 .jsvn-sidemenu { border: 1px solid var(--jsvn-line); border-radius: var(--jsvn-radius); background: #fff; overflow: hidden; }
@@ -925,9 +963,187 @@ ul, ol { margin: 0 0 1.2em; padding-left: 1.4em; }
 <div class="jsvn-page" id="page-home">
 
 <section class="jsvn-visual"><div class="jsvn-container"><div class="jsvn-visual__inner">
-  <p class="jsvn-visual__en">The Japanese Society of Visiting Nursing</p>
-  <h1 class="jsvn-visual__title">日本訪問看護学会</h1>
-  <p class="jsvn-visual__lead">訪問看護の実践と学術をつなぎ、地域で暮らす人々の療養生活を支えます。</p>
+  <div class="jsvn-visual__copy">
+    <p class="jsvn-visual__en">The Japanese Society of Visiting Nursing</p>
+    <h1 class="jsvn-visual__title">日本訪問看護学会</h1>
+    <p class="jsvn-visual__lead">訪問看護の実践と学術をつなぎ、地域で暮らす人々の療養生活を支えます。</p>
+  </div>
+  <div class="jsvn-visual__art"><svg class="jsvn-tree" viewBox="0 0 680 460" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" preserveAspectRatio="xMidYMax meet">
+<defs>
+  <radialGradient id="halo" cx="50%" cy="45%" r="55%">
+    <stop offset="0%" stop-color="#e9d3a0" stop-opacity="0.55"/>
+    <stop offset="45%" stop-color="#cbb075" stop-opacity="0.18"/>
+    <stop offset="100%" stop-color="#cbb075" stop-opacity="0"/>
+  </radialGradient>
+  <linearGradient id="leafDark" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#2f7d5a"/><stop offset="100%" stop-color="#153c28"/>
+  </linearGradient>
+  <linearGradient id="leafMid" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#4f9d76"/><stop offset="100%" stop-color="#1f5a3c"/>
+  </linearGradient>
+  <linearGradient id="leafLight" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#7bbf97"/><stop offset="100%" stop-color="#3f855f"/>
+  </linearGradient>
+  <linearGradient id="trunk" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0%" stop-color="#4a3823"/><stop offset="50%" stop-color="#6b5334"/><stop offset="100%" stop-color="#3c2c1a"/>
+  </linearGradient>
+</defs>
+<circle cx="360" cy="175" r="205" fill="url(#halo)"/>
+<circle cx="360" cy="175" r="188" fill="none" stroke="#cbb075" stroke-opacity="0.5" stroke-width="1.2"/>
+<path d="M338 430 C 344 360, 330 320, 348 250 C 352 235, 368 235, 372 252 C 386 315, 372 360, 384 430 Z" fill="url(#trunk)"/>
+<path d="M338 430 C 300 420, 285 428, 262 432 C 300 436, 322 434, 344 434 Z" fill="url(#trunk)" opacity="0.9"/>
+<path d="M384 430 C 420 420, 442 428, 470 432 C 430 437, 405 434, 378 434 Z" fill="url(#trunk)" opacity="0.9"/>
+<path d="M360 268 C 320 250, 285 235, 250 205" fill="none" stroke="#5b4324" stroke-width="6" stroke-linecap="round" opacity="0.85"/>
+<path d="M360 268 C 320 250, 285 235, 250 205" fill="none" stroke="#cbb075" stroke-width="1.4" stroke-linecap="round" opacity="0.7"/>
+<path d="M360 262 C 400 245, 435 230, 470 205" fill="none" stroke="#5b4324" stroke-width="6" stroke-linecap="round" opacity="0.85"/>
+<path d="M360 262 C 400 245, 435 230, 470 205" fill="none" stroke="#cbb075" stroke-width="1.4" stroke-linecap="round" opacity="0.7"/>
+<path d="M360 258 C 345 225, 330 205, 320 175" fill="none" stroke="#5b4324" stroke-width="6" stroke-linecap="round" opacity="0.85"/>
+<path d="M360 258 C 345 225, 330 205, 320 175" fill="none" stroke="#cbb075" stroke-width="1.4" stroke-linecap="round" opacity="0.7"/>
+<path d="M362 258 C 385 225, 400 205, 410 172" fill="none" stroke="#5b4324" stroke-width="6" stroke-linecap="round" opacity="0.85"/>
+<path d="M362 258 C 385 225, 400 205, 410 172" fill="none" stroke="#cbb075" stroke-width="1.4" stroke-linecap="round" opacity="0.7"/>
+<path d="M361 260 C 361 230, 361 205, 361 178" fill="none" stroke="#5b4324" stroke-width="6" stroke-linecap="round" opacity="0.85"/>
+<path d="M361 260 C 361 230, 361 205, 361 178" fill="none" stroke="#cbb075" stroke-width="1.4" stroke-linecap="round" opacity="0.7"/>
+<circle cx="348.4" cy="129.9" r="59.3" fill="url(#leafDark)"/>
+<circle cx="266.4" cy="152.8" r="59.2" fill="url(#leafDark)"/>
+<circle cx="260.2" cy="251.0" r="58.6" fill="url(#leafDark)"/>
+<circle cx="273.9" cy="233.9" r="58.4" fill="url(#leafDark)"/>
+<circle cx="382.3" cy="256.0" r="58.2" fill="url(#leafDark)"/>
+<circle cx="342.5" cy="161.0" r="56.6" fill="url(#leafDark)"/>
+<circle cx="251.3" cy="149.6" r="55.8" fill="url(#leafDark)"/>
+<circle cx="259.2" cy="104.6" r="53.9" fill="url(#leafDark)"/>
+<circle cx="209.7" cy="153.4" r="53.9" fill="url(#leafDark)"/>
+<circle cx="389.4" cy="92.8" r="53.1" fill="url(#leafDark)"/>
+<circle cx="390.2" cy="196.6" r="52.1" fill="url(#leafDark)"/>
+<circle cx="440.1" cy="222.9" r="51.7" fill="url(#leafDark)"/>
+<circle cx="338.7" cy="160.7" r="49.9" fill="url(#leafDark)"/>
+<circle cx="426.7" cy="143.1" r="49.6" fill="url(#leafDark)"/>
+<circle cx="337.5" cy="239.2" r="48.7" fill="url(#leafDark)"/>
+<circle cx="330.8" cy="214.3" r="48.1" fill="url(#leafDark)"/>
+<circle cx="315.9" cy="116.8" r="47.0" fill="url(#leafDark)"/>
+<circle cx="372.2" cy="247.5" r="46.0" fill="url(#leafDark)"/>
+<circle cx="388.8" cy="143.7" r="45.8" fill="url(#leafDark)"/>
+<circle cx="287.8" cy="107.9" r="45.5" fill="url(#leafDark)"/>
+<circle cx="294.1" cy="136.1" r="44.6" fill="url(#leafDark)"/>
+<circle cx="447.5" cy="102.2" r="42.1" fill="url(#leafDark)"/>
+<circle cx="253.9" cy="140.1" r="41.5" fill="url(#leafDark)"/>
+<circle cx="393.0" cy="161.3" r="41.3" fill="url(#leafDark)"/>
+<circle cx="359.1" cy="187.1" r="40.2" fill="url(#leafDark)"/>
+<circle cx="418.2" cy="142.8" r="40.1" fill="url(#leafDark)"/>
+<circle cx="417.5" cy="215.7" r="39.3" fill="url(#leafDark)"/>
+<circle cx="470.5" cy="211.9" r="38.4" fill="url(#leafDark)"/>
+<circle cx="377.3" cy="218.4" r="37.6" fill="url(#leafDark)"/>
+<circle cx="313.5" cy="124.1" r="36.7" fill="url(#leafDark)"/>
+<circle cx="395.6" cy="206.9" r="36.5" fill="url(#leafDark)"/>
+<circle cx="262.9" cy="147.9" r="36.2" fill="url(#leafDark)"/>
+<circle cx="509.0" cy="206.7" r="35.8" fill="url(#leafDark)"/>
+<circle cx="398.7" cy="103.8" r="34.3" fill="url(#leafDark)"/>
+<circle cx="401.1" cy="213.7" r="33.9" fill="url(#leafDark)"/>
+<circle cx="397.9" cy="190.0" r="33.0" fill="url(#leafDark)"/>
+<circle cx="473.0" cy="190.2" r="31.7" fill="url(#leafDark)"/>
+<circle cx="362.4" cy="181.5" r="31.1" fill="url(#leafDark)"/>
+<circle cx="452.7" cy="127.6" r="31.1" fill="url(#leafDark)"/>
+<circle cx="224.1" cy="220.9" r="30.2" fill="url(#leafDark)"/>
+<circle cx="277.2" cy="218.9" r="29.5" fill="url(#leafDark)"/>
+<circle cx="319.4" cy="191.3" r="29.1" fill="url(#leafDark)"/>
+<circle cx="332.1" cy="163.1" r="28.3" fill="url(#leafDark)"/>
+<circle cx="427.9" cy="235.8" r="27.3" fill="url(#leafDark)"/>
+<circle cx="471.8" cy="205.4" r="27.3" fill="url(#leafDark)"/>
+<circle cx="441.4" cy="215.5" r="26.9" fill="url(#leafDark)"/>
+<circle cx="459.0" cy="225.0" r="51.8" fill="url(#leafMid)" opacity="0.96"/>
+<circle cx="497.6" cy="138.8" r="50.7" fill="url(#leafMid)" opacity="0.96"/>
+<circle cx="400.7" cy="194.4" r="49.1" fill="url(#leafMid)" opacity="0.96"/>
+<circle cx="450.3" cy="148.6" r="48.2" fill="url(#leafMid)" opacity="0.96"/>
+<circle cx="379.9" cy="140.9" r="46.8" fill="url(#leafMid)" opacity="0.96"/>
+<circle cx="326.0" cy="205.8" r="46.3" fill="url(#leafMid)" opacity="0.96"/>
+<circle cx="497.9" cy="163.7" r="46.2" fill="url(#leafMid)" opacity="0.96"/>
+<circle cx="381.1" cy="124.0" r="46.0" fill="url(#leafMid)" opacity="0.96"/>
+<circle cx="363.8" cy="175.8" r="46.0" fill="url(#leafMid)" opacity="0.96"/>
+<circle cx="283.8" cy="103.2" r="45.5" fill="url(#leafMid)" opacity="0.96"/>
+<circle cx="375.0" cy="110.3" r="45.4" fill="url(#leafMid)" opacity="0.96"/>
+<circle cx="498.1" cy="160.5" r="42.9" fill="url(#leafMid)" opacity="0.96"/>
+<circle cx="382.3" cy="206.9" r="40.7" fill="url(#leafMid)" opacity="0.96"/>
+<circle cx="340.4" cy="210.7" r="39.6" fill="url(#leafMid)" opacity="0.96"/>
+<circle cx="452.4" cy="141.6" r="38.0" fill="url(#leafMid)" opacity="0.96"/>
+<circle cx="336.2" cy="167.3" r="37.8" fill="url(#leafMid)" opacity="0.96"/>
+<circle cx="478.9" cy="158.7" r="37.8" fill="url(#leafMid)" opacity="0.96"/>
+<circle cx="471.4" cy="125.9" r="36.4" fill="url(#leafMid)" opacity="0.96"/>
+<circle cx="435.3" cy="144.2" r="35.7" fill="url(#leafMid)" opacity="0.96"/>
+<circle cx="308.2" cy="94.1" r="35.4" fill="url(#leafMid)" opacity="0.96"/>
+<circle cx="339.7" cy="169.3" r="35.2" fill="url(#leafMid)" opacity="0.96"/>
+<circle cx="236.5" cy="131.1" r="34.6" fill="url(#leafMid)" opacity="0.96"/>
+<circle cx="452.9" cy="161.6" r="34.0" fill="url(#leafMid)" opacity="0.96"/>
+<circle cx="358.7" cy="220.5" r="32.9" fill="url(#leafMid)" opacity="0.96"/>
+<circle cx="480.7" cy="162.6" r="32.5" fill="url(#leafMid)" opacity="0.96"/>
+<circle cx="430.3" cy="200.4" r="29.9" fill="url(#leafMid)" opacity="0.96"/>
+<circle cx="438.1" cy="178.8" r="29.8" fill="url(#leafMid)" opacity="0.96"/>
+<circle cx="391.7" cy="136.7" r="29.6" fill="url(#leafMid)" opacity="0.96"/>
+<circle cx="313.5" cy="200.6" r="28.8" fill="url(#leafMid)" opacity="0.96"/>
+<circle cx="413.7" cy="105.3" r="28.8" fill="url(#leafMid)" opacity="0.96"/>
+<circle cx="360.1" cy="112.9" r="27.4" fill="url(#leafMid)" opacity="0.96"/>
+<circle cx="480.6" cy="147.5" r="27.1" fill="url(#leafMid)" opacity="0.96"/>
+<circle cx="353.7" cy="221.7" r="27.0" fill="url(#leafMid)" opacity="0.96"/>
+<circle cx="463.9" cy="152.5" r="26.4" fill="url(#leafMid)" opacity="0.96"/>
+<circle cx="354.3" cy="225.3" r="25.9" fill="url(#leafMid)" opacity="0.96"/>
+<circle cx="258.0" cy="183.4" r="24.6" fill="url(#leafMid)" opacity="0.96"/>
+<circle cx="283.2" cy="109.4" r="24.5" fill="url(#leafMid)" opacity="0.96"/>
+<circle cx="271.1" cy="165.5" r="22.9" fill="url(#leafMid)" opacity="0.96"/>
+<circle cx="388.7" cy="141.3" r="22.7" fill="url(#leafMid)" opacity="0.96"/>
+<circle cx="308.2" cy="161.8" r="22.4" fill="url(#leafMid)" opacity="0.96"/>
+<circle cx="456.1" cy="147.8" r="39.3" fill="url(#leafLight)" opacity="0.9"/>
+<circle cx="420.2" cy="198.6" r="39.2" fill="url(#leafLight)" opacity="0.9"/>
+<circle cx="347.5" cy="176.9" r="38.1" fill="url(#leafLight)" opacity="0.9"/>
+<circle cx="298.5" cy="105.0" r="37.5" fill="url(#leafLight)" opacity="0.9"/>
+<circle cx="241.5" cy="131.0" r="36.2" fill="url(#leafLight)" opacity="0.9"/>
+<circle cx="231.0" cy="157.9" r="36.0" fill="url(#leafLight)" opacity="0.9"/>
+<circle cx="248.8" cy="180.8" r="35.7" fill="url(#leafLight)" opacity="0.9"/>
+<circle cx="388.7" cy="190.7" r="33.4" fill="url(#leafLight)" opacity="0.9"/>
+<circle cx="234.7" cy="161.3" r="32.8" fill="url(#leafLight)" opacity="0.9"/>
+<circle cx="407.4" cy="196.3" r="31.8" fill="url(#leafLight)" opacity="0.9"/>
+<circle cx="361.9" cy="109.3" r="29.5" fill="url(#leafLight)" opacity="0.9"/>
+<circle cx="347.1" cy="144.5" r="29.3" fill="url(#leafLight)" opacity="0.9"/>
+<circle cx="321.6" cy="114.0" r="28.8" fill="url(#leafLight)" opacity="0.9"/>
+<circle cx="285.8" cy="140.7" r="28.4" fill="url(#leafLight)" opacity="0.9"/>
+<circle cx="391.6" cy="187.6" r="28.4" fill="url(#leafLight)" opacity="0.9"/>
+<circle cx="285.1" cy="124.4" r="28.3" fill="url(#leafLight)" opacity="0.9"/>
+<circle cx="357.2" cy="93.9" r="26.6" fill="url(#leafLight)" opacity="0.9"/>
+<circle cx="377.3" cy="169.4" r="26.6" fill="url(#leafLight)" opacity="0.9"/>
+<circle cx="443.1" cy="171.2" r="26.2" fill="url(#leafLight)" opacity="0.9"/>
+<circle cx="372.2" cy="212.4" r="25.6" fill="url(#leafLight)" opacity="0.9"/>
+<circle cx="335.0" cy="156.0" r="24.0" fill="url(#leafLight)" opacity="0.9"/>
+<circle cx="321.8" cy="176.2" r="23.6" fill="url(#leafLight)" opacity="0.9"/>
+<circle cx="294.4" cy="141.6" r="22.6" fill="url(#leafLight)" opacity="0.9"/>
+<circle cx="433.2" cy="110.9" r="22.2" fill="url(#leafLight)" opacity="0.9"/>
+<circle cx="361.3" cy="121.3" r="19.1" fill="url(#leafLight)" opacity="0.9"/>
+<circle cx="250.1" cy="134.3" r="18.5" fill="url(#leafLight)" opacity="0.9"/>
+<circle cx="259.3" cy="130.7" r="18.1" fill="url(#leafLight)" opacity="0.9"/>
+<circle cx="402.9" cy="166.4" r="17.8" fill="url(#leafLight)" opacity="0.9"/>
+<circle cx="288.9" cy="121.8" r="17.5" fill="url(#leafLight)" opacity="0.9"/>
+<circle cx="398.9" cy="172.5" r="17.0" fill="url(#leafLight)" opacity="0.9"/>
+<circle cx="371.5" cy="257.3" r="4.6" fill="#d8bf83"/>
+<circle cx="371.5" cy="257.3" r="2.1" fill="#f0e2bd"/>
+<circle cx="272.9" cy="125.0" r="5.1" fill="#d8bf83"/>
+<circle cx="272.9" cy="125.0" r="2.3" fill="#f0e2bd"/>
+<circle cx="352.2" cy="278.7" r="4.3" fill="#d8bf83"/>
+<circle cx="352.2" cy="278.7" r="1.9" fill="#f0e2bd"/>
+<circle cx="436.3" cy="96.5" r="3.5" fill="#d8bf83"/>
+<circle cx="436.3" cy="96.5" r="1.6" fill="#f0e2bd"/>
+<circle cx="247.2" cy="109.2" r="4.9" fill="#d8bf83"/>
+<circle cx="247.2" cy="109.2" r="2.2" fill="#f0e2bd"/>
+<circle cx="301.4" cy="90.7" r="4.6" fill="#d8bf83"/>
+<circle cx="301.4" cy="90.7" r="2.1" fill="#f0e2bd"/>
+<circle cx="321.4" cy="269.3" r="4.3" fill="#d8bf83"/>
+<circle cx="321.4" cy="269.3" r="1.9" fill="#f0e2bd"/>
+<circle cx="326.7" cy="82.5" r="5.3" fill="#d8bf83"/>
+<circle cx="326.7" cy="82.5" r="2.4" fill="#f0e2bd"/>
+<circle cx="228.5" cy="227.2" r="5.4" fill="#d8bf83"/>
+<circle cx="228.5" cy="227.2" r="2.4" fill="#f0e2bd"/>
+<circle cx="451.0" cy="123.5" r="3.7" fill="#d8bf83"/>
+<circle cx="451.0" cy="123.5" r="1.7" fill="#f0e2bd"/>
+<circle cx="501.9" cy="155.4" r="3.9" fill="#d8bf83"/>
+<circle cx="501.9" cy="155.4" r="1.8" fill="#f0e2bd"/>
+<path d="M150 434 C 300 470, 470 470, 590 430" fill="none" stroke="#cbb075" stroke-width="2" opacity="0.7"/>
+<path d="M180 440 C 320 462, 460 462, 560 438" fill="none" stroke="#cbb075" stroke-width="1" opacity="0.4"/>
+</svg></div>
 </div></div></section>
 
 <div class="jsvn-home"><div class="jsvn-container jsvn-home__grid">
@@ -957,6 +1173,16 @@ ul, ol { margin: 0 0 1.2em; padding-left: 1.4em; }
     <a class="jsvn-sidebanner jsvn-sidebanner--gold" href="#" data-page="join"><span class="jsvn-sidebanner__label">入会のご案内</span><span class="jsvn-sidebanner__en">MEMBERSHIP</span></a>
     <a class="jsvn-sidebanner" href="#" data-page="newsletter"><span class="jsvn-sidebanner__label">学会誌・ニュースレター</span><span class="jsvn-sidebanner__en">JOURNAL &amp; NEWSLETTER</span></a>
     <a class="jsvn-sidebanner jsvn-sidebanner--login" href="#" data-page="gakkai"><span class="jsvn-sidebanner__label">会員ログイン（学会バンク）</span><span class="jsvn-sidebanner__en">MEMBER LOGIN</span></a>
+
+    <section class="jsvn-sponsors" aria-label="協賛企業">
+      <h3 class="jsvn-sponsors__head">協賛企業・賛助会員</h3>
+      <div class="jsvn-sponsors__body">
+        <a class="jsvn-sponsor" href="#">企業バナー広告<br>スペース①</a>
+        <a class="jsvn-sponsor" href="#">企業バナー広告<br>スペース②</a>
+        <a class="jsvn-sponsor" href="#">企業バナー広告<br>スペース③</a>
+        <a class="jsvn-sponsors__more" href="#" data-page="join">企業会員のご案内 &rsaquo;</a>
+      </div>
+    </section>
 
     <nav class="jsvn-sidemenu" aria-label="サブメニュー">
       <h3>メニュー</h3>

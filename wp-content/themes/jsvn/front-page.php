@@ -11,13 +11,18 @@
 get_header();
 ?>
 
-<!-- ============================ メインビジュアル（控えめなバナー） ============================ -->
+<!-- ============================ メインビジュアル（クスノキのイラスト） ============================ -->
 <section class="jsvn-visual">
 	<div class="jsvn-container">
 		<div class="jsvn-visual__inner">
-			<p class="jsvn-visual__en">The Japanese Society of Visiting Nursing</p>
-			<h1 class="jsvn-visual__title"><?php bloginfo( 'name' ); ?></h1>
-			<p class="jsvn-visual__lead">訪問看護の実践と学術をつなぎ、地域で暮らす人々の療養生活を支えます。</p>
+			<div class="jsvn-visual__copy">
+				<p class="jsvn-visual__en">The Japanese Society of Visiting Nursing</p>
+				<h1 class="jsvn-visual__title"><?php bloginfo( 'name' ); ?></h1>
+				<p class="jsvn-visual__lead">訪問看護の実践と学術をつなぎ、地域で暮らす人々の療養生活を支えます。</p>
+			</div>
+			<div class="jsvn-visual__art">
+				<img class="jsvn-tree" src="<?php echo esc_url( get_template_directory_uri() . '/assets/images/camphor-tree.svg' ); ?>" alt="" aria-hidden="true">
+			</div>
 		</div>
 	</div>
 </section>
@@ -121,6 +126,21 @@ get_header();
 				<span class="jsvn-sidebanner__label">会員ログイン（学会バンク）</span>
 				<span class="jsvn-sidebanner__en">MEMBER LOGIN</span>
 			</a>
+
+			<!-- 協賛企業・企業バナー枠（企業様用リンク） -->
+			<section class="jsvn-sponsors" aria-label="協賛企業">
+				<h3 class="jsvn-sponsors__head">協賛企業・賛助会員</h3>
+				<div class="jsvn-sponsors__body">
+					<?php if ( is_active_sidebar( 'sponsors' ) ) : ?>
+						<?php dynamic_sidebar( 'sponsors' ); ?>
+					<?php else : ?>
+						<a class="jsvn-sponsor" href="#">企業バナー広告<br>スペース①</a>
+						<a class="jsvn-sponsor" href="#">企業バナー広告<br>スペース②</a>
+						<a class="jsvn-sponsor" href="#">企業バナー広告<br>スペース③</a>
+					<?php endif; ?>
+					<a class="jsvn-sponsors__more" href="<?php echo esc_url( home_url( '/join/' ) ); ?>">企業会員のご案内 &rsaquo;</a>
+				</div>
+			</section>
 
 			<nav class="jsvn-sidemenu" aria-label="サブメニュー">
 				<h3>メニュー</h3>
