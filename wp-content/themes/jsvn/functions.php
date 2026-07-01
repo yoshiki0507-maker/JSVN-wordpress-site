@@ -390,7 +390,7 @@ function jsvn_seed_pages() {
 		),
 		'officers' => array(
 			'title'   => '役員・代議員・名誉会員紹介',
-			'content' => "<h2>役員</h2>\n<p>理事長・副理事長・理事・監事（準備中）</p>\n<h2>代議員</h2>\n<p>（準備中）</p>\n<h2>名誉会員</h2>\n<p>（準備中）</p>",
+			'content' => "<p>日本訪問看護学会の役員をご紹介します。（理事長1名・副理事長2名・常任理事3名・理事15名で構成）</p>",
 		),
 		'election-rules' => array(
 			'title'   => '代議員・役員選出規定',
@@ -448,3 +448,256 @@ function jsvn_seed_pages() {
 	}
 }
 add_action( 'after_switch_theme', 'jsvn_seed_pages' );
+
+/* =============================================================
+ *  役員名簿（顔写真＋所属＋資格＋経歴）
+ * ============================================================= */
+
+/**
+ * 役員のカスタム投稿タイプ
+ */
+function jsvn_register_officer_cpt() {
+	register_post_type( 'jsvn_officer', array(
+		'labels' => array(
+			'name'          => __( '役員名簿', 'jsvn' ),
+			'singular_name' => __( '役員', 'jsvn' ),
+			'add_new_item'  => __( '役員を追加', 'jsvn' ),
+			'edit_item'     => __( '役員を編集', 'jsvn' ),
+			'menu_name'     => __( '役員名簿', 'jsvn' ),
+		),
+		'public'       => true,
+		'has_archive'  => false,
+		'menu_icon'    => 'dashicons-groups',
+		'rewrite'      => array( 'slug' => 'officer' ),
+		'supports'     => array( 'title', 'editor', 'thumbnail', 'page-attributes' ),
+		'show_in_rest' => true,
+	) );
+}
+add_action( 'init', 'jsvn_register_officer_cpt' );
+
+/**
+ * 役職の選択肢（表示順もこの順）
+ */
+function jsvn_officer_roles() {
+	return array( '理事長', '副理事長', '常任理事', '理事', '監事', '名誉会員' );
+}
+
+/**
+ * 入力欄（役職・所属・資格）のメタボックス
+ */
+function jsvn_officer_metabox() {
+	add_meta_box( 'jsvn_officer_meta', __( '役員情報（役職・所属・資格）', 'jsvn' ), 'jsvn_officer_metabox_cb', 'jsvn_officer', 'side', 'high' );
+}
+add_action( 'add_meta_boxes', 'jsvn_officer_metabox' );
+
+function jsvn_officer_metabox_cb( $post ) {
+	wp_nonce_field( 'jsvn_officer_save', 'jsvn_officer_nonce' );
+	$role    = get_post_meta( $post->ID, '_jsvn_role', true );
+	$affil   = get_post_meta( $post->ID, '_jsvn_affiliation', true );
+	$license = get_post_meta( $post->ID, '_jsvn_license', true );
+
+	echo '<p><label><strong>役職</strong><br><select name="jsvn_role" style="width:100%;">';
+	foreach ( jsvn_officer_roles() as $r ) {
+		echo '<option value="' . esc_attr( $r ) . '"' . selected( $role, $r, false ) . '>' . esc_html( $r ) . '</option>';
+	}
+	echo '</select></label></p>';
+	echo '<p><label><strong>所属・肩書</strong><br><input type="text" name="jsvn_affiliation" value="' . esc_attr( $affil ) . '" style="width:100%;" placeholder="例）○○大学大学院 教授"></label></p>';
+	echo '<p><label><strong>保有資格・ライセンス</strong><br><input type="text" name="jsvn_license" value="' . esc_attr( $license ) . '" style="width:100%;" placeholder="例）看護師／保健師／博士（看護学）"></label></p>';
+	echo '<p style="color:#777;font-size:12px;line-height:1.6;">顔写真は右の「アイキャッチ画像」、経歴は本文に入力してください。並び順は「順序」で調整できます。</p>';
+}
+
+function jsvn_officer_save( $post_id ) {
+	if ( ! isset( $_POST['jsvn_officer_nonce'] ) || ! wp_verify_nonce( $_POST['jsvn_officer_nonce'], 'jsvn_officer_save' ) ) {
+		return;
+	}
+	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+		return;
+	}
+	if ( ! current_user_can( 'edit_post', $post_id ) ) {
+		return;
+	}
+	foreach ( array( 'jsvn_role' => '_jsvn_role', 'jsvn_affiliation' => '_jsvn_affiliation', 'jsvn_license' => '_jsvn_license' ) as $field => $key ) {
+		if ( isset( $_POST[ $field ] ) ) {
+			update_post_meta( $post_id, $key, sanitize_text_field( wp_unslash( $_POST[ $field ] ) ) );
+		}
+	}
+}
+add_action( 'save_post_jsvn_officer', 'jsvn_officer_save' );
+
+/**
+ * 役員名簿を役職ごとにグループ表示
+ */
+function jsvn_render_officers() {
+	$q = new WP_Query( array(
+		'post_type'      => 'jsvn_officer',
+		'posts_per_page' => -1,
+		'orderby'        => array( 'menu_order' => 'ASC', 'date' => 'ASC' ),
+	) );
+	if ( ! $q->have_posts() ) {
+		echo '<p>役員情報は準備中です。</p>';
+		return;
+	}
+	$grouped = array();
+	while ( $q->have_posts() ) {
+		$q->the_post();
+		$r = get_post_meta( get_the_ID(), '_jsvn_role', true );
+		if ( ! $r ) {
+			$r = '理事';
+		}
+		$grouped[ $r ][] = get_the_ID();
+	}
+	wp_reset_postdata();
+
+	foreach ( jsvn_officer_roles() as $role ) {
+		if ( empty( $grouped[ $role ] ) ) {
+			continue;
+		}
+		echo '<h2 class="jsvn-officer-role-h">' . esc_html( $role ) . '<span>' . count( $grouped[ $role ] ) . '名</span></h2>';
+		echo '<div class="jsvn-officers">';
+		foreach ( $grouped[ $role ] as $id ) {
+			$affil   = get_post_meta( $id, '_jsvn_affiliation', true );
+			$license = get_post_meta( $id, '_jsvn_license', true );
+			$bio     = get_post_field( 'post_content', $id );
+			echo '<article class="jsvn-officer">';
+			echo '<div class="jsvn-officer__photo">';
+			if ( has_post_thumbnail( $id ) ) {
+				echo get_the_post_thumbnail( $id, 'medium' );
+			} else {
+				echo '<span class="jsvn-officer__noimg" aria-hidden="true"></span>';
+			}
+			echo '</div>';
+			echo '<div class="jsvn-officer__body">';
+			echo '<p class="jsvn-officer__role">' . esc_html( $role ) . '</p>';
+			echo '<h3 class="jsvn-officer__name">' . esc_html( get_the_title( $id ) ) . '</h3>';
+			if ( $affil ) {
+				echo '<p class="jsvn-officer__affil">' . esc_html( $affil ) . '</p>';
+			}
+			if ( $license ) {
+				echo '<p class="jsvn-officer__license"><span>資格</span>' . esc_html( $license ) . '</p>';
+			}
+			if ( $bio ) {
+				echo '<div class="jsvn-officer__bio">' . wp_kses_post( wpautop( $bio ) ) . '</div>';
+			}
+			echo '</div></article>';
+		}
+		echo '</div>';
+	}
+}
+
+/**
+ * サンプル役員を初期投入（理事長1・副理事長2・常任理事3・理事はサンプル数名）
+ * ※ 実構成は 理事長1／副理事長2／常任理事3／理事15。残りは管理画面から追加してください。
+ */
+function jsvn_seed_officers() {
+	$existing = get_posts( array( 'post_type' => 'jsvn_officer', 'posts_per_page' => 1, 'fields' => 'ids', 'post_status' => 'any' ) );
+	if ( $existing ) {
+		return;
+	}
+	$samples = array(
+		array( '理事長', '○○ ○○', '○○大学大学院 教授', '看護師／保健師／博士（看護学）' ),
+		array( '副理事長', '○○ ○○', '○○訪問看護ステーション 統括所長', '看護師／認定看護管理者' ),
+		array( '副理事長', '○○ ○○', '○○医科大学 教授', '医師／医学博士' ),
+		array( '常任理事', '○○ ○○', '○○大学 准教授', '看護師／博士（看護学）' ),
+		array( '常任理事', '○○ ○○', '○○在宅ケア研究所 所長', '看護師／保健師' ),
+		array( '常任理事', '○○ ○○', '○○訪問看護ステーション 所長', '看護師／緩和ケア認定看護師' ),
+		array( '理事', '○○ ○○', '○○大学 講師', '看護師／修士（看護学）' ),
+		array( '理事', '○○ ○○', '○○病院 看護部長', '看護師／認定看護管理者' ),
+		array( '理事', '○○ ○○', '○○訪問看護ステーション 管理者', '看護師' ),
+	);
+	$i = 0;
+	foreach ( $samples as $s ) {
+		$id = wp_insert_post( array(
+			'post_type'    => 'jsvn_officer',
+			'post_status'  => 'publish',
+			'post_title'   => $s[1],
+			'post_content' => '○○年○○大学卒業。○○病院、○○訪問看護ステーション勤務を経て現職。専門は在宅看護・訪問看護。（プロフィールは編集画面から差し替えできます）',
+			'menu_order'   => $i,
+		) );
+		if ( $id && ! is_wp_error( $id ) ) {
+			update_post_meta( $id, '_jsvn_role', $s[0] );
+			update_post_meta( $id, '_jsvn_affiliation', $s[2] );
+			update_post_meta( $id, '_jsvn_license', $s[3] );
+		}
+		$i++;
+	}
+}
+add_action( 'after_switch_theme', 'jsvn_seed_officers' );
+
+/* =============================================================
+ *  SNS（Instagram / X / Facebook / YouTube）とブログ
+ * ============================================================= */
+
+/**
+ * SNSのURLをカスタマイザーに追加
+ */
+function jsvn_customize_sns( $wp_customize ) {
+	$wp_customize->add_section( 'jsvn_sns', array(
+		'title'    => __( 'SNS・ソーシャル', 'jsvn' ),
+		'priority' => 45,
+	) );
+	$networks = array(
+		'instagram' => 'Instagram のURL',
+		'x'         => 'X（旧Twitter）のURL',
+		'facebook'  => 'Facebook のURL',
+		'youtube'   => 'YouTube のURL',
+	);
+	foreach ( $networks as $key => $label ) {
+		$wp_customize->add_setting( 'jsvn_sns_' . $key, array(
+			'default'           => '',
+			'sanitize_callback' => 'esc_url_raw',
+		) );
+		$wp_customize->add_control( 'jsvn_sns_' . $key, array(
+			'label'   => $label,
+			'section' => 'jsvn_sns',
+			'type'    => 'url',
+		) );
+	}
+}
+add_action( 'customize_register', 'jsvn_customize_sns' );
+
+/**
+ * 設定済みのSNSリンク一覧を返す
+ */
+function jsvn_sns_links() {
+	$links = array();
+	foreach ( array( 'instagram', 'x', 'facebook', 'youtube' ) as $key ) {
+		$url = get_theme_mod( 'jsvn_sns_' . $key, '' );
+		if ( $url ) {
+			$links[ $key ] = $url;
+		}
+	}
+	// プレビュー用：未設定でもアイコンを見せたい場合のフォールバック
+	if ( empty( $links ) ) {
+		$links = array( 'instagram' => '#', 'x' => '#', 'facebook' => '#' );
+	}
+	return $links;
+}
+
+/**
+ * SNSアイコン（インラインSVG）
+ */
+function jsvn_sns_icon( $network ) {
+	$icons = array(
+		'instagram' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>',
+		'x'         => '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.9 2H22l-7.5 8.6L23 22h-6.8l-5-6.6L5.4 22H2.3l8-9.2L1.6 2h6.9l4.6 6.1L18.9 2zm-2.4 18h1.9L7.6 4H5.6l10.9 16z"/></svg>',
+		'facebook'  => '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 12a10 10 0 1 0-11.6 9.9v-7H7.9V12h2.5V9.8c0-2.5 1.5-3.9 3.8-3.9 1.1 0 2.2.2 2.2.2v2.5h-1.2c-1.2 0-1.6.8-1.6 1.6V12h2.7l-.4 2.9h-2.3v7A10 10 0 0 0 22 12z"/></svg>',
+		'youtube'   => '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M23 12s0-3.2-.4-4.7a2.5 2.5 0 0 0-1.8-1.8C19.3 5 12 5 12 5s-7.3 0-8.8.5A2.5 2.5 0 0 0 1.4 7.3C1 8.8 1 12 1 12s0 3.2.4 4.7a2.5 2.5 0 0 0 1.8 1.8c1.5.5 8.8.5 8.8.5s7.3 0 8.8-.5a2.5 2.5 0 0 0 1.8-1.8C23 15.2 23 12 23 12zM9.8 15.3V8.7l6 3.3-6 3.3z"/></svg>',
+	);
+	return isset( $icons[ $network ] ) ? $icons[ $network ] : '';
+}
+
+/**
+ * SNSアイコン列を出力
+ */
+function jsvn_sns_icons( $extra_class = '' ) {
+	$links = jsvn_sns_links();
+	if ( empty( $links ) ) {
+		return;
+	}
+	$names = array( 'instagram' => 'Instagram', 'x' => 'X', 'facebook' => 'Facebook', 'youtube' => 'YouTube' );
+	echo '<div class="jsvn-sns ' . esc_attr( $extra_class ) . '">';
+	foreach ( $links as $key => $url ) {
+		echo '<a class="jsvn-sns__link jsvn-sns__link--' . esc_attr( $key ) . '" href="' . esc_url( $url ) . '" target="_blank" rel="noopener" aria-label="' . esc_attr( $names[ $key ] ) . '">' . jsvn_sns_icon( $key ) . '</a>';
+	}
+	echo '</div>';
+}

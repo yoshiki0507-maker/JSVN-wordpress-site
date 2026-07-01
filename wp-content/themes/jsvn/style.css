@@ -562,6 +562,100 @@ ul, ol { margin: 0 0 1.2em; padding-left: 1.4em; }
 }
 
 /* ==========================================================================
+   8c. 役員名簿（顔写真＋所属＋資格＋経歴）
+   ========================================================================== */
+.jsvn-officer-role-h {
+  font-size: 1.3rem; color: var(--jsvn-navy); margin: 2.2rem 0 1.1rem;
+  padding: .4rem 0 .4rem 1rem; border-left: 6px solid var(--jsvn-green);
+  background: linear-gradient(90deg, var(--jsvn-green-soft), transparent);
+  display: flex; align-items: baseline; gap: .8rem;
+}
+.jsvn-officer-role-h span { font-size: .8rem; color: var(--jsvn-gold); font-weight: 700; }
+.jsvn-officers { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.3rem; margin-bottom: 1.5rem; }
+.jsvn-officer {
+  display: flex; gap: 1.2rem; background: #fff; border: 1px solid var(--jsvn-line);
+  border-radius: var(--jsvn-radius); padding: 1.2rem; box-shadow: var(--jsvn-shadow-sm);
+}
+.jsvn-officer__photo { flex: 0 0 92px; width: 92px; }
+.jsvn-officer__photo img,
+.jsvn-officer__noimg {
+  display: block; width: 92px; height: 116px; object-fit: cover;
+  border-radius: 4px; background: var(--jsvn-green-soft);
+}
+/* 写真が無いときの人物シルエット */
+.jsvn-officer__noimg {
+  position: relative; border: 1px dashed var(--jsvn-line);
+}
+.jsvn-officer__noimg::before {
+  content: ""; position: absolute; left: 50%; top: 30%; transform: translateX(-50%);
+  width: 30px; height: 30px; border-radius: 50%; background: #c7d6cc;
+}
+.jsvn-officer__noimg::after {
+  content: ""; position: absolute; left: 50%; bottom: 14%; transform: translateX(-50%);
+  width: 52px; height: 34px; border-radius: 26px 26px 0 0; background: #c7d6cc;
+}
+.jsvn-officer__body { min-width: 0; }
+.jsvn-officer__role { font-size: .72rem; font-weight: 700; color: #fff; background: var(--jsvn-green); display: inline-block; padding: .1em .8em; border-radius: 999px; margin: 0 0 .4rem; }
+.jsvn-officer__name { font-size: 1.2rem; margin: 0 0 .3rem; }
+.jsvn-officer__affil { font-size: .85rem; color: var(--jsvn-ink-soft); margin: 0 0 .4rem; }
+.jsvn-officer__license { font-size: .82rem; color: var(--jsvn-ink); margin: 0 0 .5rem; }
+.jsvn-officer__license span { background: var(--jsvn-coral-soft); color: #8a6a24; font-weight: 700; padding: .1em .6em; border-radius: 4px; margin-right: .5em; font-size: .72rem; }
+.jsvn-officer__bio { font-size: .84rem; color: var(--jsvn-ink-soft); line-height: 1.7; }
+.jsvn-officer__bio p { margin: 0; }
+@media (max-width: 680px) { .jsvn-officers { grid-template-columns: 1fr; } }
+
+/* ==========================================================================
+   8d. ブログ & SNS
+   ========================================================================== */
+.jsvn-blogsns { background: var(--jsvn-green-soft); padding: 3rem 0; }
+.jsvn-blogsns__grid { display: grid; grid-template-columns: 1fr 300px; gap: 2.5rem; align-items: start; }
+.jsvn-blog__head, .jsvn-social__head {
+  display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.2rem;
+}
+.jsvn-blog__head h2, .jsvn-social__head h2 {
+  margin: 0; font-size: 1.3rem; color: var(--jsvn-navy);
+}
+.jsvn-blog__head h2::before, .jsvn-social__head h2::before {
+  content: ""; display: inline-block; width: 8px; height: 18px; background: var(--jsvn-gold);
+  margin-right: .6rem; vertical-align: -3px; border-radius: 2px;
+}
+.jsvn-blog__list { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.1rem; }
+.jsvn-blogcard { background: #fff; border-radius: var(--jsvn-radius); overflow: hidden; box-shadow: var(--jsvn-shadow-sm); display: flex; flex-direction: column; }
+.jsvn-blogcard__thumb { aspect-ratio: 16/10; background: var(--jsvn-green-light); overflow: hidden; }
+.jsvn-blogcard__thumb img { width: 100%; height: 100%; object-fit: cover; }
+.jsvn-blogcard__body { padding: .9rem 1rem 1.1rem; }
+.jsvn-blogcard__date { font-size: .76rem; color: var(--jsvn-gold); font-weight: 700; }
+.jsvn-blogcard h3 { font-size: .98rem; margin: .3rem 0 0; line-height: 1.5; }
+
+/* SNS 縦積みカード */
+.jsvn-social__card { background: #fff; border-radius: var(--jsvn-radius); padding: 1.4rem; box-shadow: var(--jsvn-shadow-sm); }
+.jsvn-social__note { font-size: .86rem; color: var(--jsvn-ink-soft); margin: 0 0 1rem; }
+.jsvn-social__embed {
+  border: 1px dashed var(--jsvn-line); border-radius: 6px; padding: 1.4rem 1rem; text-align: center;
+  color: var(--jsvn-ink-soft); font-size: .82rem; background: var(--jsvn-cream); margin-top: 1rem;
+}
+
+/* SNSアイコン共通 */
+.jsvn-sns { display: flex; gap: .6rem; }
+.jsvn-sns__link {
+  display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%;
+  background: var(--jsvn-green); color: #fff; transition: transform .2s ease, background .2s ease;
+}
+.jsvn-sns__link:hover { transform: translateY(-3px); color: #fff; }
+.jsvn-sns__link svg { width: 20px; height: 20px; }
+.jsvn-sns__link--instagram { background: #c13584; }
+.jsvn-sns__link--x { background: #111; }
+.jsvn-sns__link--facebook { background: #1877f2; }
+.jsvn-sns__link--youtube { background: #ff0000; }
+.jsvn-footer .jsvn-sns { margin-top: 1.1rem; }
+
+@media (max-width: 900px) {
+  .jsvn-blogsns__grid { grid-template-columns: 1fr; }
+  .jsvn-blog__list { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 560px) { .jsvn-blog__list { grid-template-columns: 1fr; } }
+
+/* ==========================================================================
    9. フッター
    ========================================================================== */
 .jsvn-footer { background: var(--jsvn-navy-deep); color:#aeb9c7; padding: 4rem 0 0; }

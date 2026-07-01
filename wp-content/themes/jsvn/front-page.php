@@ -142,5 +142,76 @@ get_header();
 	</div>
 </div>
 
+<!-- ============================ ブログ & SNS ============================ -->
+<section class="jsvn-blogsns">
+	<div class="jsvn-container">
+		<div class="jsvn-blogsns__grid">
+
+			<!-- ブログ -->
+			<div class="jsvn-blog">
+				<div class="jsvn-blog__head">
+					<h2>ブログ</h2>
+					<a class="jsvn-textlink" href="<?php echo esc_url( home_url( '/category/blog/' ) ); ?>">ブログ一覧へ &rsaquo;</a>
+				</div>
+				<div class="jsvn-blog__list">
+					<?php
+					$blog = new WP_Query( array(
+						'post_type'           => 'post',
+						'posts_per_page'      => 3,
+						'category_name'       => 'blog',
+						'ignore_sticky_posts' => true,
+					) );
+					if ( $blog->have_posts() ) :
+						while ( $blog->have_posts() ) : $blog->the_post();
+							?>
+							<a class="jsvn-blogcard" href="<?php the_permalink(); ?>" style="text-decoration:none;color:inherit;">
+								<span class="jsvn-blogcard__thumb"><?php if ( has_post_thumbnail() ) { the_post_thumbnail( 'jsvn-card' ); } ?></span>
+								<span class="jsvn-blogcard__body">
+									<span class="jsvn-blogcard__date"><?php echo esc_html( get_the_date( 'Y.m.d' ) ); ?></span>
+									<h3><?php echo esc_html( wp_trim_words( get_the_title(), 26, '…' ) ); ?></h3>
+								</span>
+							</a>
+							<?php
+						endwhile;
+						wp_reset_postdata();
+					else :
+						$bph = array(
+							array( '2026.06.18', '設立準備委員会の様子をご紹介します' ),
+							array( '2026.06.10', '訪問看護の現場から：ある一日' ),
+							array( '2026.06.02', '学術大会に向けた準備が始まりました' ),
+						);
+						foreach ( $bph as $b ) :
+							?>
+							<div class="jsvn-blogcard">
+								<span class="jsvn-blogcard__thumb"></span>
+								<span class="jsvn-blogcard__body">
+									<span class="jsvn-blogcard__date"><?php echo esc_html( $b[0] ); ?></span>
+									<h3><?php echo esc_html( $b[1] ); ?></h3>
+								</span>
+							</div>
+							<?php
+						endforeach;
+					endif;
+					?>
+				</div>
+			</div>
+
+			<!-- SNS -->
+			<div class="jsvn-social">
+				<div class="jsvn-social__head"><h2>SNS</h2></div>
+				<div class="jsvn-social__card">
+					<p class="jsvn-social__note">最新情報はSNSでも発信しています。ぜひフォローしてください。</p>
+					<?php jsvn_sns_icons(); ?>
+					<div class="jsvn-social__embed">
+						Instagram／X／Facebook の最新投稿を、ここに自動表示できます。<br>
+						（公開時に各SNSと連携して有効化します）
+					</div>
+				</div>
+			</div>
+
+		</div>
+	</div>
+</section>
+
 <?php
 get_footer();
