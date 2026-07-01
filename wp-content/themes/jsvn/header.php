@@ -37,7 +37,7 @@ $has_utility = has_nav_menu( 'utility' );
 			?>
 		<?php else : ?>
 			<a href="<?php echo esc_url( home_url( '/contact/' ) ); ?>">お問い合わせ</a>
-			<a href="<?php echo esc_url( home_url( '/login/' ) ); ?>">会員ログイン</a>
+			<a href="<?php echo esc_url( jsvn_login_url() ); ?>" target="_blank" rel="noopener">会員ログイン（学会バンク）</a>
 		<?php endif; ?>
 	</div>
 </div>
@@ -73,15 +73,8 @@ $has_utility = has_nav_menu( 'utility' );
 					'depth'          => 2,
 				) );
 			} else {
-				// メニュー未設定時の仮表示
-				echo '<ul class="jsvn-nav__menu">';
-				echo '<li><a href="' . esc_url( home_url( '/about/' ) ) . '">学会について</a></li>';
-				echo '<li><a href="' . esc_url( home_url( '/events/' ) ) . '">学術大会</a></li>';
-				echo '<li><a href="' . esc_url( home_url( '/journal/' ) ) . '">学会誌</a></li>';
-				echo '<li><a href="' . esc_url( home_url( '/news/' ) ) . '">お知らせ</a></li>';
-				echo '<li><a href="' . esc_url( home_url( '/join/' ) ) . '">入会案内</a></li>';
-				echo '<li><a href="' . esc_url( home_url( '/contact/' ) ) . '">お問い合わせ</a></li>';
-				echo '</ul>';
+				// メニュー未設定時の仮表示（学会向けの構成）
+				jsvn_render_fallback_menu();
 			}
 			?>
 		</nav>

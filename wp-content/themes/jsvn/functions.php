@@ -253,3 +253,198 @@ function jsvn_body_classes( $classes ) {
 	return $classes;
 }
 add_filter( 'body_class', 'jsvn_body_classes' );
+
+/**
+ * 会員ログイン先URL（学会バンクを利用予定）
+ *
+ * 実URLが決まったら [外観 > カスタマイズ] の「学会バンクのログインURL」に設定するか、
+ * jsvn_login_url フィルターで上書きしてください。
+ */
+function jsvn_login_url() {
+	$url = get_theme_mod( 'jsvn_gakkai_bank_url', '' );
+	if ( empty( $url ) ) {
+		$url = '#gakkai-bank'; // 未設定時のプレースホルダー
+	}
+	return apply_filters( 'jsvn_login_url', $url );
+}
+
+/**
+ * カスタマイザーに「学会バンクのログインURL」設定を追加
+ */
+function jsvn_customize_register( $wp_customize ) {
+	$wp_customize->add_section( 'jsvn_membership', array(
+		'title'    => __( '会員・学会バンク', 'jsvn' ),
+		'priority' => 40,
+	) );
+	$wp_customize->add_setting( 'jsvn_gakkai_bank_url', array(
+		'default'           => '',
+		'sanitize_callback' => 'esc_url_raw',
+	) );
+	$wp_customize->add_control( 'jsvn_gakkai_bank_url', array(
+		'label'       => __( '学会バンク ログインURL', 'jsvn' ),
+		'description' => __( '会員ログインのリンク先。学会バンクの会員ページURLを入力してください。', 'jsvn' ),
+		'section'     => 'jsvn_membership',
+		'type'        => 'url',
+	) );
+}
+add_action( 'customize_register', 'jsvn_customize_register' );
+
+/**
+ * グローバルメニューの構造（メニュー未設定時のフォールバック用）
+ *
+ * 管理画面 [外観 > メニュー] で正式なメニューを作成すればそちらが優先されます。
+ * ここは「まだメニューを作っていない段階」でも学会サイトらしい構成を表示するための定義です。
+ */
+function jsvn_menu_structure() {
+	return array(
+		array(
+			'label'    => '学会について',
+			'url'      => home_url( '/about/' ),
+			'children' => array(
+				array( 'label' => '理事長挨拶', 'url' => home_url( '/about-greeting/' ) ),
+				array( 'label' => '学会概要', 'url' => home_url( '/about/' ) ),
+				array( 'label' => '定款', 'url' => home_url( '/articles/' ) ),
+				array( 'label' => '役員・代議員・名誉会員紹介', 'url' => home_url( '/officers/' ) ),
+				array( 'label' => '代議員・役員選出規定', 'url' => home_url( '/election-rules/' ) ),
+			),
+		),
+		array(
+			'label'    => '規程・倫理',
+			'url'      => home_url( '/ethics-code/' ),
+			'children' => array(
+				array( 'label' => '倫理綱領', 'url' => home_url( '/ethics-code/' ) ),
+				array( 'label' => '科学者の行動規範', 'url' => home_url( '/scientist-conduct/' ) ),
+				array( 'label' => '研究倫理ガイドライン', 'url' => home_url( '/research-ethics/' ) ),
+			),
+		),
+		array(
+			'label'    => '情報公開',
+			'url'      => home_url( '/balance-sheet/' ),
+			'children' => array(
+				array( 'label' => '貸借対照表', 'url' => home_url( '/balance-sheet/' ) ),
+			),
+		),
+		array(
+			'label'    => '学術活動',
+			'url'      => home_url( '/events/' ),
+			'children' => array(
+				array( 'label' => '学術大会・研究会', 'url' => home_url( '/events/' ) ),
+				array( 'label' => 'ニュースレター', 'url' => home_url( '/newsletter/' ) ),
+				array( 'label' => '表彰', 'url' => home_url( '/awards/' ) ),
+			),
+		),
+		array( 'label' => '在宅ケアとは？', 'url' => home_url( '/home-care/' ) ),
+		array( 'label' => 'お知らせ', 'url' => home_url( '/news/' ) ),
+		array( 'label' => '入会案内', 'url' => home_url( '/join/' ) ),
+		array( 'label' => 'お問い合わせ', 'url' => home_url( '/contact/' ) ),
+	);
+}
+
+/**
+ * フォールバックメニューを出力
+ */
+function jsvn_render_fallback_menu() {
+	echo '<ul class="jsvn-nav__menu">';
+	foreach ( jsvn_menu_structure() as $item ) {
+		$has_children = ! empty( $item['children'] );
+		$li_class     = $has_children ? ' class="menu-item-has-children"' : '';
+		echo '<li' . $li_class . '>';
+		echo '<a href="' . esc_url( $item['url'] ) . '">' . esc_html( $item['label'] );
+		if ( $has_children ) {
+			echo ' <span class="caret" aria-hidden="true">▾</span>';
+		}
+		echo '</a>';
+		if ( $has_children ) {
+			echo '<ul class="sub-menu">';
+			foreach ( $item['children'] as $child ) {
+				echo '<li><a href="' . esc_url( $child['url'] ) . '">' . esc_html( $child['label'] ) . '</a></li>';
+			}
+			echo '</ul>';
+		}
+		echo '</li>';
+	}
+	echo '</ul>';
+}
+
+/**
+ * テーマ有効化時に、メニューに対応する固定ページを自動作成する。
+ *
+ * すでに同じスラッグのページがあればスキップ（重複作成しない）。
+ * 中身はあとから自由に編集できる「たたき台」です。
+ */
+function jsvn_seed_pages() {
+	$lorem = "<p>このページは準備中です。内容が決まり次第、こちらに掲載します。</p>";
+
+	$pages = array(
+		'about-greeting' => array(
+			'title'   => '理事長挨拶',
+			'content' => "<p>このたび、日本訪問看護学会のホームページをご覧いただき、誠にありがとうございます。</p>\n<p>在宅医療の広がりとともに、訪問看護が担う役割はますます重要になっています。本会は、現場の実践知と科学的根拠を結び、訪問看護の質の向上と、地域で暮らす方々の「その人らしい療養」を支えてまいります。</p>\n<p>会員の皆さまとともに、温かく、そして学術的に確かな学会を育てていきたいと考えております。</p>\n<p style=\"text-align:right;\">日本訪問看護学会　理事長　○○　○○</p>",
+		),
+		'about' => array(
+			'title'   => '学会概要',
+			'content' => "<table><tbody>\n<tr><th>名称</th><td>日本訪問看護学会</td></tr>\n<tr><th>設立</th><td>2026年（予定）</td></tr>\n<tr><th>目的</th><td>訪問看護に関する学術研究の発展、人材育成、多職種連携の推進</td></tr>\n<tr><th>事務局</th><td>（準備中）</td></tr>\n</tbody></table>",
+		),
+		'articles' => array(
+			'title'   => '定款',
+			'content' => "<h2>第1章　総則</h2>\n<p>（名称）第1条　本会は、日本訪問看護学会と称する。</p>\n<p>（目的）第2条　本会は、訪問看護に関する学術の発展に寄与することを目的とする。</p>\n<h2>第2章　会員</h2>\n<p>第3条　本会の会員は、正会員・学生会員・賛助会員とする。</p>\n<p><em>※ 全文は準備中です。</em></p>",
+		),
+		'officers' => array(
+			'title'   => '役員・代議員・名誉会員紹介',
+			'content' => "<h2>役員</h2>\n<p>理事長・副理事長・理事・監事（準備中）</p>\n<h2>代議員</h2>\n<p>（準備中）</p>\n<h2>名誉会員</h2>\n<p>（準備中）</p>",
+		),
+		'election-rules' => array(
+			'title'   => '代議員・役員選出規定',
+			'content' => "<p>本規定は、日本訪問看護学会の代議員および役員の選出方法について定めるものである。</p>\n<h2>第1条（代議員の選出）</h2>\n<p>（準備中）</p>\n<h2>第2条（役員の選出）</h2>\n<p>（準備中）</p>",
+		),
+		'ethics-code' => array(
+			'title'   => '倫理綱領',
+			'content' => "<p>日本訪問看護学会会員は、訪問看護の対象となるすべての人の尊厳と権利を尊重し、専門職としての倫理を遵守する。</p>\n<ol>\n<li>対象者の尊厳と自己決定を尊重する。</li>\n<li>専門的知識と技術の維持・向上に努める。</li>\n<li>研究にあたっては倫理的配慮を最優先する。</li>\n</ol>",
+		),
+		'scientist-conduct' => array(
+			'title'   => '科学者の行動規範',
+			'content' => "<p>本会会員は、研究者・専門職として、誠実かつ公正に行動する。</p>\n<p>捏造・改ざん・盗用などの研究不正を行わず、研究の自由と責任を自覚して活動する。（準備中）</p>",
+		),
+		'research-ethics' => array(
+			'title'   => '研究倫理ガイドライン',
+			'content' => "<p>本ガイドラインは、訪問看護に関する研究を行う会員が遵守すべき倫理的事項を示すものである。</p>\n<h2>1. 研究対象者への配慮</h2>\n<p>インフォームド・コンセントの取得、個人情報の保護に十分配慮する。（準備中）</p>",
+		),
+		'balance-sheet' => array(
+			'title'   => '貸借対照表',
+			'content' => "<p>本会の財務状況を公開しています。</p>\n<table><tbody>\n<tr><th>資産の部</th><td>（準備中）</td></tr>\n<tr><th>負債の部</th><td>（準備中）</td></tr>\n<tr><th>正味財産の部</th><td>（準備中）</td></tr>\n</tbody></table>\n<p><em>※ 事業年度ごとの貸借対照表・活動計算書を掲載予定です。</em></p>",
+		),
+		'home-care' => array(
+			'title'   => '在宅ケアとは？',
+			'content' => "<p>在宅ケアとは、病気や障がい、加齢などにより支援が必要になっても、住み慣れた自宅や地域で暮らし続けられるように、医療・看護・介護・福祉が連携して支える仕組みです。</p>\n<p>訪問看護は、その中心的な役割のひとつを担います。看護師などが定期的にご自宅を訪問し、健康状態の観察や医療的ケア、療養生活の相談・支援を行います。</p>\n<h2>訪問看護でできること</h2>\n<ul>\n<li>健康状態のチェック・病状の観察</li>\n<li>医療的な処置やケア</li>\n<li>療養生活・介護のご相談</li>\n<li>ご家族への支援</li>\n</ul>",
+		),
+		'newsletter' => array(
+			'title'   => 'ニュースレター',
+			'content' => "<p>会員向けニュースレターを発行予定です。発行後、こちらにバックナンバーを掲載します。</p>\n<ul>\n<li>創刊準備号（近日公開）</li>\n</ul>",
+		),
+		'awards' => array(
+			'title'   => '表彰',
+			'content' => "<p>訪問看護の実践・研究に顕著な貢献をされた方を表彰します。</p>\n<ul>\n<li>学会賞（優れた研究）</li>\n<li>奨励賞（若手研究者）</li>\n<li>実践功労賞</li>\n</ul>\n<p><em>※ 詳細は準備中です。</em></p>",
+		),
+		'join' => array(
+			'title'   => '入会のご案内',
+			'content' => "<p>訪問看護に関わるすべての方を歓迎します。入会をご希望の方は、以下をご確認ください。</p>\n<h2>会員種別と年会費（予定）</h2>\n<table><tbody>\n<tr><th>正会員</th><td>年会費 5,000円</td></tr>\n<tr><th>学生会員</th><td>年会費 2,000円</td></tr>\n<tr><th>賛助会員</th><td>1口 10,000円</td></tr>\n</tbody></table>\n<h2>お手続き</h2>\n<p>入会手続きは「学会バンク」を通じて行う予定です。準備が整い次第、こちらにお申し込みリンクを掲載します。</p>",
+		),
+		'contact' => array(
+			'title'   => 'お問い合わせ',
+			'content' => "<p>本会へのお問い合わせは、以下よりお願いいたします。</p>\n<p>メール：（準備中）<br>お問い合わせフォームを設置予定です。</p>",
+		),
+	);
+
+	foreach ( $pages as $slug => $data ) {
+		if ( get_page_by_path( $slug, OBJECT, 'page' ) ) {
+			continue; // 既に存在すればスキップ
+		}
+		wp_insert_post( array(
+			'post_title'   => $data['title'],
+			'post_name'    => $slug,
+			'post_content' => $data['content'] ? $data['content'] : $lorem,
+			'post_status'  => 'publish',
+			'post_type'    => 'page',
+		) );
+	}
+}
+add_action( 'after_switch_theme', 'jsvn_seed_pages' );
