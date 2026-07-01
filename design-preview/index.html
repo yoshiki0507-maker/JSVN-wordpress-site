@@ -504,19 +504,52 @@ ul, ol { margin: 0 0 1.2em; padding-left: 1.4em; }
   content: ""; position: absolute; left: 0; right: 0; top: 0; height: 2px;
   background: linear-gradient(90deg, transparent, var(--jsvn-gold-line), transparent);
 }
+.jsvn-visual::before { /* 金の細枠（品格）*/
+  content: ""; position: absolute; inset: 14px; z-index: 1; pointer-events: none;
+  border: 1px solid rgba(203, 176, 117, .38);
+}
 .jsvn-visual__inner {
   display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: 1.5rem;
-  min-height: 400px;
+  min-height: 420px;
 }
-.jsvn-visual__copy { padding: 3rem 0; position: relative; z-index: 2; }
-.jsvn-visual__en { color: var(--jsvn-gold-line); letter-spacing: .18em; font-size: .8rem; margin: 0 0 .9rem; }
+.jsvn-visual__copy { padding: 3.5rem 0; position: relative; z-index: 2; }
+.jsvn-visual__en {
+  color: var(--jsvn-gold-line); letter-spacing: .28em; font-size: .78rem; font-weight: 500;
+  margin: 0 0 1rem; text-transform: none;
+}
 .jsvn-visual__title {
-  color: #fff; font-size: clamp(1.9rem, 4.5vw, 3rem); margin: 0 0 1rem; line-height: 1.35;
-  text-shadow: 0 2px 24px rgba(0,0,0,.35);
+  font-family: var(--jsvn-serif);
+  color: #fff; font-size: clamp(2rem, 4.6vw, 3.1rem); margin: 0; line-height: 1.4;
+  letter-spacing: .1em; font-weight: 600;
+  text-shadow: 0 2px 26px rgba(0,0,0,.4);
 }
-.jsvn-visual__lead { color: #e6efe9; margin: 0; font-size: 1.02rem; max-width: 26em; }
+/* 装飾罫（金の細線＋菱形）*/
+.jsvn-visual__rule { display: flex; align-items: center; gap: .8rem; margin: 1.2rem 0 1.3rem; max-width: 20rem; }
+.jsvn-visual__rule span { height: 1px; flex: 1; background: linear-gradient(90deg, transparent, var(--jsvn-gold-line)); }
+.jsvn-visual__rule span:last-child { background: linear-gradient(90deg, var(--jsvn-gold-line), transparent); }
+.jsvn-visual__rule i { color: var(--jsvn-gold-line); font-style: normal; font-size: .7rem; }
+.jsvn-visual__lead {
+  font-family: var(--jsvn-serif); color: #edf3ee; margin: 0 0 1.4rem; font-size: 1.08rem;
+  line-height: 2; max-width: 27em; letter-spacing: .02em;
+}
+.jsvn-visual__est {
+  margin: 0; font-size: .76rem; letter-spacing: .12em; color: rgba(203, 176, 117, .9);
+}
 .jsvn-visual__art { position: relative; z-index: 1; align-self: end; }
 .jsvn-tree { display: block; width: 100%; max-width: 560px; height: auto; margin: 0 0 -3px auto; }
+
+/* 写真をメインビジュアルにした場合 */
+.jsvn-visual--photo {
+  background-size: cover;
+  background-position: center right;
+  background-repeat: no-repeat;
+}
+.jsvn-visual--photo .jsvn-visual__inner { grid-template-columns: 1fr; min-height: 440px; }
+.jsvn-visual--photo .jsvn-visual__copy { max-width: 40rem; }
+@media (max-width: 820px) {
+  .jsvn-visual--photo { background-position: center; }
+  .jsvn-visual--photo .jsvn-visual__inner { min-height: 360px; }
+}
 
 @media (max-width: 820px) {
   .jsvn-visual__inner { grid-template-columns: 1fr; min-height: 0; }
@@ -966,7 +999,9 @@ ul, ol { margin: 0 0 1.2em; padding-left: 1.4em; }
   <div class="jsvn-visual__copy">
     <p class="jsvn-visual__en">The Japanese Society of Visiting Nursing</p>
     <h1 class="jsvn-visual__title">日本訪問看護学会</h1>
-    <p class="jsvn-visual__lead">訪問看護の実践と学術をつなぎ、地域で暮らす人々の療養生活を支えます。</p>
+    <div class="jsvn-visual__rule" aria-hidden="true"><span></span><i>◆</i><span></span></div>
+    <p class="jsvn-visual__lead">あたたかなケアを、確かな学術で。<br>訪問看護の実践と学術をつなぎ、地域で暮らす人々の療養生活を支えます。</p>
+    <p class="jsvn-visual__est">学術研究 ・ 人材育成 ・ 地域連携</p>
   </div>
   <div class="jsvn-visual__art"><svg class="jsvn-tree" viewBox="0 0 680 460" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" preserveAspectRatio="xMidYMax meet">
 <defs>

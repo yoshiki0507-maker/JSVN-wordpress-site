@@ -20,7 +20,9 @@ get_header();
 			<div class="jsvn-visual__copy">
 				<p class="jsvn-visual__en">The Japanese Society of Visiting Nursing</p>
 				<h1 class="jsvn-visual__title"><?php bloginfo( 'name' ); ?></h1>
-				<p class="jsvn-visual__lead">訪問看護の実践と学術をつなぎ、地域で暮らす人々の療養生活を支えます。</p>
+				<div class="jsvn-visual__rule" aria-hidden="true"><span></span><i>◆</i><span></span></div>
+				<p class="jsvn-visual__lead">あたたかなケアを、確かな学術で。<br>訪問看護の実践と学術をつなぎ、地域で暮らす人々の療養生活を支えます。</p>
+				<p class="jsvn-visual__est">学術研究 ・ 人材育成 ・ 地域連携</p>
 			</div>
 			<?php if ( ! $jsvn_hero ) : ?>
 			<div class="jsvn-visual__art">
