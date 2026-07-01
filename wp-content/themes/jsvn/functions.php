@@ -333,7 +333,7 @@ function jsvn_menu_structure() {
 				array( 'label' => '表彰', 'url' => home_url( '/awards/' ) ),
 			),
 		),
-		array( 'label' => '在宅ケアとは？', 'url' => home_url( '/home-care/' ) ),
+		array( 'label' => '訪問看護とは？', 'url' => home_url( '/visiting-nursing/' ) ),
 		array( 'label' => 'お知らせ', 'url' => home_url( '/news/' ) ),
 		array( 'label' => '入会案内', 'url' => home_url( '/join/' ) ),
 		array( 'label' => 'お問い合わせ', 'url' => home_url( '/contact/' ) ),
@@ -412,9 +412,9 @@ function jsvn_seed_pages() {
 			'title'   => '貸借対照表',
 			'content' => "<p>本会の財務状況を公開しています。</p>\n<table><tbody>\n<tr><th>資産の部</th><td>（準備中）</td></tr>\n<tr><th>負債の部</th><td>（準備中）</td></tr>\n<tr><th>正味財産の部</th><td>（準備中）</td></tr>\n</tbody></table>\n<p><em>※ 事業年度ごとの貸借対照表・活動計算書を掲載予定です。</em></p>",
 		),
-		'home-care' => array(
-			'title'   => '在宅ケアとは？',
-			'content' => "<p>在宅ケアとは、病気や障がい、加齢などにより支援が必要になっても、住み慣れた自宅や地域で暮らし続けられるように、医療・看護・介護・福祉が連携して支える仕組みです。</p>\n<p>訪問看護は、その中心的な役割のひとつを担います。看護師などが定期的にご自宅を訪問し、健康状態の観察や医療的ケア、療養生活の相談・支援を行います。</p>\n<h2>訪問看護でできること</h2>\n<ul>\n<li>健康状態のチェック・病状の観察</li>\n<li>医療的な処置やケア</li>\n<li>療養生活・介護のご相談</li>\n<li>ご家族への支援</li>\n</ul>",
+		'visiting-nursing' => array(
+			'title'   => '訪問看護とは？',
+			'content' => "<p>訪問看護とは、看護師などが利用者のご自宅を訪問し、主治医の指示や多職種との連携のもとで、その人が住み慣れた地域・自宅で自分らしく療養生活を送れるように支える看護サービスです。</p>\n<p>病気や障がい、加齢などで通院が難しい方でも、赤ちゃんからご高齢の方まで幅広く利用できます。</p>\n<h2>訪問看護でできること</h2>\n<ul>\n<li>健康状態のチェック・病状の観察</li>\n<li>医療的な処置やケア</li>\n<li>服薬の管理・支援</li>\n<li>療養生活・介護のご相談</li>\n<li>ご本人・ご家族への支援</li>\n</ul>",
 		),
 		'newsletter' => array(
 			'title'   => 'ニュースレター',
