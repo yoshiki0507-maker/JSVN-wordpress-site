@@ -666,6 +666,7 @@ ul, ol { margin: 0 0 1.2em; padding-left: 1.4em; }
   padding-bottom:3rem;
 }
 .jsvn-footer__brand .jsvn-brand__name { color:#fff; }
+.jsvn-footer__logo { height:46px; width:auto; max-width:240px; display:block; }
 .jsvn-footer__brand p { font-size:.88rem; margin-top:1rem; max-width:24em; }
 .jsvn-footer h4 { color:#fff; font-size:1rem; margin-bottom:1.1rem; }
 .jsvn-footer ul { list-style:none; margin:0; padding:0; }
