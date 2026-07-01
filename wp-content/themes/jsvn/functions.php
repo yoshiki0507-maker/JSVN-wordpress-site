@@ -280,6 +280,42 @@ function jsvn_login_url() {
 }
 
 /**
+ * カスタマイザーに「メインビジュアル画像」設定を追加
+ */
+function jsvn_customize_hero( $wp_customize ) {
+	$wp_customize->add_section( 'jsvn_hero', array(
+		'title'    => __( 'メインビジュアル（トップ画像）', 'jsvn' ),
+		'priority' => 30,
+	) );
+	$wp_customize->add_setting( 'jsvn_hero_image', array(
+		'default'           => '',
+		'sanitize_callback' => 'esc_url_raw',
+	) );
+	$wp_customize->add_control( new WP_Customize_Image_Control( $wp_customize, 'jsvn_hero_image', array(
+		'label'       => __( 'メインビジュアルの画像', 'jsvn' ),
+		'description' => __( 'トップ最上部に表示する写真。横長（例 1600×760px 程度）推奨。未設定の場合はクスノキのイラストを表示します。', 'jsvn' ),
+		'section'     => 'jsvn_hero',
+	) ) );
+}
+add_action( 'customize_register', 'jsvn_customize_hero' );
+
+/**
+ * メインビジュアル画像のURLを取得（カスタマイザー → テーマ同梱 hero.jpg の順）
+ */
+function jsvn_hero_image_url() {
+	$img = get_theme_mod( 'jsvn_hero_image', '' );
+	if ( $img ) {
+		return $img;
+	}
+	foreach ( array( 'hero.jpg', 'hero.png', 'hero.webp' ) as $name ) {
+		if ( file_exists( get_template_directory() . '/assets/images/' . $name ) ) {
+			return get_template_directory_uri() . '/assets/images/' . $name;
+		}
+	}
+	return '';
+}
+
+/**
  * カスタマイザーに「学会バンクのログインURL」設定を追加
  */
 function jsvn_customize_register( $wp_customize ) {

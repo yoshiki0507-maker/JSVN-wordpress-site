@@ -508,6 +508,19 @@ ul, ol { margin: 0 0 1.2em; padding-left: 1.4em; }
 .jsvn-visual__art { position: relative; z-index: 1; align-self: end; }
 .jsvn-tree { display: block; width: 100%; max-width: 560px; height: auto; margin: 0 0 -3px auto; }
 
+/* 写真をメインビジュアルにした場合 */
+.jsvn-visual--photo {
+  background-size: cover;
+  background-position: center right;
+  background-repeat: no-repeat;
+}
+.jsvn-visual--photo .jsvn-visual__inner { grid-template-columns: 1fr; min-height: 440px; }
+.jsvn-visual--photo .jsvn-visual__copy { max-width: 40rem; }
+@media (max-width: 820px) {
+  .jsvn-visual--photo { background-position: center; }
+  .jsvn-visual--photo .jsvn-visual__inner { min-height: 360px; }
+}
+
 @media (max-width: 820px) {
   .jsvn-visual__inner { grid-template-columns: 1fr; min-height: 0; }
   .jsvn-visual__art { position: absolute; inset: 0; opacity: .16; align-self: center; }

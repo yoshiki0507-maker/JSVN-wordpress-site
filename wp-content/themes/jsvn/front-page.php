@@ -11,8 +11,10 @@
 get_header();
 ?>
 
-<!-- ============================ メインビジュアル（クスノキのイラスト） ============================ -->
-<section class="jsvn-visual">
+<!-- ============================ メインビジュアル ============================ -->
+<?php $jsvn_hero = jsvn_hero_image_url(); ?>
+<section class="jsvn-visual <?php echo $jsvn_hero ? 'jsvn-visual--photo' : ''; ?>"
+	<?php if ( $jsvn_hero ) : ?>style="background-image: linear-gradient(90deg, rgba(11,36,24,.86) 0%, rgba(11,36,24,.55) 34%, rgba(11,36,24,.12) 62%, rgba(11,36,24,0) 100%), url('<?php echo esc_url( $jsvn_hero ); ?>');"<?php endif; ?>>
 	<div class="jsvn-container">
 		<div class="jsvn-visual__inner">
 			<div class="jsvn-visual__copy">
@@ -20,9 +22,11 @@ get_header();
 				<h1 class="jsvn-visual__title"><?php bloginfo( 'name' ); ?></h1>
 				<p class="jsvn-visual__lead">訪問看護の実践と学術をつなぎ、地域で暮らす人々の療養生活を支えます。</p>
 			</div>
+			<?php if ( ! $jsvn_hero ) : ?>
 			<div class="jsvn-visual__art">
 				<img class="jsvn-tree" src="<?php echo esc_url( get_template_directory_uri() . '/assets/images/camphor-tree.svg' ); ?>" alt="" aria-hidden="true">
 			</div>
+			<?php endif; ?>
 		</div>
 	</div>
 </section>
