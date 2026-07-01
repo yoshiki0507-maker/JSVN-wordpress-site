@@ -303,25 +303,21 @@ function jsvn_menu_structure() {
 			'children' => array(
 				array( 'label' => '理事長挨拶', 'url' => home_url( '/about-greeting/' ) ),
 				array( 'label' => '学会概要', 'url' => home_url( '/about/' ) ),
-				array( 'label' => '定款', 'url' => home_url( '/articles/' ) ),
+				array( 'label' => '定款・規程', 'url' => home_url( '/articles/' ) ),
 				array( 'label' => '役員・代議員・名誉会員紹介', 'url' => home_url( '/officers/' ) ),
 				array( 'label' => '代議員・役員選出規定', 'url' => home_url( '/election-rules/' ) ),
+				array( 'label' => '委員会・部会', 'url' => home_url( '/committees/' ) ),
+				array( 'label' => '情報公開（事業報告・決算）', 'url' => home_url( '/reports/' ) ),
 			),
 		),
 		array(
-			'label'    => '規程・倫理',
+			'label'    => '倫理・COI',
 			'url'      => home_url( '/ethics-code/' ),
 			'children' => array(
 				array( 'label' => '倫理綱領', 'url' => home_url( '/ethics-code/' ) ),
 				array( 'label' => '科学者の行動規範', 'url' => home_url( '/scientist-conduct/' ) ),
 				array( 'label' => '研究倫理ガイドライン', 'url' => home_url( '/research-ethics/' ) ),
-			),
-		),
-		array(
-			'label'    => '情報公開',
-			'url'      => home_url( '/balance-sheet/' ),
-			'children' => array(
-				array( 'label' => '貸借対照表', 'url' => home_url( '/balance-sheet/' ) ),
+				array( 'label' => '利益相反（COI）', 'url' => home_url( '/coi/' ) ),
 			),
 		),
 		array(
@@ -329,13 +325,24 @@ function jsvn_menu_structure() {
 			'url'      => home_url( '/events/' ),
 			'children' => array(
 				array( 'label' => '学術大会・研究会', 'url' => home_url( '/events/' ) ),
+				array( 'label' => '学会誌・投稿規定', 'url' => home_url( '/journal-submission/' ) ),
 				array( 'label' => 'ニュースレター', 'url' => home_url( '/newsletter/' ) ),
-				array( 'label' => '表彰', 'url' => home_url( '/awards/' ) ),
+				array( 'label' => '研修会・セミナー', 'url' => home_url( '/seminars/' ) ),
+				array( 'label' => '表彰・研究助成', 'url' => home_url( '/awards/' ) ),
+			),
+		),
+		array( 'label' => '認定制度', 'url' => home_url( '/certification/' ) ),
+		array(
+			'label'    => '入会案内',
+			'url'      => home_url( '/join/' ),
+			'children' => array(
+				array( 'label' => '入会のご案内', 'url' => home_url( '/join/' ) ),
+				array( 'label' => '各種手続き・様式ダウンロード', 'url' => home_url( '/downloads/' ) ),
+				array( 'label' => 'よくある質問（FAQ）', 'url' => home_url( '/faq/' ) ),
 			),
 		),
 		array( 'label' => '訪問看護とは？', 'url' => home_url( '/visiting-nursing/' ) ),
 		array( 'label' => 'お知らせ', 'url' => home_url( '/news/' ) ),
-		array( 'label' => '入会案内', 'url' => home_url( '/join/' ) ),
 		array( 'label' => 'お問い合わせ', 'url' => home_url( '/contact/' ) ),
 	);
 }
@@ -421,16 +428,74 @@ function jsvn_seed_pages() {
 			'content' => "<p>会員向けニュースレターを発行予定です。発行後、こちらにバックナンバーを掲載します。</p>\n<ul>\n<li>創刊準備号（近日公開）</li>\n</ul>",
 		),
 		'awards' => array(
-			'title'   => '表彰',
-			'content' => "<p>訪問看護の実践・研究に顕著な貢献をされた方を表彰します。</p>\n<ul>\n<li>学会賞（優れた研究）</li>\n<li>奨励賞（若手研究者）</li>\n<li>実践功労賞</li>\n</ul>\n<p><em>※ 詳細は準備中です。</em></p>",
+			'title'   => '表彰・研究助成',
+			'content' => "<h2>表彰</h2>\n<p>訪問看護の実践・研究に顕著な貢献をされた方を表彰します。</p>\n<ul>\n<li>学会賞（優れた研究業績）</li>\n<li>奨励賞（将来が期待される若手研究者）</li>\n<li>実践功労賞（訪問看護の実践・普及への貢献）</li>\n</ul>\n<h2>研究助成</h2>\n<p>訪問看護に関する研究を支援するため、研究助成を行います。募集要項・応募方法は準備中です。</p>",
 		),
 		'join' => array(
 			'title'   => '入会のご案内',
-			'content' => "<p>訪問看護に関わるすべての方を歓迎します。入会をご希望の方は、以下をご確認ください。</p>\n<h2>会員種別と年会費（予定）</h2>\n<table><tbody>\n<tr><th>正会員</th><td>年会費 5,000円</td></tr>\n<tr><th>学生会員</th><td>年会費 2,000円</td></tr>\n<tr><th>賛助会員</th><td>1口 10,000円</td></tr>\n</tbody></table>\n<h2>お手続き</h2>\n<p>入会手続きは「学会バンク」を通じて行う予定です。準備が整い次第、こちらにお申し込みリンクを掲載します。</p>",
+			'content' => "<p>訪問看護に関わるすべての方を歓迎します。職種・経験は問いません。入会をご希望の方は、以下をご確認ください。</p>\n<h2>会員種別と年会費（予定）</h2>\n<h3>個人会員</h3>\n<table><tbody>\n<tr><th>訪問看護所属会員</th><td>年会費 5,000円</td></tr>\n<tr><th>通常会員</th><td>年会費 7,000円</td></tr>\n<tr><th>他職種連携会員</th><td>年会費 4,000円</td></tr>\n<tr><th>一般・学生会員</th><td>年会費 1,500円</td></tr>\n<tr><th>プラチナNs会員</th><td>年会費 2,000円</td></tr>\n</tbody></table>\n<h3>賛助・企業会員</h3>\n<table><tbody>\n<tr><th>賛助会員</th><td>年会費 15,000円（1口）</td></tr>\n<tr><th>企業会員</th><td>年会費 30,000円（1口）</td></tr>\n</tbody></table>\n<p><em>※ 会員種別の詳細・要件は今後確定します。</em></p>\n<h2>会員特典</h2>\n<ul>\n<li>学術集会・研究会への会員価格での参加</li>\n<li>学会誌・ニュースレターの購読</li>\n<li>研修プログラム／認定制度の利用</li>\n<li>多職種・全国の仲間とのネットワーク</li>\n</ul>\n<h2>お手続き</h2>\n<p>入会手続きは会員管理システム「学会バンク」を通じて行う予定です。準備が整い次第、こちらにお申し込みリンクを掲載します。各種様式は<a href=\"/downloads/\">各種手続き・様式ダウンロード</a>をご覧ください。</p>",
 		),
 		'contact' => array(
 			'title'   => 'お問い合わせ',
 			'content' => "<p>本会へのお問い合わせは、以下よりお願いいたします。</p>\n<p>メール：（準備中）<br>お問い合わせフォームを設置予定です。</p>",
+		),
+
+		// --- 追加ページ（他学会サイトの定番構成に合わせて拡充）---
+		'committees' => array(
+			'title'   => '委員会・部会',
+			'content' => "<p>本会は、目的を達成するために各種委員会・部会を設置し、学術・教育・広報・倫理などの活動を行います。</p>\n<ul>\n<li>学術委員会</li>\n<li>編集委員会（学会誌）</li>\n<li>倫理委員会</li>\n<li>利益相反（COI）委員会</li>\n<li>教育・研修委員会</li>\n<li>広報委員会</li>\n</ul>\n<p><em>※ 各委員会の構成・活動内容は準備中です。</em></p>",
+		),
+		'reports' => array(
+			'title'   => '情報公開（事業報告・決算）',
+			'content' => "<p>本会は、運営の透明性を確保するため、事業計画・事業報告・決算などを公開します。</p>\n<h2>事業計画・事業報告</h2>\n<p>（準備中）</p>\n<h2>決算（貸借対照表・活動計算書）</h2>\n<p>年度ごとの<a href=\"/balance-sheet/\">貸借対照表</a>を掲載予定です。</p>\n<h2>総会資料</h2>\n<p>（準備中）</p>",
+		),
+		'coi' => array(
+			'title'   => '利益相反（COI）',
+			'content' => "<p>本会は、学術活動の公正性と信頼性を確保するため、利益相反（Conflict of Interest：COI）の管理に関する指針を定めます。</p>\n<h2>対象</h2>\n<ul>\n<li>学会誌への論文投稿者</li>\n<li>学術大会での発表者</li>\n<li>本会の役員・委員</li>\n</ul>\n<h2>COIの開示</h2>\n<p>論文投稿時・発表登録時に、過去一定期間の企業・団体等との経済的関係を開示していただきます。</p>\n<h2>指針・様式</h2>\n<p>COI管理指針および開示様式（PDF）は準備中です。確定後にこちらへ掲載します。</p>",
+		),
+		'journal-submission' => array(
+			'title'   => '学会誌・投稿規定',
+			'content' => "<p>本会は、訪問看護に関する学術論文を掲載する学会誌を発行します。</p>\n<h2>学会誌について</h2>\n<p>誌名・発行頻度・電子版（J-STAGE等）については準備中です。</p>\n<h2>投稿規定・執筆要領</h2>\n<p>投稿資格、原稿の種類（原著・研究報告・実践報告・総説など）、書式、文献の記載方法などを定めた投稿規定・執筆要領を掲載予定です。</p>\n<h2>査読について</h2>\n<p>投稿論文は、編集委員会による査読を経て採否を決定します。</p>\n<h2>バックナンバー</h2>\n<p>発行後、各号の目次・本文へのリンクを掲載します。</p>",
+		),
+		'seminars' => array(
+			'title'   => '研修会・セミナー',
+			'content' => "<p>会員の継続的な学びを支援するため、研修会・セミナー・教育講演を開催します。</p>\n<ul>\n<li>訪問看護実践セミナー</li>\n<li>研究方法・論文執筆セミナー</li>\n<li>オンライン教育講演</li>\n</ul>\n<p><em>※ 開催予定・申込方法は準備中です。</em></p>",
+		),
+		'certification' => array(
+			'title'   => '認定制度',
+			'content' => "<p>本会は「人材育成」を柱のひとつとし、訪問看護の質の向上に資する認定制度の整備を進めます。</p>\n<h2>制度の目的</h2>\n<p>訪問看護に関する高度な知識・実践力を持つ人材を認定し、生涯にわたる学びを支援します。</p>\n<h2>認定の区分（予定）</h2>\n<ul>\n<li>研修修了認定</li>\n<li>指導者認定</li>\n</ul>\n<p><em>※ 認定要件・申請方法は準備中です。</em></p>",
+		),
+		'downloads' => array(
+			'title'   => '各種手続き・様式ダウンロード',
+			'content' => "<p>入会・変更・退会などの各種手続きに必要な様式（PDF）を掲載します。</p>\n<table><tbody>\n<tr><th>入会申込書</th><td>準備中</td></tr>\n<tr><th>会員情報変更届</th><td>準備中</td></tr>\n<tr><th>退会届</th><td>準備中</td></tr>\n<tr><th>各種申請書（助成・表彰など）</th><td>準備中</td></tr>\n</tbody></table>\n<p>会員情報の変更・各種申請は、会員管理システム「学会バンク」からも行える予定です。</p>",
+		),
+		'faq' => array(
+			'title'   => 'よくある質問（FAQ）',
+			'content' => "<h2>入会について</h2>\n<p><strong>Q. 看護師以外でも入会できますか？</strong><br>A. はい。他職種連携会員など、職種を問わずご入会いただけます。</p>\n<p><strong>Q. 会費の支払い方法は？</strong><br>A. 会員管理システム「学会バンク」を通じたお支払いを予定しています。</p>\n<h2>学術大会について</h2>\n<p><strong>Q. 非会員でも参加できますか？</strong><br>A. 参加可能です（会員価格の適用は会員のみ）。</p>\n<p><em>※ 内容は今後追加します。</em></p>",
+		),
+		'links' => array(
+			'title'   => '関連リンク',
+			'content' => "<p>訪問看護・在宅ケアに関連する学会・団体・行政のリンク集です。</p>\n<ul>\n<li>関連学会（準備中）</li>\n<li>行政・関係機関（準備中）</li>\n<li>訪問看護関連団体（準備中）</li>\n</ul>",
+		),
+		'english' => array(
+			'title'   => 'English',
+			'content' => "<h2>The Japanese Society of Visiting Nursing</h2>\n<p>The Japanese Society of Visiting Nursing promotes research, education, and interprofessional collaboration in home-visit nursing, supporting people living with care in their communities.</p>\n<p><em>An English version of this website is under preparation.</em></p>",
+		),
+		'privacy' => array(
+			'title'   => 'プライバシーポリシー',
+			'content' => "<p>日本訪問看護学会（以下「本会」）は、会員および利用者の個人情報を適切に取り扱います。</p>\n<h2>1. 個人情報の利用目的</h2>\n<p>会員管理、学術大会・研修の運営、学会誌の発送、各種連絡等に利用します。</p>\n<h2>2. 第三者提供</h2>\n<p>法令に基づく場合を除き、本人の同意なく第三者に提供しません。</p>\n<h2>3. お問い合わせ</h2>\n<p>個人情報の取扱いに関するお問い合わせは、事務局までご連絡ください。</p>\n<p><em>※ 正式なポリシーは確定後に掲載します。</em></p>",
+		),
+		'sitemap' => array(
+			'title'   => 'サイトマップ',
+			'content' => "<p>本サイトの主なページ一覧です。（公開時に自動生成の設定も可能です）</p>\n<ul>\n<li>学会について（理事長挨拶／学会概要／定款・規程／役員紹介／選出規定／委員会／情報公開）</li>\n<li>倫理・COI（倫理綱領／科学者の行動規範／研究倫理ガイドライン／利益相反）</li>\n<li>学術活動（学術大会／学会誌・投稿規定／ニュースレター／研修会・セミナー／表彰・研究助成）</li>\n<li>認定制度</li>\n<li>入会案内（入会のご案内／各種様式／FAQ）</li>\n<li>訪問看護とは？／お知らせ／お問い合わせ</li>\n</ul>",
+		),
+		'tokushoho' => array(
+			'title'   => '特定商取引法に基づく表記',
+			'content' => "<p>会費等のオンライン決済を行う場合の表記です。</p>\n<table><tbody>\n<tr><th>販売事業者</th><td>日本訪問看護学会</td></tr>\n<tr><th>運営責任者</th><td>（準備中）</td></tr>\n<tr><th>所在地・連絡先</th><td>（準備中）</td></tr>\n<tr><th>お支払い方法</th><td>クレジットカード等（学会バンク）</td></tr>\n<tr><th>返金・キャンセル</th><td>（準備中）</td></tr>\n</tbody></table>\n<p><em>※ オンライン決済の要否に応じて記載します。</em></p>",
+		),
+		'accessibility' => array(
+			'title'   => 'ウェブアクセシビリティ方針',
+			'content' => "<p>本会は、どなたでも利用しやすいウェブサイトを目指し、ウェブアクセシビリティの向上に努めます。</p>\n<h2>目標とする適合レベル</h2>\n<p>JIS X 8341-3:2016 の適合レベル AA 準拠を目標とします。</p>\n<h2>取り組み</h2>\n<ul>\n<li>文字サイズや色のコントラストへの配慮</li>\n<li>キーボード操作への対応</li>\n<li>読みやすい文章・構成</li>\n</ul>",
 		),
 	);
 

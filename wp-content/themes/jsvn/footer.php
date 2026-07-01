@@ -53,6 +53,17 @@
 		</div>
 	</div>
 
+	<nav class="jsvn-footer__utility" aria-label="ユーティリティ">
+		<div class="jsvn-container">
+			<a href="<?php echo esc_url( home_url( '/privacy/' ) ); ?>">プライバシーポリシー</a>
+			<a href="<?php echo esc_url( home_url( '/sitemap/' ) ); ?>">サイトマップ</a>
+			<a href="<?php echo esc_url( home_url( '/tokushoho/' ) ); ?>">特定商取引法に基づく表記</a>
+			<a href="<?php echo esc_url( home_url( '/accessibility/' ) ); ?>">ウェブアクセシビリティ方針</a>
+			<a href="<?php echo esc_url( home_url( '/links/' ) ); ?>">関連リンク</a>
+			<a href="<?php echo esc_url( home_url( '/english/' ) ); ?>">English</a>
+		</div>
+	</nav>
+
 	<div class="jsvn-footer__bottom">
 		<div class="jsvn-container">
 			&copy; <?php echo esc_html( date_i18n( 'Y' ) ); ?> <?php bloginfo( 'name' ); ?> All Rights Reserved.

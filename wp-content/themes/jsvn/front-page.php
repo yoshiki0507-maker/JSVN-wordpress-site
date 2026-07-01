@@ -129,8 +129,10 @@ get_header();
 					<li><a href="<?php echo esc_url( home_url( '/about/' ) ); ?>">学会概要</a></li>
 					<li><a href="<?php echo esc_url( home_url( '/articles/' ) ); ?>">定款</a></li>
 					<li><a href="<?php echo esc_url( home_url( '/officers/' ) ); ?>">役員・代議員・名誉会員紹介</a></li>
-					<li><a href="<?php echo esc_url( home_url( '/ethics-code/' ) ); ?>">倫理綱領・各種規程</a></li>
-					<li><a href="<?php echo esc_url( home_url( '/balance-sheet/' ) ); ?>">情報公開（貸借対照表）</a></li>
+					<li><a href="<?php echo esc_url( home_url( '/ethics-code/' ) ); ?>">倫理綱領・COI</a></li>
+					<li><a href="<?php echo esc_url( home_url( '/reports/' ) ); ?>">情報公開（事業報告・決算）</a></li>
+					<li><a href="<?php echo esc_url( home_url( '/journal-submission/' ) ); ?>">学会誌・投稿規定</a></li>
+					<li><a href="<?php echo esc_url( home_url( '/certification/' ) ); ?>">認定制度</a></li>
 					<li><a href="<?php echo esc_url( home_url( '/visiting-nursing/' ) ); ?>">訪問看護とは？</a></li>
 					<li><a href="<?php echo esc_url( home_url( '/awards/' ) ); ?>">表彰</a></li>
 					<li><a href="<?php echo esc_url( home_url( '/contact/' ) ); ?>">お問い合わせ</a></li>

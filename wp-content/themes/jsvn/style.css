@@ -670,6 +670,14 @@ ul, ol { margin: 0 0 1.2em; padding-left: 1.4em; }
 .jsvn-footer h4 { color:#fff; font-size:1rem; margin-bottom:1.1rem; }
 .jsvn-footer ul { list-style:none; margin:0; padding:0; }
 .jsvn-footer li { padding:.35rem 0; font-size:.9rem; }
+.jsvn-footer__utility {
+  border-top:1px solid rgba(255,255,255,.12);
+}
+.jsvn-footer__utility .jsvn-container {
+  display:flex; flex-wrap:wrap; gap:.4rem 1.4rem; padding:1.2rem 0; font-size:.82rem;
+}
+.jsvn-footer__utility a { color:#aeb9c7; }
+.jsvn-footer__utility a:hover { color:#fff; }
 .jsvn-footer__bottom {
   border-top:1px solid rgba(255,255,255,.12);
   padding:1.5rem 0; font-size:.82rem; text-align:center; color:#8593a4;
