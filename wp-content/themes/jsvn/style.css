@@ -755,6 +755,24 @@ ul, ol { margin: 0 0 1.2em; padding-left: 1.4em; }
   .jsvn-members__stats { grid-template-columns: 1fr 1fr; }
 }
 
+/* 格式あるツールチップ（会員数マップ） */
+.jsvn-maptip {
+  position: fixed; z-index: 1000; pointer-events: none;
+  opacity: 0; transform: translateY(6px); transition: opacity .14s ease, transform .14s ease;
+  background: linear-gradient(135deg, #0e2c1d 0%, #1f5a3c 100%);
+  color: #fff; border-top: 2px solid var(--jsvn-gold-line); border-radius: 8px;
+  padding: .55rem 1rem .6rem; box-shadow: 0 10px 30px rgba(11,36,24,.35);
+  min-width: 118px; text-align: left;
+}
+.jsvn-maptip.is-on { opacity: 1; transform: translateY(0); }
+.jsvn-maptip::before {
+  content: ""; display: block; width: 26px; height: 1px; margin-bottom: .35rem;
+  background: linear-gradient(90deg, var(--jsvn-gold-line), transparent);
+}
+.jsvn-maptip__n { display: block; font-family: var(--jsvn-serif); font-size: .95rem; letter-spacing: .05em; }
+.jsvn-maptip__v { display: block; margin-top: .15rem; font-family: var(--jsvn-serif); font-weight: 600; font-size: 1.45rem; color: #e9d3a0; line-height: 1.1; }
+.jsvn-maptip__v i { font-style: normal; font-size: .78rem; color: #cfe0d5; margin-left: .18em; }
+
 /* ==========================================================================
    9. フッター
    ========================================================================== */

@@ -52,3 +52,32 @@
 		});
 	});
 })();
+
+/**
+ * 会員数マップの格式あるツールチップ
+ */
+(function () {
+	'use strict';
+	document.addEventListener('DOMContentLoaded', function () {
+		var prefs = document.querySelectorAll('.jsvn-jpmap .jsvn-pref');
+		if (!prefs.length) return;
+		var tip = document.createElement('div');
+		tip.className = 'jsvn-maptip';
+		document.body.appendChild(tip);
+		function move(e) {
+			var t = e.currentTarget;
+			tip.innerHTML = '<span class="jsvn-maptip__n">' + t.getAttribute('data-n') +
+				'</span><span class="jsvn-maptip__v">' + t.getAttribute('data-v') + '<i>名</i></span>';
+			var x = e.clientX + 16, y = e.clientY + 16;
+			if (x + 160 > window.innerWidth) x = e.clientX - 160;
+			tip.style.left = x + 'px';
+			tip.style.top = y + 'px';
+			tip.classList.add('is-on');
+		}
+		function leave() { tip.classList.remove('is-on'); }
+		prefs.forEach(function (p) {
+			p.addEventListener('mousemove', move);
+			p.addEventListener('mouseleave', leave);
+		});
+	});
+})();

@@ -875,7 +875,7 @@ function jsvn_render_member_map() {
 	$svg  = '<svg viewBox="' . esc_attr( $data['viewbox'] ) . '" xmlns="http://www.w3.org/2000/svg" class="jsvn-jpmap" role="img" aria-label="都道府県別の会員数">';
 	foreach ( $data['paths'] as $nm => $d ) {
 		$v    = isset( $counts[ $nm ] ) ? (int) $counts[ $nm ] : 0;
-		$svg .= '<path d="' . esc_attr( $d ) . '" fill="' . esc_attr( jsvn_member_color( $v ) ) . '" stroke="#ffffff" stroke-width="0.7" class="jsvn-pref" data-n="' . esc_attr( $nm ) . '" data-v="' . esc_attr( $v ) . '"><title>' . esc_html( $nm . '：' . $v . '名' ) . '</title></path>';
+		$svg .= '<path d="' . esc_attr( $d ) . '" fill="' . esc_attr( jsvn_member_color( $v ) ) . '" stroke="#ffffff" stroke-width="0.7" class="jsvn-pref" tabindex="0" role="img" aria-label="' . esc_attr( $nm . ' 会員数 ' . $v . '名' ) . '" data-n="' . esc_attr( $nm ) . '" data-v="' . esc_attr( $v ) . '"></path>';
 	}
 	$ins  = $data['inset'];
 	$svg .= '<rect x="' . esc_attr( $ins['x'] ) . '" y="' . esc_attr( $ins['y'] ) . '" width="' . esc_attr( $ins['w'] ) . '" height="' . esc_attr( $ins['h'] ) . '" fill="none" stroke="#cbb075" stroke-width="1" stroke-dasharray="4 3" rx="6"/>';
