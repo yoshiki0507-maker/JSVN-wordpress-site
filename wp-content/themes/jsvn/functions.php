@@ -878,13 +878,13 @@ function jsvn_render_member_map() {
 		$v    = isset( $counts[ $nm ] ) ? (int) $counts[ $nm ] : 0;
 		$svg .= '<path d="' . esc_attr( $d ) . '" fill="' . esc_attr( jsvn_member_color( $v ) ) . '" stroke="#ffffff" stroke-width="0.7" class="jsvn-pref" tabindex="0" role="img" aria-label="' . esc_attr( $nm . ' 会員数 ' . $v . '名' ) . '" data-n="' . esc_attr( $nm ) . '" data-v="' . esc_attr( $v ) . '"></path>';
 	}
-	if ( ! empty( $data['conn'] ) ) {
-		$c    = $data['conn'];
-		$svg .= '<line x1="' . esc_attr( $c['x1'] ) . '" y1="' . esc_attr( $c['y1'] ) . '" x2="' . esc_attr( $c['x2'] ) . '" y2="' . esc_attr( $c['y2'] ) . '" stroke="#cbb075" stroke-width="1" stroke-dasharray="3 3" opacity="0.8"/>';
+	if ( ! empty( $data['bracket'] ) ) {
+		$svg .= '<polyline points="' . esc_attr( $data['bracket'] ) . '" fill="none" stroke="#8a97a0" stroke-width="1.2" stroke-linejoin="round"/>';
 	}
-	$ins  = $data['inset'];
-	$svg .= '<rect x="' . esc_attr( $ins['x'] ) . '" y="' . esc_attr( $ins['y'] ) . '" width="' . esc_attr( $ins['w'] ) . '" height="' . esc_attr( $ins['h'] ) . '" fill="none" stroke="#cbb075" stroke-width="1" stroke-dasharray="4 3" rx="6"/>';
-	$svg .= '<text x="' . esc_attr( $ins['lx'] ) . '" y="' . esc_attr( $ins['ly'] ) . '" font-size="11" fill="#5b6960">沖縄県</text>';
+	if ( ! empty( $data['label'] ) ) {
+		$lb   = $data['label'];
+		$svg .= '<text x="' . esc_attr( $lb['x'] ) . '" y="' . esc_attr( $lb['y'] ) . '" font-size="12" fill="#5b6960">沖縄県</text>';
+	}
 	$svg .= '</svg>';
 
 	// --- 上位ランキング ---
