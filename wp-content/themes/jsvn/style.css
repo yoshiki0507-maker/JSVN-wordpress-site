@@ -777,6 +777,22 @@ ul, ol { margin: 0 0 1.2em; padding-left: 1.4em; }
   .jsvn-members__stats { grid-template-columns: 1fr 1fr; }
 }
 
+/* 保有資格別の会員数（横棒） */
+.jsvn-quals { margin-top: 2.6rem; }
+.jsvn-quals__note { font-size: .82rem; color: var(--jsvn-ink-soft); margin: .3rem 0 1.2rem; }
+.jsvn-qual { display: flex; flex-direction: column; gap: .85rem; }
+.jsvn-qual__row { display: grid; grid-template-columns: 210px 1fr auto; align-items: center; gap: 1rem; }
+.jsvn-qual__label { font-weight: 600; font-size: .95rem; color: var(--jsvn-navy); }
+.jsvn-qual__bar { height: 15px; background: var(--jsvn-green-soft); border-radius: 999px; overflow: hidden; }
+.jsvn-qual__bar i { display: block; height: 100%; width: 0; border-radius: 999px; background: linear-gradient(90deg, var(--jsvn-green-light), var(--jsvn-green)); }
+.jsvn-qual__row:nth-child(2) .jsvn-qual__bar i { background: linear-gradient(90deg, #d9c084, var(--jsvn-gold)); }
+.jsvn-qual__val { font-family: var(--jsvn-serif); font-weight: 600; font-size: 1.2rem; color: var(--jsvn-green); min-width: 4.2em; text-align: right; }
+.jsvn-qual__val small { font-size: .75rem; color: var(--jsvn-ink-soft); margin-left: .15em; font-family: var(--jsvn-sans); }
+@media (max-width: 600px) {
+  .jsvn-qual__row { grid-template-columns: 120px 1fr auto; gap: .6rem; }
+  .jsvn-qual__label { font-size: .82rem; }
+}
+
 /* 格式あるツールチップ（会員数マップ） */
 .jsvn-maptip {
   position: fixed; z-index: 1000; pointer-events: none;

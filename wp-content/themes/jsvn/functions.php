@@ -917,3 +917,42 @@ function jsvn_render_member_map() {
 	echo '<p class="jsvn-mnote">※ 各都道府県にカーソルを合わせると人数が表示されます。数値は会員データ（学会バンク等）との連携、または管理画面からの入力で更新できます。</p></aside>';
 	echo '</div></div>';
 }
+
+/**
+ * 保有資格別の会員数（サンプル）。
+ * jsvn_member_qualifications フィルターで上書きできます。
+ */
+function jsvn_member_qualifications() {
+	$q = array(
+		'認定看護師'        => 312,
+		'専門看護師'        => 86,
+		'認定看護管理者'    => 54,
+		'特定行為修了者'    => 128,
+		'その他学会ライセンス' => 240,
+	);
+	return apply_filters( 'jsvn_member_qualifications', $q );
+}
+
+/**
+ * 保有資格別の会員数を横棒で表示
+ */
+function jsvn_render_member_quals() {
+	$q = jsvn_member_qualifications();
+	if ( empty( $q ) ) {
+		return;
+	}
+	$max = max( $q );
+	echo '<div class="jsvn-quals">';
+	echo '<h2>保有資格別の会員数</h2>';
+	echo '<p class="jsvn-quals__note">学会員が保有する主な資格・ライセンス（1人で複数保有の場合があります）</p>';
+	echo '<div class="jsvn-qual">';
+	foreach ( $q as $name => $v ) {
+		$w = ( $max > 0 ) ? round( $v / $max * 100 ) : 0;
+		echo '<div class="jsvn-qual__row">';
+		echo '<span class="jsvn-qual__label">' . esc_html( $name ) . '</span>';
+		echo '<span class="jsvn-qual__bar"><i style="width:' . esc_attr( $w ) . '%"></i></span>';
+		echo '<span class="jsvn-qual__val">' . esc_html( number_format( $v ) ) . '<small>名</small></span>';
+		echo '</div>';
+	}
+	echo '</div></div>';
+}

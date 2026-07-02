@@ -27,6 +27,9 @@ while ( have_posts() ) : the_post();
 				if ( function_exists( 'jsvn_render_member_map' ) ) {
 					jsvn_render_member_map();
 				}
+				if ( function_exists( 'jsvn_render_member_quals' ) ) {
+					jsvn_render_member_quals();
+				}
 				?>
 			</article>
 		</div>

@@ -787,6 +787,22 @@ ul, ol { margin: 0 0 1.2em; padding-left: 1.4em; }
   .jsvn-members__stats { grid-template-columns: 1fr 1fr; }
 }
 
+/* 保有資格別の会員数（横棒） */
+.jsvn-quals { margin-top: 2.6rem; }
+.jsvn-quals__note { font-size: .82rem; color: var(--jsvn-ink-soft); margin: .3rem 0 1.2rem; }
+.jsvn-qual { display: flex; flex-direction: column; gap: .85rem; }
+.jsvn-qual__row { display: grid; grid-template-columns: 210px 1fr auto; align-items: center; gap: 1rem; }
+.jsvn-qual__label { font-weight: 600; font-size: .95rem; color: var(--jsvn-navy); }
+.jsvn-qual__bar { height: 15px; background: var(--jsvn-green-soft); border-radius: 999px; overflow: hidden; }
+.jsvn-qual__bar i { display: block; height: 100%; width: 0; border-radius: 999px; background: linear-gradient(90deg, var(--jsvn-green-light), var(--jsvn-green)); }
+.jsvn-qual__row:nth-child(2) .jsvn-qual__bar i { background: linear-gradient(90deg, #d9c084, var(--jsvn-gold)); }
+.jsvn-qual__val { font-family: var(--jsvn-serif); font-weight: 600; font-size: 1.2rem; color: var(--jsvn-green); min-width: 4.2em; text-align: right; }
+.jsvn-qual__val small { font-size: .75rem; color: var(--jsvn-ink-soft); margin-left: .15em; font-family: var(--jsvn-sans); }
+@media (max-width: 600px) {
+  .jsvn-qual__row { grid-template-columns: 120px 1fr auto; gap: .6rem; }
+  .jsvn-qual__label { font-size: .82rem; }
+}
+
 /* 格式あるツールチップ（会員数マップ） */
 .jsvn-maptip {
   position: fixed; z-index: 1000; pointer-events: none;
@@ -1342,7 +1358,7 @@ ul, ol { margin: 0 0 1.2em; padding-left: 1.4em; }
       <p class="jsvn-mnote">※ 各都道府県にカーソルを合わせると人数が表示されます。数値は会員データ（学会バンク等）との連携、または管理画面からの入力で更新できます。</p>
     </aside>
   </div>
-</div></article></div></div></div>
+</div><div class="jsvn-quals"><h2>保有資格別の会員数</h2><p class="jsvn-quals__note">学会員が保有する主な資格・ライセンス（1人で複数保有の場合があります）</p><div class="jsvn-qual"><div class="jsvn-qual__row"><span class="jsvn-qual__label">認定看護師</span><span class="jsvn-qual__bar"><i style="width:100%"></i></span><span class="jsvn-qual__val">312<small>名</small></span></div><div class="jsvn-qual__row"><span class="jsvn-qual__label">専門看護師</span><span class="jsvn-qual__bar"><i style="width:28%"></i></span><span class="jsvn-qual__val">86<small>名</small></span></div><div class="jsvn-qual__row"><span class="jsvn-qual__label">認定看護管理者</span><span class="jsvn-qual__bar"><i style="width:17%"></i></span><span class="jsvn-qual__val">54<small>名</small></span></div><div class="jsvn-qual__row"><span class="jsvn-qual__label">特定行為修了者</span><span class="jsvn-qual__bar"><i style="width:41%"></i></span><span class="jsvn-qual__val">128<small>名</small></span></div><div class="jsvn-qual__row"><span class="jsvn-qual__label">その他学会ライセンス</span><span class="jsvn-qual__bar"><i style="width:77%"></i></span><span class="jsvn-qual__val">240<small>名</small></span></div></div></div></article></div></div></div>
 </main>
 
 <footer class="jsvn-footer"><div class="jsvn-container"><div class="jsvn-footer__grid">
