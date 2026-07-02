@@ -876,7 +876,7 @@ function jsvn_render_member_map() {
 	$svg  = '<svg viewBox="' . esc_attr( $data['viewbox'] ) . '" xmlns="http://www.w3.org/2000/svg" class="jsvn-jpmap" role="img" aria-label="都道府県別の会員数">';
 	foreach ( $data['paths'] as $nm => $d ) {
 		$v    = isset( $counts[ $nm ] ) ? (int) $counts[ $nm ] : 0;
-		$svg .= '<path d="' . esc_attr( $d ) . '" fill="' . esc_attr( jsvn_member_color( $v ) ) . '" stroke="#ffffff" stroke-width="0.7" class="jsvn-pref" tabindex="0" role="img" aria-label="' . esc_attr( $nm . ' 会員数 ' . $v . '名' ) . '" data-n="' . esc_attr( $nm ) . '" data-v="' . esc_attr( $v ) . '"></path>';
+		$svg .= '<path d="' . esc_attr( $d ) . '" fill="' . esc_attr( jsvn_member_color( $v ) ) . '" stroke="#aab8af" stroke-width="0.8" class="jsvn-pref" tabindex="0" role="img" aria-label="' . esc_attr( $nm . ' 会員数 ' . $v . '名' ) . '" data-n="' . esc_attr( $nm ) . '" data-v="' . esc_attr( $v ) . '"></path>';
 	}
 	if ( ! empty( $data['bracket'] ) ) {
 		$svg .= '<polyline points="' . esc_attr( $data['bracket'] ) . '" fill="none" stroke="#8a97a0" stroke-width="1.2" stroke-linejoin="round"/>';
