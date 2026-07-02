@@ -673,7 +673,29 @@ ul, ol { margin: 0 0 1.2em; padding-left: 1.4em; }
 .jsvn-officer__license span { background: var(--jsvn-coral-soft); color: #8a6a24; font-weight: 700; padding: .1em .6em; border-radius: 4px; margin-right: .5em; font-size: .72rem; }
 .jsvn-officer__bio { font-size: .84rem; color: var(--jsvn-ink-soft); line-height: 1.7; }
 .jsvn-officer__bio p { margin: 0; }
-@media (max-width: 680px) { .jsvn-officers { grid-template-columns: 1fr; } }
+
+/* 理事長：2人分の横幅を使い、経歴欄を広く */
+.jsvn-officer--lead {
+  grid-column: 1 / -1;
+  gap: 1.8rem; padding: 1.8rem;
+  border: 1px solid var(--jsvn-line); border-top: 4px solid var(--jsvn-gold);
+  background: linear-gradient(180deg, #fff, var(--jsvn-cream));
+}
+.jsvn-officer--lead .jsvn-officer__photo { flex: 0 0 150px; width: 150px; }
+.jsvn-officer--lead .jsvn-officer__photo img,
+.jsvn-officer--lead .jsvn-officer__noimg { width: 150px; height: 190px; }
+.jsvn-officer--lead .jsvn-officer__role { font-size: .8rem; padding: .18em 1em; }
+.jsvn-officer--lead .jsvn-officer__name { font-size: 1.7rem; }
+.jsvn-officer--lead .jsvn-officer__affil { font-size: .95rem; }
+.jsvn-officer--lead .jsvn-officer__license { font-size: .9rem; }
+.jsvn-officer--lead .jsvn-officer__bio { font-size: .95rem; line-height: 2; margin-top: .8rem; color: var(--jsvn-ink); }
+
+@media (max-width: 680px) {
+  .jsvn-officers { grid-template-columns: 1fr; }
+  .jsvn-officer--lead { flex-direction: column; text-align: center; }
+  .jsvn-officer--lead .jsvn-officer__photo { margin: 0 auto; }
+  .jsvn-officer--lead .jsvn-officer__bio { text-align: left; }
+}
 
 /* ==========================================================================
    8d. ブログ & SNS

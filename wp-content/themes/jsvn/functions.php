@@ -669,13 +669,14 @@ function jsvn_render_officers() {
 		if ( empty( $grouped[ $role ] ) ) {
 			continue;
 		}
+		$is_lead = ( '理事長' === $role );
 		echo '<h2 class="jsvn-officer-role-h">' . esc_html( $role ) . '<span>' . count( $grouped[ $role ] ) . '名</span></h2>';
-		echo '<div class="jsvn-officers">';
+		echo '<div class="jsvn-officers' . ( $is_lead ? ' jsvn-officers--lead' : '' ) . '">';
 		foreach ( $grouped[ $role ] as $id ) {
 			$affil   = get_post_meta( $id, '_jsvn_affiliation', true );
 			$license = get_post_meta( $id, '_jsvn_license', true );
 			$bio     = get_post_field( 'post_content', $id );
-			echo '<article class="jsvn-officer">';
+			echo '<article class="jsvn-officer' . ( $is_lead ? ' jsvn-officer--lead' : '' ) . '">';
 			echo '<div class="jsvn-officer__photo">';
 			if ( has_post_thumbnail( $id ) ) {
 				echo get_the_post_thumbnail( $id, 'medium' );
@@ -877,9 +878,13 @@ function jsvn_render_member_map() {
 		$v    = isset( $counts[ $nm ] ) ? (int) $counts[ $nm ] : 0;
 		$svg .= '<path d="' . esc_attr( $d ) . '" fill="' . esc_attr( jsvn_member_color( $v ) ) . '" stroke="#ffffff" stroke-width="0.7" class="jsvn-pref" tabindex="0" role="img" aria-label="' . esc_attr( $nm . ' 会員数 ' . $v . '名' ) . '" data-n="' . esc_attr( $nm ) . '" data-v="' . esc_attr( $v ) . '"></path>';
 	}
+	if ( ! empty( $data['conn'] ) ) {
+		$c    = $data['conn'];
+		$svg .= '<line x1="' . esc_attr( $c['x1'] ) . '" y1="' . esc_attr( $c['y1'] ) . '" x2="' . esc_attr( $c['x2'] ) . '" y2="' . esc_attr( $c['y2'] ) . '" stroke="#cbb075" stroke-width="1" stroke-dasharray="3 3" opacity="0.8"/>';
+	}
 	$ins  = $data['inset'];
 	$svg .= '<rect x="' . esc_attr( $ins['x'] ) . '" y="' . esc_attr( $ins['y'] ) . '" width="' . esc_attr( $ins['w'] ) . '" height="' . esc_attr( $ins['h'] ) . '" fill="none" stroke="#cbb075" stroke-width="1" stroke-dasharray="4 3" rx="6"/>';
-	$svg .= '<text x="' . esc_attr( $ins['lx'] ) . '" y="' . esc_attr( $ins['ly'] ) . '" font-size="11" fill="#5b6960">沖縄</text>';
+	$svg .= '<text x="' . esc_attr( $ins['lx'] ) . '" y="' . esc_attr( $ins['ly'] ) . '" font-size="11" fill="#5b6960">沖縄県</text>';
 	$svg .= '</svg>';
 
 	// --- 上位ランキング ---
