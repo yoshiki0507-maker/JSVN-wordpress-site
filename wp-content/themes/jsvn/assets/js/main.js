@@ -81,3 +81,31 @@
 		});
 	});
 })();
+
+/**
+ * メインビジュアルのスライドショー
+ */
+(function () {
+	'use strict';
+	document.addEventListener('DOMContentLoaded', function () {
+		var root = document.querySelector('[data-jsvn-slider]');
+		if (!root) return;
+		var slides = root.querySelectorAll('.jsvn-slide');
+		var dots = root.querySelectorAll('.jsvn-dot');
+		if (slides.length < 2) return;
+		var i = 0, timer;
+		function go(n) {
+			slides[i].classList.remove('is-active');
+			if (dots[i]) dots[i].classList.remove('is-active');
+			i = (n + slides.length) % slides.length;
+			slides[i].classList.add('is-active');
+			if (dots[i]) dots[i].classList.add('is-active');
+		}
+		function start() { timer = setInterval(function () { go(i + 1); }, 6000); }
+		function reset() { clearInterval(timer); start(); }
+		dots.forEach(function (d) {
+			d.addEventListener('click', function () { go(parseInt(d.getAttribute('data-i'), 10)); reset(); });
+		});
+		start();
+	});
+})();

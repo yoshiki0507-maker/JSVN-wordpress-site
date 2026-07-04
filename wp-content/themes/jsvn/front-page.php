@@ -11,26 +11,47 @@
 get_header();
 ?>
 
-<!-- ============================ メインビジュアル ============================ -->
-<?php $jsvn_hero = jsvn_hero_image_url(); ?>
-<section class="jsvn-visual <?php echo $jsvn_hero ? 'jsvn-visual--photo' : ''; ?>"
-	<?php if ( $jsvn_hero ) : ?>style="background-image: linear-gradient(90deg, rgba(11,36,24,.86) 0%, rgba(11,36,24,.55) 34%, rgba(11,36,24,.12) 62%, rgba(11,36,24,0) 100%), url('<?php echo esc_url( $jsvn_hero ); ?>');"<?php endif; ?>>
+<!-- ============================ メインビジュアル（スライドショー） ============================ -->
+<?php
+$jsvn_slides = array();
+$jsvn_hero   = jsvn_hero_image_url();
+if ( $jsvn_hero ) {
+	$jsvn_slides[] = $jsvn_hero;
+}
+foreach ( array( 'slide-1.svg', 'slide-2.svg', 'slide-3.svg' ) as $jsvn_s ) {
+	if ( file_exists( get_template_directory() . '/assets/images/' . $jsvn_s ) ) {
+		$jsvn_slides[] = get_template_directory_uri() . '/assets/images/' . $jsvn_s;
+	}
+}
+if ( empty( $jsvn_slides ) ) {
+	$jsvn_slides[] = get_template_directory_uri() . '/assets/images/camphor-tree.svg';
+}
+?>
+<section class="jsvn-visual" data-jsvn-slider>
+	<div class="jsvn-slides" aria-hidden="true">
+		<?php foreach ( $jsvn_slides as $jsvn_i => $jsvn_src ) : ?>
+			<div class="jsvn-slide<?php echo 0 === $jsvn_i ? ' is-active' : ''; ?>" style="background-image:url('<?php echo esc_url( $jsvn_src ); ?>');"></div>
+		<?php endforeach; ?>
+	</div>
+	<div class="jsvn-visual__scrim"></div>
 	<div class="jsvn-container">
 		<div class="jsvn-visual__inner">
 			<div class="jsvn-visual__copy">
-				<p class="jsvn-visual__en">The Japanese Society of Visiting Nursing</p>
-				<h1 class="jsvn-visual__title"><?php bloginfo( 'name' ); ?></h1>
+				<p class="jsvn-visual__en"><?php bloginfo( 'name' ); ?> ／ The Japanese Society of Visiting Nursing</p>
+				<h1 class="jsvn-visual__title">訪問看護師の臨床知を、<br>社会を動かす力へ。</h1>
 				<div class="jsvn-visual__rule" aria-hidden="true"><span></span><i>◆</i><span></span></div>
-				<p class="jsvn-visual__lead">あたたかなケアを、確かな学術で。<br>訪問看護の実践と学術をつなぎ、地域で暮らす人々の療養生活を支えます。</p>
-				<p class="jsvn-visual__est">学術研究 ・ 人材育成 ・ 地域連携</p>
+				<p class="jsvn-visual__lead">現場で生まれる疑問や工夫、成果を学術的知見へと高め、臨床・教育・研究・制度へ還元する。訪問看護の質の向上と社会的価値の発展に寄与します。</p>
+				<p class="jsvn-visual__est">臨床知の可視化 ・ 学術への発展 ・ 臨床・教育・制度への還元</p>
 			</div>
-			<?php if ( ! $jsvn_hero ) : ?>
-			<div class="jsvn-visual__art">
-				<img class="jsvn-tree" src="<?php echo esc_url( get_template_directory_uri() . '/assets/images/camphor-tree.svg' ); ?>" alt="" aria-hidden="true">
-			</div>
-			<?php endif; ?>
 		</div>
 	</div>
+	<?php if ( count( $jsvn_slides ) > 1 ) : ?>
+	<div class="jsvn-visual__dots" aria-label="メインビジュアルのスライド切り替え">
+		<?php foreach ( $jsvn_slides as $jsvn_i => $jsvn_src ) : ?>
+			<button class="jsvn-dot<?php echo 0 === $jsvn_i ? ' is-active' : ''; ?>" data-i="<?php echo esc_attr( $jsvn_i ); ?>" aria-label="スライド<?php echo esc_attr( $jsvn_i + 1 ); ?>"></button>
+		<?php endforeach; ?>
+	</div>
+	<?php endif; ?>
 </section>
 
 <div class="jsvn-home">
@@ -89,22 +110,22 @@ get_header();
 				</div>
 			</section>
 
-			<!-- ごあいさつ -->
+			<!-- 設立趣旨（ダイジェスト） -->
 			<section class="jsvn-home-about">
-				<h2 class="jsvn-home-h2">ごあいさつ</h2>
+				<h2 class="jsvn-home-h2">設立趣旨</h2>
 				<p>
-					高齢化と在宅医療の広がりのなかで、訪問看護が担う役割はますます大きくなっています。
-					日本訪問看護学会は、現場で積み重ねられる実践知を研究という形で体系化し、
-					温かなまなざしと確かな科学的根拠の両輪で、地域で暮らす一人ひとりの療養生活を支えます。
+					少子高齢化の進展とともに、療養の場は病院から地域・在宅へと大きく広がっています。
+					訪問看護師は利用者の生活の場に入り、病状だけでなくその人の価値観や生活背景、家族、地域とのつながりを
+					総合的に捉えながら、医療と生活を結ぶ重要な役割を担っています。
 				</p>
 				<p>
-					職種や所属を越えて学び合える「開かれた学術の場」を大切にします。
-					訪問看護に関わるすべての方の参画を、心よりお待ちしています。
+					日々の臨床で培われた優れた実践や知見は、事業所や地域に留まりがちです。
+					日本訪問看護学会は「訪問看護師の臨床知を、社会を動かす力へ。」を理念に、現場で生まれる疑問や工夫、成果を
+					学術的知見へと高め、臨床・教育・研究・制度へ還元することを目的として設立します。
 				</p>
 				<p style="margin:0;">
-					<a class="jsvn-textlink" href="<?php echo esc_url( home_url( '/about-greeting/' ) ); ?>">理事長挨拶を読む &rsaquo;</a>
-
-					<a class="jsvn-textlink" href="<?php echo esc_url( home_url( '/about/' ) ); ?>">学会概要 &rsaquo;</a>
+					<a class="jsvn-textlink" href="<?php echo esc_url( home_url( '/founding/' ) ); ?>">設立趣旨・理念を読む &rsaquo;</a>
+					<a class="jsvn-textlink" href="<?php echo esc_url( home_url( '/about-greeting/' ) ); ?>">理事長挨拶 &rsaquo;</a>
 				</p>
 			</section>
 
@@ -169,6 +190,39 @@ get_header();
 
 	</div>
 </div>
+
+<!-- ============================ 三本柱 ============================ -->
+<section class="jsvn-section jsvn-section--green">
+	<div class="jsvn-container">
+		<div class="jsvn-section-head">
+			<span class="jsvn-eyebrow">OUR MISSION</span>
+			<h2>本会がめざす三本柱</h2>
+		</div>
+		<div class="jsvn-pillars">
+			<article class="jsvn-pillar">
+				<div class="jsvn-pillar__icon" aria-hidden="true">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
+				</div>
+				<h3>臨床知を可視化する</h3>
+				<p>訪問看護師の日々の実践に宿る判断・工夫・課題・成果を、事例発表やケースレポートを通じて言語化し、可視化します。</p>
+			</article>
+			<article class="jsvn-pillar">
+				<div class="jsvn-pillar__icon" aria-hidden="true">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5V6a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v13.5"/><path d="M4 19.5A1.5 1.5 0 0 1 5.5 18H19"/><path d="M9 8h6M9 11h6"/></svg>
+				</div>
+				<h3>学術的知見へ発展させる</h3>
+				<p>現場の臨床知と、教育機関・研究者の研究力を融合し、実践を研究へ発展させ、訪問看護の質向上に資する知見を創出します。</p>
+			</article>
+			<article class="jsvn-pillar">
+				<div class="jsvn-pillar__icon" aria-hidden="true">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9"/><path d="M3 4v5h5"/><path d="M12 7v5l3 2"/></svg>
+				</div>
+				<h3>臨床・教育・制度へ還元する</h3>
+				<p>創出した知見を現場へ還元し、働きやすい環境づくり、教育体制の整備、制度・報酬の改善に資する基盤を築きます。</p>
+			</article>
+		</div>
+	</div>
+</section>
 
 <!-- ============================ ブログ & SNS ============================ -->
 <section class="jsvn-blogsns">
