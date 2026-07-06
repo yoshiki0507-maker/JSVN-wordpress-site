@@ -59,7 +59,7 @@ Tags: academic, society, healthcare, nursing, custom-menu, featured-images, tran
 *::before,
 *::after { box-sizing: border-box; }
 
-html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; overflow-x: clip; } /* スマホのスライドメニュー等の横はみ出しを防止（clipは追従ヘッダーを壊さない）*/
 
 body {
   margin: 0;
@@ -872,6 +872,12 @@ ul, ol { margin: 0 0 1.2em; padding-left: 1.4em; }
   background:var(--jsvn-green-soft); color:var(--jsvn-navy); font-weight:700;
   white-space:nowrap; width:1%;
 }
+/* スマホでは見出しセルも折り返して横はみ出しを防ぐ */
+@media (max-width: 600px) {
+  .jsvn-article table { table-layout: fixed; }
+  .jsvn-article th, .jsvn-article td { white-space: normal; word-break: break-word; padding:.7rem .6rem; font-size:.9rem; }
+  .jsvn-article th { width: 34%; }
+}
 .jsvn-article ol, .jsvn-article ul { padding-left:1.5rem; }
 .jsvn-article li { margin:.35rem 0; }
 .jsvn-article blockquote {
@@ -955,10 +961,12 @@ ul, ol { margin: 0 0 1.2em; padding-left: 1.4em; }
   .jsvn-nav {
     position: fixed; inset: 0 0 0 auto; width: min(80%, 320px);
     background:#fff; box-shadow: -8px 0 30px rgba(0,0,0,.12);
-    transform: translateX(100%); transition: transform .3s ease;
+    /* 画面外へ飛ばさず、その場でフェードで隠す（横スクロール発生を防止）*/
+    opacity: 0; visibility: hidden; transform: translateY(-6px);
+    transition: opacity .28s ease, transform .28s ease, visibility .28s ease;
     padding: 6rem 2rem 2rem; overflow-y:auto; z-index:90;
   }
-  .jsvn-nav.is-open { transform: translateX(0); }
+  .jsvn-nav.is-open { opacity: 1; visibility: visible; transform: translateY(0); }
   .jsvn-nav__menu { flex-direction:column; gap:0; align-items:stretch; }
   .jsvn-nav__menu > li { position:static; }
   .jsvn-nav a { display:block; padding:.8em 0; border-bottom:1px solid var(--jsvn-line); }
