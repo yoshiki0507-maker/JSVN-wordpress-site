@@ -37,11 +37,11 @@ if ( empty( $jsvn_slides ) ) {
 	<div class="jsvn-container">
 		<div class="jsvn-visual__inner">
 			<div class="jsvn-visual__copy">
-				<p class="jsvn-visual__en"><?php bloginfo( 'name' ); ?> ／ The Japanese Society of Visiting Nursing</p>
-				<h1 class="jsvn-visual__title">訪問看護師の臨床知を、<br>社会を動かす力へ。</h1>
+				<p class="jsvn-visual__en"><?php jsvn_e( 'hero_eyebrow', '日本訪問看護学会 ／ The Japanese Society of Visiting Nursing' ); ?></p>
+				<h1 class="jsvn-visual__title"><?php jsvn_e_ml( 'hero_title', "訪問看護師の臨床知を、\n社会を動かす力へ。" ); ?></h1>
 				<div class="jsvn-visual__rule" aria-hidden="true"><span></span><i>◆</i><span></span></div>
-				<p class="jsvn-visual__lead">現場で生まれる疑問や工夫、成果を学術的知見へと高め、臨床・教育・研究・制度へ還元する。訪問看護の質の向上と社会的価値の発展に寄与します。</p>
-				<p class="jsvn-visual__est">臨床知の可視化 ・ 学術への発展 ・ 臨床・教育・制度への還元</p>
+				<p class="jsvn-visual__lead"><?php jsvn_e_ml( 'hero_lead', '現場で生まれる疑問や工夫、成果を学術的知見へと高め、臨床・教育・研究・制度へ還元する。訪問看護の質の向上と社会的価値の発展に寄与します。' ); ?></p>
+				<p class="jsvn-visual__est"><?php jsvn_e( 'hero_est', '臨床知の可視化 ・ 学術への発展 ・ 臨床・教育・制度への還元' ); ?></p>
 			</div>
 		</div>
 	</div>
@@ -63,7 +63,7 @@ if ( empty( $jsvn_slides ) ) {
 			<!-- お知らせ -->
 			<section class="jsvn-newsbox">
 				<div class="jsvn-newsbox__head">
-					<h2>お知らせ</h2>
+					<h2><?php jsvn_e( 'newsbox_heading', 'お知らせ' ); ?></h2>
 					<a class="jsvn-newsbox__all" href="<?php echo esc_url( get_permalink( get_option( 'page_for_posts' ) ) ? get_permalink( get_option( 'page_for_posts' ) ) : home_url( '/news/' ) ); ?>">一覧へ &rsaquo;</a>
 				</div>
 				<div class="jsvn-news__list">
@@ -112,17 +112,9 @@ if ( empty( $jsvn_slides ) ) {
 
 			<!-- 設立趣旨（ダイジェスト） -->
 			<section class="jsvn-home-about">
-				<h2 class="jsvn-home-h2">設立趣旨</h2>
-				<p>
-					少子高齢化の進展とともに、療養の場は病院から地域・在宅へと大きく広がっています。
-					訪問看護師は利用者の生活の場に入り、病状だけでなくその人の価値観や生活背景、家族、地域とのつながりを
-					総合的に捉えながら、医療と生活を結ぶ重要な役割を担っています。
-				</p>
-				<p>
-					日々の臨床で培われた優れた実践や知見は、事業所や地域に留まりがちです。
-					日本訪問看護学会は「訪問看護師の臨床知を、社会を動かす力へ。」を理念に、現場で生まれる疑問や工夫、成果を
-					学術的知見へと高め、臨床・教育・研究・制度へ還元することを目的として設立します。
-				</p>
+				<h2 class="jsvn-home-h2"><?php jsvn_e( 'home_founding_heading', '設立趣旨' ); ?></h2>
+				<p><?php jsvn_e_ml( 'home_founding_p1', '少子高齢化の進展とともに、療養の場は病院から地域・在宅へと大きく広がっています。訪問看護師は利用者の生活の場に入り、病状だけでなくその人の価値観や生活背景、家族、地域とのつながりを総合的に捉えながら、医療と生活を結ぶ重要な役割を担っています。' ); ?></p>
+				<p><?php jsvn_e_ml( 'home_founding_p2', '日々の臨床で培われた優れた実践や知見は、事業所や地域に留まりがちです。日本訪問看護学会は「訪問看護師の臨床知を、社会を動かす力へ。」を理念に、現場で生まれる疑問や工夫、成果を学術的知見へと高め、臨床・教育・研究・制度へ還元することを目的として設立します。' ); ?></p>
 				<p style="margin:0;">
 					<a class="jsvn-textlink" href="<?php echo esc_url( home_url( '/founding/' ) ); ?>">設立趣旨・理念を読む &rsaquo;</a>
 					<a class="jsvn-textlink" href="<?php echo esc_url( home_url( '/about-greeting/' ) ); ?>">理事長挨拶 &rsaquo;</a>
@@ -135,28 +127,28 @@ if ( empty( $jsvn_slides ) ) {
 		<aside class="jsvn-home__side">
 
 			<a class="jsvn-sidebanner" href="<?php echo esc_url( home_url( '/events/' ) ); ?>">
-				<span class="jsvn-sidebanner__label">学術大会・研究会</span>
-				<span class="jsvn-sidebanner__en">ACADEMIC MEETING</span>
+				<span class="jsvn-sidebanner__label"><?php jsvn_e( 'banner_events_label', '学術大会・研究会' ); ?></span>
+				<span class="jsvn-sidebanner__en"><?php jsvn_e( 'banner_events_en', 'ACADEMIC MEETING' ); ?></span>
 			</a>
 
 			<a class="jsvn-sidebanner jsvn-sidebanner--gold" href="<?php echo esc_url( home_url( '/join/' ) ); ?>">
-				<span class="jsvn-sidebanner__label">入会のご案内</span>
-				<span class="jsvn-sidebanner__en">MEMBERSHIP</span>
+				<span class="jsvn-sidebanner__label"><?php jsvn_e( 'banner_join_label', '入会のご案内' ); ?></span>
+				<span class="jsvn-sidebanner__en"><?php jsvn_e( 'banner_join_en', 'MEMBERSHIP' ); ?></span>
 			</a>
 
 			<a class="jsvn-sidebanner" href="<?php echo esc_url( home_url( '/newsletter/' ) ); ?>">
-				<span class="jsvn-sidebanner__label">学会誌・ニュースレター</span>
-				<span class="jsvn-sidebanner__en">JOURNAL &amp; NEWSLETTER</span>
+				<span class="jsvn-sidebanner__label"><?php jsvn_e( 'banner_journal_label', '学会誌・ニュースレター' ); ?></span>
+				<span class="jsvn-sidebanner__en"><?php jsvn_e( 'banner_journal_en', 'JOURNAL & NEWSLETTER' ); ?></span>
 			</a>
 
 			<a class="jsvn-sidebanner jsvn-sidebanner--login" href="<?php echo esc_url( jsvn_login_url() ); ?>" target="_blank" rel="noopener">
-				<span class="jsvn-sidebanner__label">会員ログイン（学会バンク）</span>
-				<span class="jsvn-sidebanner__en">MEMBER LOGIN</span>
+				<span class="jsvn-sidebanner__label"><?php jsvn_e( 'banner_login_label', '会員ログイン（学会バンク）' ); ?></span>
+				<span class="jsvn-sidebanner__en"><?php jsvn_e( 'banner_login_en', 'MEMBER LOGIN' ); ?></span>
 			</a>
 
 			<!-- 協賛企業・企業バナー枠（企業様用リンク） -->
 			<section class="jsvn-sponsors" aria-label="協賛企業">
-				<h3 class="jsvn-sponsors__head">協賛企業・賛助会員</h3>
+				<h3 class="jsvn-sponsors__head"><?php jsvn_e( 'sponsors_heading', '協賛企業・賛助会員' ); ?></h3>
 				<div class="jsvn-sponsors__body">
 					<?php if ( is_active_sidebar( 'sponsors' ) ) : ?>
 						<?php dynamic_sidebar( 'sponsors' ); ?>
@@ -195,30 +187,30 @@ if ( empty( $jsvn_slides ) ) {
 <section class="jsvn-section jsvn-section--green">
 	<div class="jsvn-container">
 		<div class="jsvn-section-head">
-			<span class="jsvn-eyebrow">OUR MISSION</span>
-			<h2>本会がめざす三本柱</h2>
+			<span class="jsvn-eyebrow"><?php jsvn_e( 'pillars_eyebrow', 'OUR MISSION' ); ?></span>
+			<h2><?php jsvn_e( 'pillars_heading', '本会がめざす三本柱' ); ?></h2>
 		</div>
 		<div class="jsvn-pillars">
 			<article class="jsvn-pillar">
 				<div class="jsvn-pillar__icon" aria-hidden="true">
 					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
 				</div>
-				<h3>臨床知を可視化する</h3>
-				<p>訪問看護師の日々の実践に宿る判断・工夫・課題・成果を、事例発表やケースレポートを通じて言語化し、可視化します。</p>
+				<h3><?php jsvn_e( 'pillar1_title', '臨床知を可視化する' ); ?></h3>
+				<p><?php jsvn_e_ml( 'pillar1_desc', '訪問看護師の日々の実践に宿る判断・工夫・課題・成果を、事例発表やケースレポートを通じて言語化し、可視化します。' ); ?></p>
 			</article>
 			<article class="jsvn-pillar">
 				<div class="jsvn-pillar__icon" aria-hidden="true">
 					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5V6a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v13.5"/><path d="M4 19.5A1.5 1.5 0 0 1 5.5 18H19"/><path d="M9 8h6M9 11h6"/></svg>
 				</div>
-				<h3>学術的知見へ発展させる</h3>
-				<p>現場の臨床知と、教育機関・研究者の研究力を融合し、実践を研究へ発展させ、訪問看護の質向上に資する知見を創出します。</p>
+				<h3><?php jsvn_e( 'pillar2_title', '学術的知見へ発展させる' ); ?></h3>
+				<p><?php jsvn_e_ml( 'pillar2_desc', '現場の臨床知と、教育機関・研究者の研究力を融合し、実践を研究へ発展させ、訪問看護の質向上に資する知見を創出します。' ); ?></p>
 			</article>
 			<article class="jsvn-pillar">
 				<div class="jsvn-pillar__icon" aria-hidden="true">
 					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9"/><path d="M3 4v5h5"/><path d="M12 7v5l3 2"/></svg>
 				</div>
-				<h3>臨床・教育・制度へ還元する</h3>
-				<p>創出した知見を現場へ還元し、働きやすい環境づくり、教育体制の整備、制度・報酬の改善に資する基盤を築きます。</p>
+				<h3><?php jsvn_e( 'pillar3_title', '臨床・教育・制度へ還元する' ); ?></h3>
+				<p><?php jsvn_e_ml( 'pillar3_desc', '創出した知見を現場へ還元し、働きやすい環境づくり、教育体制の整備、制度・報酬の改善に資する基盤を築きます。' ); ?></p>
 			</article>
 		</div>
 	</div>
@@ -232,7 +224,7 @@ if ( empty( $jsvn_slides ) ) {
 			<!-- ブログ -->
 			<div class="jsvn-blog">
 				<div class="jsvn-blog__head">
-					<h2>ブログ</h2>
+					<h2><?php jsvn_e( 'blog_heading', 'ブログ' ); ?></h2>
 					<a class="jsvn-textlink" href="<?php echo esc_url( home_url( '/category/blog/' ) ); ?>">ブログ一覧へ &rsaquo;</a>
 				</div>
 				<div class="jsvn-blog__list">
@@ -280,9 +272,9 @@ if ( empty( $jsvn_slides ) ) {
 
 			<!-- SNS -->
 			<div class="jsvn-social">
-				<div class="jsvn-social__head"><h2>SNS</h2></div>
+				<div class="jsvn-social__head"><h2><?php jsvn_e( 'sns_heading', 'SNS' ); ?></h2></div>
 				<div class="jsvn-social__card">
-					<p class="jsvn-social__note">最新情報はSNSでも発信しています。ぜひフォローしてください。</p>
+					<p class="jsvn-social__note"><?php jsvn_e_ml( 'sns_note', '最新情報はSNSでも発信しています。ぜひフォローしてください。' ); ?></p>
 					<?php jsvn_sns_icons(); ?>
 					<div class="jsvn-social__embed">
 						Instagram／X／Facebook の最新投稿を、ここに自動表示できます。<br>

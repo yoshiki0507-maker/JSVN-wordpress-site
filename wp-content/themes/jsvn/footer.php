@@ -13,33 +13,33 @@
 
 			<div class="jsvn-footer__brand">
 				<img class="jsvn-footer__logo" src="<?php echo esc_url( get_template_directory_uri() . '/assets/images/logo.png' ); ?>" alt="<?php bloginfo( 'name' ); ?>">
-				<p><?php echo esc_html( get_bloginfo( 'description' ) ? get_bloginfo( 'description' ) : '訪問看護の実践と学術を支え、地域で暮らす人々の「その人らしい療養」を支援します。' ); ?></p>
+				<p><?php jsvn_e_ml( 'footer_desc', '訪問看護の実践と学術を支え、地域で暮らす人々の「その人らしい療養」を支援します。' ); ?></p>
 				<?php if ( function_exists( 'jsvn_sns_icons' ) ) { jsvn_sns_icons(); } ?>
 			</div>
 
 			<div class="jsvn-footer__col">
-				<h4>学会について</h4>
+				<h4><?php jsvn_e( 'footer_col1', '学会について' ); ?></h4>
 				<ul>
-					<li><a href="<?php echo esc_url( home_url( '/about/' ) ); ?>">ご挨拶・理念</a></li>
-					<li><a href="<?php echo esc_url( home_url( '/about/organization/' ) ); ?>">組織・役員</a></li>
-					<li><a href="<?php echo esc_url( home_url( '/about/charter/' ) ); ?>">定款・規程</a></li>
+					<li><a href="<?php echo esc_url( home_url( '/founding/' ) ); ?>">設立趣旨・理念</a></li>
+					<li><a href="<?php echo esc_url( home_url( '/officers/' ) ); ?>">役員・代議員・名誉会員</a></li>
+					<li><a href="<?php echo esc_url( home_url( '/articles/' ) ); ?>">定款・規程</a></li>
 				</ul>
 			</div>
 
 			<div class="jsvn-footer__col">
-				<h4>活動・学術</h4>
+				<h4><?php jsvn_e( 'footer_col2', '活動・学術' ); ?></h4>
 				<ul>
 					<li><a href="<?php echo esc_url( home_url( '/events/' ) ); ?>">学術大会・研究会</a></li>
-					<li><a href="<?php echo esc_url( home_url( '/journal/' ) ); ?>">学会誌・刊行物</a></li>
+					<li><a href="<?php echo esc_url( home_url( '/journal-submission/' ) ); ?>">学会誌・投稿規定</a></li>
 					<li><a href="<?php echo esc_url( home_url( '/news/' ) ); ?>">お知らせ</a></li>
 				</ul>
 			</div>
 
 			<div class="jsvn-footer__col">
-				<h4>会員の方へ</h4>
+				<h4><?php jsvn_e( 'footer_col3', '会員の方へ' ); ?></h4>
 				<ul>
 					<li><a href="<?php echo esc_url( home_url( '/join/' ) ); ?>">入会のご案内</a></li>
-					<li><a href="<?php echo esc_url( home_url( '/login/' ) ); ?>">会員ログイン</a></li>
+					<li><a href="<?php echo esc_url( jsvn_login_url() ); ?>" target="_blank" rel="noopener">会員ログイン（学会バンク）</a></li>
 					<li><a href="<?php echo esc_url( home_url( '/contact/' ) ); ?>">お問い合わせ</a></li>
 				</ul>
 			</div>

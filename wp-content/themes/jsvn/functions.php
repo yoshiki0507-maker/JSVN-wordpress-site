@@ -976,3 +976,118 @@ function jsvn_render_member_quals() {
 	}
 	echo '</div></div>';
 }
+
+/* =============================================================
+ *  サイトの文言をカスタマイザーから編集できるようにする
+ * ============================================================= */
+
+/** テーマ設定の文言を取得 */
+function jsvn_text( $key, $default = '' ) {
+	return get_theme_mod( 'jsvn_' . $key, $default );
+}
+/** 1行テキストを出力（エスケープ済み） */
+function jsvn_e( $key, $default = '' ) {
+	echo esc_html( jsvn_text( $key, $default ) );
+}
+/** 複数行テキストを出力（改行を <br> に変換）*/
+function jsvn_e_ml( $key, $default = '' ) {
+	echo nl2br( esc_html( jsvn_text( $key, $default ) ) );
+}
+
+/** 編集可能な文言の定義（セクション → 項目）*/
+function jsvn_content_fields() {
+	return array(
+		'hero' => array(
+			'title'  => 'メインビジュアルの文言',
+			'fields' => array(
+				'hero_eyebrow' => array( '小見出し（学会名／英字）', 'text', '日本訪問看護学会 ／ The Japanese Society of Visiting Nursing' ),
+				'hero_title'   => array( 'キャッチコピー（改行可）', 'textarea', "訪問看護師の臨床知を、\n社会を動かす力へ。" ),
+				'hero_lead'    => array( 'リード文', 'textarea', '現場で生まれる疑問や工夫、成果を学術的知見へと高め、臨床・教育・研究・制度へ還元する。訪問看護の質の向上と社会的価値の発展に寄与します。' ),
+				'hero_est'     => array( 'キーワード行', 'text', '臨床知の可視化 ・ 学術への発展 ・ 臨床・教育・制度への還元' ),
+			),
+		),
+		'founding_home' => array(
+			'title'  => 'トップの設立趣旨',
+			'fields' => array(
+				'home_founding_heading' => array( '見出し', 'text', '設立趣旨' ),
+				'home_founding_p1'      => array( '本文1', 'textarea', '少子高齢化の進展とともに、療養の場は病院から地域・在宅へと大きく広がっています。訪問看護師は利用者の生活の場に入り、病状だけでなくその人の価値観や生活背景、家族、地域とのつながりを総合的に捉えながら、医療と生活を結ぶ重要な役割を担っています。' ),
+				'home_founding_p2'      => array( '本文2', 'textarea', '日々の臨床で培われた優れた実践や知見は、事業所や地域に留まりがちです。日本訪問看護学会は「訪問看護師の臨床知を、社会を動かす力へ。」を理念に、現場で生まれる疑問や工夫、成果を学術的知見へと高め、臨床・教育・研究・制度へ還元することを目的として設立します。' ),
+			),
+		),
+		'pillars' => array(
+			'title'  => '三本柱',
+			'fields' => array(
+				'pillars_eyebrow' => array( '英字ラベル', 'text', 'OUR MISSION' ),
+				'pillars_heading' => array( '見出し', 'text', '本会がめざす三本柱' ),
+				'pillar1_title'   => array( '柱1 タイトル', 'text', '臨床知を可視化する' ),
+				'pillar1_desc'    => array( '柱1 説明', 'textarea', '訪問看護師の日々の実践に宿る判断・工夫・課題・成果を、事例発表やケースレポートを通じて言語化し、可視化します。' ),
+				'pillar2_title'   => array( '柱2 タイトル', 'text', '学術的知見へ発展させる' ),
+				'pillar2_desc'    => array( '柱2 説明', 'textarea', '現場の臨床知と、教育機関・研究者の研究力を融合し、実践を研究へ発展させ、訪問看護の質向上に資する知見を創出します。' ),
+				'pillar3_title'   => array( '柱3 タイトル', 'text', '臨床・教育・制度へ還元する' ),
+				'pillar3_desc'    => array( '柱3 説明', 'textarea', '創出した知見を現場へ還元し、働きやすい環境づくり、教育体制の整備、制度・報酬の改善に資する基盤を築きます。' ),
+			),
+		),
+		'banners' => array(
+			'title'  => 'サイドバナー・お知らせ・協賛',
+			'fields' => array(
+				'newsbox_heading'    => array( 'お知らせ 見出し', 'text', 'お知らせ' ),
+				'banner_events_label' => array( 'バナー1 見出し', 'text', '学術大会・研究会' ),
+				'banner_events_en'    => array( 'バナー1 英字', 'text', 'ACADEMIC MEETING' ),
+				'banner_join_label'   => array( 'バナー2 見出し', 'text', '入会のご案内' ),
+				'banner_join_en'      => array( 'バナー2 英字', 'text', 'MEMBERSHIP' ),
+				'banner_journal_label' => array( 'バナー3 見出し', 'text', '学会誌・ニュースレター' ),
+				'banner_journal_en'   => array( 'バナー3 英字', 'text', 'JOURNAL & NEWSLETTER' ),
+				'banner_login_label'  => array( 'バナー4 見出し', 'text', '会員ログイン（学会バンク）' ),
+				'banner_login_en'     => array( 'バナー4 英字', 'text', 'MEMBER LOGIN' ),
+				'sponsors_heading'    => array( '協賛企業 見出し', 'text', '協賛企業・賛助会員' ),
+			),
+		),
+		'blogsns' => array(
+			'title'  => 'ブログ・SNS',
+			'fields' => array(
+				'blog_heading' => array( 'ブログ 見出し', 'text', 'ブログ' ),
+				'sns_heading'  => array( 'SNS 見出し', 'text', 'SNS' ),
+				'sns_note'     => array( 'SNS 説明', 'textarea', '最新情報はSNSでも発信しています。ぜひフォローしてください。' ),
+			),
+		),
+		'common' => array(
+			'title'  => 'ヘッダー・フッター',
+			'fields' => array(
+				'cta_label'   => array( 'ヘッダーの入会ボタン', 'text', '入会のご案内' ),
+				'footer_desc' => array( 'フッター紹介文', 'textarea', '訪問看護の実践と学術を支え、地域で暮らす人々の「その人らしい療養」を支援します。' ),
+				'footer_col1' => array( 'フッター見出し1', 'text', '学会について' ),
+				'footer_col2' => array( 'フッター見出し2', 'text', '活動・学術' ),
+				'footer_col3' => array( 'フッター見出し3', 'text', '会員の方へ' ),
+			),
+		),
+	);
+}
+
+/** カスタマイザーへ「サイトの文言」パネルを登録 */
+function jsvn_customize_content( $wp_customize ) {
+	$wp_customize->add_panel( 'jsvn_content', array(
+		'title'       => __( 'サイトの文言（テキスト編集）', 'jsvn' ),
+		'description' => __( 'トップページやヘッダー・フッターの文章をここから編集できます。', 'jsvn' ),
+		'priority'    => 25,
+	) );
+	foreach ( jsvn_content_fields() as $sec => $def ) {
+		$sid = 'jsvn_c_' . $sec;
+		$wp_customize->add_section( $sid, array(
+			'title' => $def['title'],
+			'panel' => 'jsvn_content',
+		) );
+		foreach ( $def['fields'] as $key => $f ) {
+			list( $label, $type, $default ) = $f;
+			$wp_customize->add_setting( 'jsvn_' . $key, array(
+				'default'           => $default,
+				'sanitize_callback' => ( 'textarea' === $type ) ? 'sanitize_textarea_field' : 'sanitize_text_field',
+			) );
+			$wp_customize->add_control( 'jsvn_' . $key, array(
+				'label'   => $label,
+				'section' => $sid,
+				'type'    => $type,
+			) );
+		}
+	}
+}
+add_action( 'customize_register', 'jsvn_customize_content' );

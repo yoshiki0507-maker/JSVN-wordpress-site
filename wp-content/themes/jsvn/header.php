@@ -78,7 +78,7 @@ $has_utility = has_nav_menu( 'utility' );
 		</nav>
 
 		<div class="jsvn-header__cta">
-			<a class="jsvn-btn jsvn-btn--coral" href="<?php echo esc_url( home_url( '/join/' ) ); ?>">入会のご案内</a>
+			<a class="jsvn-btn jsvn-btn--coral" href="<?php echo esc_url( home_url( '/join/' ) ); ?>"><?php jsvn_e( 'cta_label', '入会のご案内' ); ?></a>
 		</div>
 
 	</div>
