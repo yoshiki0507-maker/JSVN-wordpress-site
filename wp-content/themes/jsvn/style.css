@@ -255,20 +255,24 @@ ul, ol { margin: 0 0 1.2em; padding-left: 1.4em; }
 .jsvn-nav__menu > .current-menu-item > a::after,
 .jsvn-nav__menu > .current-page > a::after { width: 100%; }
 
-/* ドロップダウン（親項目に▾） */
+/* ドロップダウン開閉ボタン（▾）— JSが親項目に自動挿入。マウス・タッチ・キーボードで操作可能 */
 .jsvn-nav .caret { font-size: .62em; opacity: .7; transition: transform .2s ease; }
-.jsvn-nav__menu > li:hover > a .caret { transform: rotate(180deg); }
 
-/* [外観 > メニュー] で作成した親項目にも自動でドロップダウン記号（▾）を付ける */
-.jsvn-nav__menu > li.menu-item-has-children > a {
-  padding-right: 1.05em;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' viewBox='0 0 10 7'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%231f5a3c' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right center;
-  background-size: .62em auto;
+.jsvn-submenu-toggle {
+  appearance: none; -webkit-appearance: none;
+  border: 0; background: transparent; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 1.5em; height: 1.8em; margin-left: -.1em; padding: 0;
+  color: var(--jsvn-green); line-height: 1; vertical-align: middle;
 }
-.jsvn-nav__menu > li.menu-item-has-children:hover > a {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' viewBox='0 0 10 7'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23163d29' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+.jsvn-submenu-toggle__caret {
+  width: .5em; height: .5em; display: inline-block; margin-top: -.18em;
+  border-right: 2px solid currentColor; border-bottom: 2px solid currentColor;
+  transform: rotate(45deg); transition: transform .2s ease;
+}
+.jsvn-submenu-toggle:hover { color: var(--jsvn-navy); }
+.jsvn-nav__menu > li.is-open > .jsvn-submenu-toggle .jsvn-submenu-toggle__caret {
+  transform: rotate(-135deg); margin-top: .1em;
 }
 
 .jsvn-nav .sub-menu {
@@ -283,9 +287,19 @@ ul, ol { margin: 0 0 1.2em; padding-left: 1.4em; }
   transition: opacity .2s ease, transform .2s ease, visibility .2s ease;
   z-index: 120;
 }
-.jsvn-nav__menu > li:hover > .sub-menu,
-.jsvn-nav__menu > li:focus-within > .sub-menu {
+/* クリック／タップ／キーボードで開く（全デバイス共通） */
+.jsvn-nav__menu > li.is-open > .sub-menu {
   opacity: 1; visibility: visible; transform: translateY(0);
+}
+/* マウス（ホバー可能デバイス）ではホバーでも開く */
+@media (hover: hover) and (pointer: fine) {
+  .jsvn-nav__menu > li:hover > .sub-menu,
+  .jsvn-nav__menu > li:focus-within > .sub-menu {
+    opacity: 1; visibility: visible; transform: translateY(0);
+  }
+  .jsvn-nav__menu > li:hover > .jsvn-submenu-toggle .jsvn-submenu-toggle__caret {
+    transform: rotate(-135deg); margin-top: .1em;
+  }
 }
 .jsvn-nav .sub-menu li { display: block; }
 .jsvn-nav .sub-menu a {
@@ -993,7 +1007,8 @@ ul, ol { margin: 0 0 1.2em; padding-left: 1.4em; }
     padding:.6em 0 .6em 1.2rem; font-size:.88rem; color:var(--jsvn-ink-soft);
     border-bottom:1px solid var(--jsvn-line);
   }
-  .jsvn-nav__menu > li.menu-item-has-children > a { color: var(--jsvn-navy); font-weight:700; background-image:none; padding-right:0; }
+  .jsvn-nav__menu > li.menu-item-has-children > a { color: var(--jsvn-navy); font-weight:700; }
+  .jsvn-submenu-toggle { display:none; } /* モバイルはサブメニュー常時展開のためボタン不要 */
   .jsvn-header__cta .jsvn-btn { display:none; }
   .jsvn-nav-overlay {
     position:fixed; inset:0; background:rgba(20,37,60,.45);

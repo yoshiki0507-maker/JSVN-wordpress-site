@@ -50,6 +50,66 @@
 		window.addEventListener('resize', function () {
 			if (window.innerWidth > 1100) closeNav();
 		});
+
+		/* ---- ドロップダウン：クリック・タップ・キーボードで開閉 ---- */
+		var menu = document.querySelector('.jsvn-nav__menu');
+		if (menu) {
+			var parents = Array.prototype.slice.call(
+				menu.querySelectorAll(':scope > li.menu-item-has-children')
+			);
+
+			function closeAll(except) {
+				parents.forEach(function (li) {
+					if (li === except) return;
+					li.classList.remove('is-open');
+					var b = li.querySelector(':scope > .jsvn-submenu-toggle');
+					if (b) b.setAttribute('aria-expanded', 'false');
+				});
+			}
+
+			parents.forEach(function (li) {
+				var link = li.querySelector(':scope > a');
+				var sub  = li.querySelector(':scope > .sub-menu');
+				if (!sub) return;
+
+				// 開閉ボタンを自動生成（親リンクはページ遷移用に残す）
+				var btn = document.createElement('button');
+				btn.type = 'button';
+				btn.className = 'jsvn-submenu-toggle';
+				btn.setAttribute('aria-expanded', 'false');
+				var name = link ? link.textContent.trim() : '';
+				btn.setAttribute('aria-label', name + ' のサブメニューを開く');
+				btn.innerHTML = '<span class="jsvn-submenu-toggle__caret" aria-hidden="true"></span>';
+				if (link && link.parentNode === li) {
+					li.insertBefore(btn, link.nextSibling);
+				} else {
+					li.appendChild(btn);
+				}
+
+				btn.addEventListener('click', function (e) {
+					e.preventDefault();
+					e.stopPropagation();
+					var isOpen = li.classList.contains('is-open');
+					closeAll(li);
+					if (isOpen) {
+						li.classList.remove('is-open');
+						btn.setAttribute('aria-expanded', 'false');
+					} else {
+						li.classList.add('is-open');
+						btn.setAttribute('aria-expanded', 'true');
+					}
+				});
+			});
+
+			// メニュー外をクリック／タップしたら閉じる
+			document.addEventListener('click', function (e) {
+				if (!menu.contains(e.target)) closeAll(null);
+			});
+			// Escで閉じる
+			menu.addEventListener('keydown', function (e) {
+				if (e.key === 'Escape') closeAll(null);
+			});
+		}
 	});
 })();
 

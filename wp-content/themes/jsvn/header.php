@@ -57,7 +57,7 @@ $has_utility = has_nav_menu( 'utility' );
 			<?php endif; ?>
 		</div>
 
-		<button class="jsvn-burger" aria-label="メニューを開く" aria-expanded="false" aria-controls="jsvn-primary-nav">
+		<button type="button" class="jsvn-burger" aria-label="メニューを開く" aria-expanded="false" aria-controls="jsvn-primary-nav">
 			<span></span><span></span><span></span>
 		</button>
 
