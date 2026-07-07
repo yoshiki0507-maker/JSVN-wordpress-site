@@ -406,9 +406,6 @@ function jsvn_render_fallback_menu() {
 		$li_class     = $has_children ? ' class="menu-item-has-children"' : '';
 		echo '<li' . $li_class . '>';
 		echo '<a href="' . esc_url( $item['url'] ) . '">' . esc_html( $item['label'] );
-		if ( $has_children ) {
-			echo ' <span class="caret" aria-hidden="true">▾</span>';
-		}
 		echo '</a>';
 		if ( $has_children ) {
 			echo '<ul class="sub-menu">';
@@ -421,6 +418,100 @@ function jsvn_render_fallback_menu() {
 	}
 	echo '</ul>';
 }
+
+/**
+ * メニュー項目を1つ追加するヘルパー。
+ *
+ * URLがサイト内の固定ページに一致すればページ項目として、
+ * それ以外はカスタムリンクとして登録する（あとから [外観 > メニュー] で自由に変更できます）。
+ *
+ * @param int    $menu_id 追加先メニューID
+ * @param int    $parent  親メニュー項目ID（0でトップ階層）
+ * @param string $label   表示名
+ * @param string $url     リンク先URL
+ * @return int 追加されたメニュー項目ID
+ */
+function jsvn_add_menu_item( $menu_id, $parent, $label, $url ) {
+	$args = array(
+		'menu-item-title'     => $label,
+		'menu-item-parent-id' => $parent,
+		'menu-item-status'    => 'publish',
+	);
+
+	// URLのパスからサイト内固定ページを探す
+	$path = trim( wp_parse_url( $url, PHP_URL_PATH ), '/' );
+	$page = $path ? get_page_by_path( $path ) : null;
+
+	if ( $page ) {
+		$args['menu-item-type']      = 'post_type';
+		$args['menu-item-object']    = 'page';
+		$args['menu-item-object-id'] = $page->ID;
+	} else {
+		$args['menu-item-type'] = 'custom';
+		$args['menu-item-url']  = $url;
+	}
+
+	return wp_update_nav_menu_item( $menu_id, 0, $args );
+}
+
+/**
+ * テーマ有効化時に、編集可能なグローバルメニューを自動作成する。
+ *
+ * [外観 > メニュー] に「グローバルメニュー」が作られ、'primary' の位置に割り当てられます。
+ * 項目・サブ項目のリンク付けや並び替えは、管理画面から自由に編集できます。
+ * すでにメニューが割り当て済み、または同名メニューがある場合はスキップします。
+ */
+function jsvn_seed_menu() {
+	if ( ! function_exists( 'wp_update_nav_menu_item' ) ) {
+		require_once ABSPATH . 'wp-admin/includes/nav-menu.php';
+	}
+
+	$menu_name = 'グローバルメニュー';
+
+	// すでに 'primary' に何か割り当て済みなら触らない
+	$locations = get_theme_mod( 'nav_menu_locations' );
+	if ( ! empty( $locations['primary'] ) && is_nav_menu( $locations['primary'] ) ) {
+		return;
+	}
+
+	// 同名メニューがあれば再利用、なければ新規作成
+	$menu = wp_get_nav_menu_object( $menu_name );
+	if ( $menu ) {
+		$menu_id = $menu->term_id;
+		// すでに項目があるメニューには追加しない（二重登録防止）
+		$existing = wp_get_nav_menu_items( $menu_id );
+		if ( ! empty( $existing ) ) {
+			$menu_id_to_assign = $menu_id;
+			$menu_id           = 0;
+		}
+	} else {
+		$menu_id = wp_create_nav_menu( $menu_name );
+	}
+
+	if ( $menu_id && ! is_wp_error( $menu_id ) ) {
+		foreach ( jsvn_menu_structure() as $item ) {
+			$parent_id = jsvn_add_menu_item( $menu_id, 0, $item['label'], $item['url'] );
+			if ( is_wp_error( $parent_id ) ) {
+				continue;
+			}
+			if ( ! empty( $item['children'] ) ) {
+				foreach ( $item['children'] as $child ) {
+					jsvn_add_menu_item( $menu_id, $parent_id, $child['label'], $child['url'] );
+				}
+			}
+		}
+		$menu_id_to_assign = $menu_id;
+	}
+
+	// 'primary' の位置にメニューを割り当てる
+	if ( ! empty( $menu_id_to_assign ) ) {
+		$locations             = (array) get_theme_mod( 'nav_menu_locations' );
+		$locations['primary']  = (int) $menu_id_to_assign;
+		set_theme_mod( 'nav_menu_locations', $locations );
+	}
+}
+// 固定ページ作成（jsvn_seed_pages）の後に走らせ、ページ項目として正しく紐づける
+add_action( 'after_switch_theme', 'jsvn_seed_menu', 20 );
 
 /**
  * テーマ有効化時に、メニューに対応する固定ページを自動作成する。

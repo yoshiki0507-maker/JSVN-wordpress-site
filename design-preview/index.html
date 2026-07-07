@@ -269,6 +269,18 @@ ul, ol { margin: 0 0 1.2em; padding-left: 1.4em; }
 .jsvn-nav .caret { font-size: .62em; opacity: .7; transition: transform .2s ease; }
 .jsvn-nav__menu > li:hover > a .caret { transform: rotate(180deg); }
 
+/* [外観 > メニュー] で作成した親項目にも自動でドロップダウン記号（▾）を付ける */
+.jsvn-nav__menu > li.menu-item-has-children > a {
+  padding-right: 1.05em;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' viewBox='0 0 10 7'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%231f5a3c' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right center;
+  background-size: .62em auto;
+}
+.jsvn-nav__menu > li.menu-item-has-children:hover > a {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' viewBox='0 0 10 7'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23163d29' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
 .jsvn-nav .sub-menu {
   list-style: none; margin: 0; padding: .5rem 0;
   position: absolute; top: 100%; left: 0;
@@ -991,7 +1003,7 @@ ul, ol { margin: 0 0 1.2em; padding-left: 1.4em; }
     padding:.6em 0 .6em 1.2rem; font-size:.88rem; color:var(--jsvn-ink-soft);
     border-bottom:1px solid var(--jsvn-line);
   }
-  .jsvn-nav__menu > li.menu-item-has-children > a { color: var(--jsvn-navy); font-weight:700; }
+  .jsvn-nav__menu > li.menu-item-has-children > a { color: var(--jsvn-navy); font-weight:700; background-image:none; padding-right:0; }
   .jsvn-header__cta .jsvn-btn { display:none; }
   .jsvn-nav-overlay {
     position:fixed; inset:0; background:rgba(20,37,60,.45);
@@ -1037,7 +1049,7 @@ ul, ol { margin: 0 0 1.2em; padding-left: 1.4em; }
   <nav class="jsvn-nav" id="jsvn-primary-nav" aria-label="グローバルメニュー">
     <ul class="jsvn-nav__menu">
 <li class="menu-item-has-children">
-<a href="#" data-page="about">学会について <span class="caret" aria-hidden="true">▾</span></a>
+<a href="#" data-page="about">学会について</a>
 <ul class="sub-menu">
 <li><a href="#" data-page="founding">設立趣旨・理念</a></li>
 <li><a href="#" data-page="about-greeting">理事長挨拶</a></li>
@@ -1050,7 +1062,7 @@ ul, ol { margin: 0 0 1.2em; padding-left: 1.4em; }
 <li><a href="#" data-page="reports">情報公開（事業報告・決算）</a></li>
 </ul></li>
 <li class="menu-item-has-children">
-<a href="#" data-page="ethics-code">倫理・COI <span class="caret" aria-hidden="true">▾</span></a>
+<a href="#" data-page="ethics-code">倫理・COI</a>
 <ul class="sub-menu">
 <li><a href="#" data-page="ethics-code">倫理綱領</a></li>
 <li><a href="#" data-page="scientist-conduct">科学者の行動規範</a></li>
@@ -1058,7 +1070,7 @@ ul, ol { margin: 0 0 1.2em; padding-left: 1.4em; }
 <li><a href="#" data-page="coi">利益相反（COI）</a></li>
 </ul></li>
 <li class="menu-item-has-children">
-<a href="#" data-page="events">学術活動 <span class="caret" aria-hidden="true">▾</span></a>
+<a href="#" data-page="events">学術活動</a>
 <ul class="sub-menu">
 <li><a href="#" data-page="events">学術大会・研究会</a></li>
 <li><a href="#" data-page="journal-submission">学会誌・投稿規定</a></li>
@@ -1068,7 +1080,7 @@ ul, ol { margin: 0 0 1.2em; padding-left: 1.4em; }
 </ul></li>
 <li><a href="#" data-page="certification">認定制度</a></li>
 <li class="menu-item-has-children">
-<a href="#" data-page="join">入会案内 <span class="caret" aria-hidden="true">▾</span></a>
+<a href="#" data-page="join">入会案内</a>
 <ul class="sub-menu">
 <li><a href="#" data-page="join">入会のご案内</a></li>
 <li><a href="#" data-page="downloads">各種手続き・様式ダウンロード</a></li>
