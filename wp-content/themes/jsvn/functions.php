@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit; // 直接アクセスを禁止
 }
 
-define( 'JSVN_VERSION', '1.0.0' );
+define( 'JSVN_VERSION', '1.2.0' );
 
 /**
  * テーマの基本セットアップ
@@ -284,35 +284,50 @@ function jsvn_login_url() {
  */
 function jsvn_customize_hero( $wp_customize ) {
 	$wp_customize->add_section( 'jsvn_hero', array(
-		'title'    => __( 'メインビジュアル（トップ画像）', 'jsvn' ),
-		'priority' => 30,
+		'title'       => __( 'メインビジュアル（トップ画像）', 'jsvn' ),
+		'priority'    => 30,
+		'description' => __( 'トップ最上部の画像。1〜3枚まで登録でき、2枚以上でスライドショーになります。未設定のときは深緑の背景にキャッチコピーのみを上品に表示します。横長（例 1600×760px 程度）推奨。', 'jsvn' ),
 	) );
-	$wp_customize->add_setting( 'jsvn_hero_image', array(
-		'default'           => '',
-		'sanitize_callback' => 'esc_url_raw',
-	) );
-	$wp_customize->add_control( new WP_Customize_Image_Control( $wp_customize, 'jsvn_hero_image', array(
-		'label'       => __( 'メインビジュアルの画像', 'jsvn' ),
-		'description' => __( 'トップ最上部に表示する写真。横長（例 1600×760px 程度）推奨。未設定の場合はクスノキのイラストを表示します。', 'jsvn' ),
-		'section'     => 'jsvn_hero',
-	) ) );
+
+	$slots = array(
+		'jsvn_hero_image'   => __( 'メインビジュアル画像 1', 'jsvn' ),
+		'jsvn_hero_image_2' => __( 'メインビジュアル画像 2（任意・スライド用）', 'jsvn' ),
+		'jsvn_hero_image_3' => __( 'メインビジュアル画像 3（任意・スライド用）', 'jsvn' ),
+	);
+	foreach ( $slots as $id => $label ) {
+		$wp_customize->add_setting( $id, array(
+			'default'           => '',
+			'sanitize_callback' => 'esc_url_raw',
+		) );
+		$wp_customize->add_control( new WP_Customize_Image_Control( $wp_customize, $id, array(
+			'label'   => $label,
+			'section' => 'jsvn_hero',
+		) ) );
+	}
 }
 add_action( 'customize_register', 'jsvn_customize_hero' );
 
 /**
- * メインビジュアル画像のURLを取得（カスタマイザー → テーマ同梱 hero.jpg の順）
+ * メインビジュアル画像のURL一覧を取得。
+ * カスタマイザーで登録された画像のみを順番に返す（同梱のデフォルト画像は使わない）。
  */
-function jsvn_hero_image_url() {
-	$img = get_theme_mod( 'jsvn_hero_image', '' );
-	if ( $img ) {
-		return $img;
-	}
-	foreach ( array( 'hero.jpg', 'hero.png', 'hero.webp' ) as $name ) {
-		if ( file_exists( get_template_directory() . '/assets/images/' . $name ) ) {
-			return get_template_directory_uri() . '/assets/images/' . $name;
+function jsvn_hero_images() {
+	$images = array();
+	foreach ( array( 'jsvn_hero_image', 'jsvn_hero_image_2', 'jsvn_hero_image_3' ) as $key ) {
+		$url = get_theme_mod( $key, '' );
+		if ( $url ) {
+			$images[] = $url;
 		}
 	}
-	return '';
+	return $images;
+}
+
+/**
+ * 先頭のメインビジュアル画像URL（後方互換用）。未設定なら空文字。
+ */
+function jsvn_hero_image_url() {
+	$images = jsvn_hero_images();
+	return ! empty( $images ) ? $images[0] : '';
 }
 
 /**
@@ -397,7 +412,23 @@ function jsvn_menu_structure() {
 }
 
 /**
- * フォールバックメニューを出力
+ * URLを「実在する固定ページのパーマリンク」に解決する。
+ * パーマリンク設定に依存せず正しいURLになるので、リンク切れ（404）を防ぐ。
+ */
+function jsvn_resolve_url( $url ) {
+	$path = trim( (string) wp_parse_url( $url, PHP_URL_PATH ), '/' );
+	if ( '' === $path ) {
+		return $url;
+	}
+	$page = get_page_by_path( $path );
+	if ( $page ) {
+		return get_permalink( $page->ID );
+	}
+	return $url;
+}
+
+/**
+ * フォールバックメニューを出力（メニュー未割り当て時の仮表示）
  */
 function jsvn_render_fallback_menu() {
 	echo '<ul class="jsvn-nav__menu">';
@@ -405,12 +436,12 @@ function jsvn_render_fallback_menu() {
 		$has_children = ! empty( $item['children'] );
 		$li_class     = $has_children ? ' class="menu-item-has-children"' : '';
 		echo '<li' . $li_class . '>';
-		echo '<a href="' . esc_url( $item['url'] ) . '">' . esc_html( $item['label'] );
+		echo '<a href="' . esc_url( jsvn_resolve_url( $item['url'] ) ) . '">' . esc_html( $item['label'] );
 		echo '</a>';
 		if ( $has_children ) {
 			echo '<ul class="sub-menu">';
 			foreach ( $item['children'] as $child ) {
-				echo '<li><a href="' . esc_url( $child['url'] ) . '">' . esc_html( $child['label'] ) . '</a></li>';
+				echo '<li><a href="' . esc_url( jsvn_resolve_url( $child['url'] ) ) . '">' . esc_html( $child['label'] ) . '</a></li>';
 			}
 			echo '</ul>';
 		}

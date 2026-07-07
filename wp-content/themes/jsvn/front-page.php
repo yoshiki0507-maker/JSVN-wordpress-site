@@ -13,26 +13,17 @@ get_header();
 
 <!-- ============================ メインビジュアル（スライドショー） ============================ -->
 <?php
-$jsvn_slides = array();
-$jsvn_hero   = jsvn_hero_image_url();
-if ( $jsvn_hero ) {
-	$jsvn_slides[] = $jsvn_hero;
-}
-foreach ( array( 'slide-1.svg', 'slide-2.svg', 'slide-3.svg' ) as $jsvn_s ) {
-	if ( file_exists( get_template_directory() . '/assets/images/' . $jsvn_s ) ) {
-		$jsvn_slides[] = get_template_directory_uri() . '/assets/images/' . $jsvn_s;
-	}
-}
-if ( empty( $jsvn_slides ) ) {
-	$jsvn_slides[] = get_template_directory_uri() . '/assets/images/camphor-tree.svg';
-}
+// カスタマイザーで登録された画像のみ表示（未登録なら深緑背景＋コピーのみ）
+$jsvn_slides = jsvn_hero_images();
 ?>
-<section class="jsvn-visual" data-jsvn-slider>
+<section class="jsvn-visual<?php echo empty( $jsvn_slides ) ? ' jsvn-visual--plain' : ''; ?>" data-jsvn-slider>
+	<?php if ( ! empty( $jsvn_slides ) ) : ?>
 	<div class="jsvn-slides" aria-hidden="true">
 		<?php foreach ( $jsvn_slides as $jsvn_i => $jsvn_src ) : ?>
 			<div class="jsvn-slide<?php echo 0 === $jsvn_i ? ' is-active' : ''; ?>" style="background-image:url('<?php echo esc_url( $jsvn_src ); ?>');"></div>
 		<?php endforeach; ?>
 	</div>
+	<?php endif; ?>
 	<div class="jsvn-visual__scrim"></div>
 	<div class="jsvn-container">
 		<div class="jsvn-visual__inner">
