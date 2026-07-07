@@ -944,12 +944,40 @@ function jsvn_sns_icons( $extra_class = '' ) {
  * ============================================================= */
 
 /**
- * 都道府県別の会員数（サンプル）。
- * 実データは管理画面入力や学会バンク連携に置き換え可能。
- * jsvn_member_counts フィルターで上書きできます。
+ * 「名称,人数」形式の複数行テキストを連想配列に変換する。
+ * 例）東京都,120  → array( '東京都' => 120 )
+ * カンマは半角・全角どちらでもOK。空行や不正な行は無視。
  */
-function jsvn_member_counts() {
-	$counts = array(
+function jsvn_parse_count_lines( $text ) {
+	$out = array();
+	if ( ! is_string( $text ) || '' === trim( $text ) ) {
+		return $out;
+	}
+	$lines = preg_split( '/\r\n|\r|\n/', $text );
+	foreach ( $lines as $line ) {
+		$line = trim( $line );
+		if ( '' === $line ) {
+			continue;
+		}
+		// 半角/全角カンマ・読点・タブを区切りとして許可
+		$parts = preg_split( '/[,，、\t]+/u', $line );
+		if ( count( $parts ) < 2 ) {
+			continue;
+		}
+		$name = trim( $parts[0] );
+		$num  = (int) preg_replace( '/[^0-9]/', '', $parts[1] );
+		if ( '' !== $name ) {
+			$out[ $name ] = $num;
+		}
+	}
+	return $out;
+}
+
+/**
+ * 都道府県別の会員数（初期サンプル値）。
+ */
+function jsvn_member_counts_defaults() {
+	return array(
 		'北海道' => 86, '青森県' => 12, '秋田県' => 9, '岩手県' => 11, '山形県' => 10, '宮城県' => 24,
 		'新潟県' => 18, '福島県' => 16, '長野県' => 20, '群馬県' => 15, '栃木県' => 14, '茨城県' => 19,
 		'富山県' => 8, '石川県' => 10, '福井県' => 7, '山梨県' => 7, '埼玉県' => 38, '千葉県' => 34,
@@ -959,6 +987,29 @@ function jsvn_member_counts() {
 		'徳島県' => 7, '愛媛県' => 11, '高知県' => 6, '福岡県' => 44, '大分県' => 10, '佐賀県' => 6,
 		'熊本県' => 15, '宮崎県' => 8, '長崎県' => 10, '鹿児島県' => 12, '沖縄県' => 9,
 	);
+}
+
+/**
+ * 連想配列を「名称,人数」形式の複数行テキストに変換（Customizerの初期値・表示用）。
+ */
+function jsvn_counts_to_text( $counts ) {
+	$lines = array();
+	foreach ( $counts as $name => $v ) {
+		$lines[] = $name . ',' . (int) $v;
+	}
+	return implode( "\n", $lines );
+}
+
+/**
+ * 都道府県別の会員数。
+ * [外観 > カスタマイズ > 会員数データ] の入力があればそれを使い、なければ初期値。
+ * jsvn_member_counts フィルターで学会バンク連携・API等に差し替え可能。
+ */
+function jsvn_member_counts() {
+	$defaults = jsvn_member_counts_defaults();
+	$raw      = get_theme_mod( 'jsvn_pref_counts', '' );
+	$parsed   = jsvn_parse_count_lines( $raw );
+	$counts   = ! empty( $parsed ) ? $parsed : $defaults;
 	return apply_filters( 'jsvn_member_counts', $counts );
 }
 
@@ -1030,17 +1081,28 @@ function jsvn_render_member_map() {
 }
 
 /**
- * 保有資格別の会員数（サンプル）。
- * jsvn_member_qualifications フィルターで上書きできます。
+ * 保有資格別の会員数（初期サンプル値）。
  */
-function jsvn_member_qualifications() {
-	$q = array(
+function jsvn_member_qualifications_defaults() {
+	return array(
 		'認定看護師'        => 312,
 		'専門看護師'        => 86,
 		'認定看護管理者'    => 54,
 		'特定行為修了者'    => 128,
 		'その他学会ライセンス' => 240,
 	);
+}
+
+/**
+ * 保有資格別の会員数。
+ * [外観 > カスタマイズ > 会員数データ] の入力があればそれを使い、なければ初期値。
+ * jsvn_member_qualifications フィルターで上書きできます。
+ */
+function jsvn_member_qualifications() {
+	$defaults = jsvn_member_qualifications_defaults();
+	$raw      = get_theme_mod( 'jsvn_qual_counts', '' );
+	$parsed   = jsvn_parse_count_lines( $raw );
+	$q        = ! empty( $parsed ) ? $parsed : $defaults;
 	return apply_filters( 'jsvn_member_qualifications', $q );
 }
 
@@ -1067,6 +1129,45 @@ function jsvn_render_member_quals() {
 	}
 	echo '</div></div>';
 }
+
+/**
+ * 会員数データを管理画面（カスタマイザー）から手入力できるようにする。
+ * [外観 > カスタマイズ > 会員数データ]
+ */
+function jsvn_customize_members_data( $wp_customize ) {
+	$wp_customize->add_section( 'jsvn_members_data', array(
+		'title'       => __( '会員数データ（地図・資格）', 'jsvn' ),
+		'priority'    => 45,
+		'description' => __( '「名称,人数」を1行に1件ずつ入力してください。ここを書き換えると、会員分布ページの地図・順位・合計・資格グラフが自動で更新されます。', 'jsvn' ),
+	) );
+
+	// 都道府県別の会員数
+	$wp_customize->add_setting( 'jsvn_pref_counts', array(
+		'default'           => jsvn_counts_to_text( jsvn_member_counts_defaults() ),
+		'sanitize_callback' => 'sanitize_textarea_field',
+	) );
+	$wp_customize->add_control( 'jsvn_pref_counts', array(
+		'label'       => __( '都道府県別の会員数', 'jsvn' ),
+		'description' => __( '例）東京都,120 のように「都道府県名,人数」を1行ずつ。空欄や削除した県は0名として扱われます。', 'jsvn' ),
+		'section'     => 'jsvn_members_data',
+		'type'        => 'textarea',
+		'input_attrs' => array( 'rows' => 12, 'style' => 'font-family:monospace;' ),
+	) );
+
+	// 保有資格別の会員数
+	$wp_customize->add_setting( 'jsvn_qual_counts', array(
+		'default'           => jsvn_counts_to_text( jsvn_member_qualifications_defaults() ),
+		'sanitize_callback' => 'sanitize_textarea_field',
+	) );
+	$wp_customize->add_control( 'jsvn_qual_counts', array(
+		'label'       => __( '保有資格別の会員数', 'jsvn' ),
+		'description' => __( '例）認定看護師,312 のように「資格名,人数」を1行ずつ。行を増やせば項目も増えます。', 'jsvn' ),
+		'section'     => 'jsvn_members_data',
+		'type'        => 'textarea',
+		'input_attrs' => array( 'rows' => 6, 'style' => 'font-family:monospace;' ),
+	) );
+}
+add_action( 'customize_register', 'jsvn_customize_members_data' );
 
 /* =============================================================
  *  サイトの文言をカスタマイザーから編集できるようにする
