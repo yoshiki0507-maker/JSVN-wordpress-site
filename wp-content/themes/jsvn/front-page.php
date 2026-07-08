@@ -85,22 +85,10 @@ $jsvn_slides = jsvn_hero_images();
 						endwhile;
 						wp_reset_postdata();
 					else :
-						// 雛形（投稿が未登録のとき）
-						$ph = array(
-							array( '2026.06.20', 'お知らせ', '', '会員募集を開始いたしました' ),
-							array( '2026.06.15', '学術大会', 'jsvn-news__cat--academic', '第1回学術集会の開催が決定しました' ),
-							array( '2026.06.01', 'イベント', 'jsvn-news__cat--event', '設立記念シンポジウムを開催します' ),
-							array( '2026.05.20', 'お知らせ', '', '公式サイトを公開しました' ),
-						);
-						foreach ( $ph as $row ) :
-							?>
-							<div class="jsvn-news__item">
-								<span class="jsvn-news__date"><?php echo esc_html( $row[0] ); ?></span>
-								<span class="jsvn-news__cat <?php echo esc_attr( $row[2] ); ?>"><?php echo esc_html( $row[1] ); ?></span>
-								<span class="jsvn-news__title"><?php echo esc_html( $row[3] ); ?></span>
-							</div>
-							<?php
-						endforeach;
+						// 投稿がまだ無いとき
+						?>
+						<p class="jsvn-feed-empty">現在お知らせはありません。［投稿］から追加すると、ここに表示されます。</p>
+						<?php
 					endif;
 					?>
 				</div>
@@ -245,22 +233,10 @@ $jsvn_slides = jsvn_hero_images();
 						endwhile;
 						wp_reset_postdata();
 					else :
-						$bph = array(
-							array( '2026.06.18', '設立準備委員会の様子をご紹介します' ),
-							array( '2026.06.10', '訪問看護の現場から：ある一日' ),
-							array( '2026.06.02', '学術大会に向けた準備が始まりました' ),
-						);
-						foreach ( $bph as $b ) :
-							?>
-							<div class="jsvn-blogcard">
-								<span class="jsvn-blogcard__thumb"></span>
-								<span class="jsvn-blogcard__body">
-									<span class="jsvn-blogcard__date"><?php echo esc_html( $b[0] ); ?></span>
-									<h3><?php echo esc_html( $b[1] ); ?></h3>
-								</span>
-							</div>
-							<?php
-						endforeach;
+						// 投稿がまだ無いとき
+						?>
+						<p class="jsvn-feed-empty">現在ブログの投稿はありません。［投稿］でカテゴリー「ブログ」を選んで公開すると、ここに表示されます。</p>
+						<?php
 					endif;
 					?>
 				</div>
