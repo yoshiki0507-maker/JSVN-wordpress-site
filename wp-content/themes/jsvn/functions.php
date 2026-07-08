@@ -610,6 +610,10 @@ function jsvn_seed_pages() {
 			'title'   => 'お問い合わせ',
 			'content' => "<p>本会へのお問い合わせは、以下よりお願いいたします。</p>\n<p>メール：（準備中）<br>お問い合わせフォームを設置予定です。</p>",
 		),
+		'news' => array(
+			'title'   => 'お知らせ',
+			'content' => "<p>日本訪問看護学会からのお知らせを掲載します。最新のお知らせは下記の一覧をご覧ください。</p>",
+		),
 
 		// --- 追加ページ（他学会サイトの定番構成に合わせて拡充）---
 		'members' => array(
@@ -707,6 +711,27 @@ function jsvn_seed_pages() {
 	}
 }
 add_action( 'after_switch_theme', 'jsvn_seed_pages' );
+
+/**
+ * バージョン更新時に、不足している固定ページの作成・メニュー割り当て・
+ * リライトルールの再構築を一度だけ行う。
+ *
+ * テーマ有効化（after_switch_theme）を伴わないファイル差し替え更新でも、
+ * 新しく追加したページ（例：お知らせ /news/）や、カスタム投稿の
+ * アーカイブ（例：/events/）が 404 にならないようにするための保険。
+ */
+function jsvn_maybe_seed() {
+	if ( get_option( 'jsvn_seed_version' ) === JSVN_VERSION ) {
+		return;
+	}
+	jsvn_seed_pages();
+	if ( function_exists( 'jsvn_seed_menu' ) ) {
+		jsvn_seed_menu();
+	}
+	flush_rewrite_rules();
+	update_option( 'jsvn_seed_version', JSVN_VERSION );
+}
+add_action( 'admin_init', 'jsvn_maybe_seed' );
 
 /* =============================================================
  *  役員名簿（顔写真＋所属＋資格＋経歴）

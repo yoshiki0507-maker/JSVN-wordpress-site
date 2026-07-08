@@ -1001,6 +1001,10 @@ ul, ol { margin: 0 0 1.2em; padding-left: 1.4em; }
 
   /* モバイルナビ */
   .jsvn-burger { display:block; }
+  /* backdrop-filter は position:fixed の含有ブロックを作ってしまい、
+     オフキャンバスメニューがヘッダーの高さに閉じ込められる不具合の原因になる。
+     モバイルでは無効化して、メニューを画面全体に正しく表示する。 */
+  .jsvn-header { -webkit-backdrop-filter: none; backdrop-filter: none; background:#fff; }
   .jsvn-nav {
     position: fixed; inset: 0 0 0 auto; width: min(80%, 320px);
     background:#fff; box-shadow: -8px 0 30px rgba(0,0,0,.12);
