@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit; // 直接アクセスを禁止
 }
 
-define( 'JSVN_VERSION', '1.2.0' );
+define( 'JSVN_VERSION', '1.3.0' );
 
 /**
  * テーマの基本セットアップ
@@ -138,9 +138,11 @@ function jsvn_register_post_types() {
 			'menu_name'     => __( '学術大会', 'jsvn' ),
 		),
 		'public'       => true,
-		'has_archive'  => true,
+		// 一覧は固定ページ /events/（page-events.php）で表示するためアーカイブは無効化。
+		// 個別の大会・研究会は /event/{スラッグ} で表示。
+		'has_archive'  => false,
 		'menu_icon'    => 'dashicons-megaphone',
-		'rewrite'      => array( 'slug' => 'events' ),
+		'rewrite'      => array( 'slug' => 'event' ),
 		'supports'     => array( 'title', 'editor', 'thumbnail', 'excerpt' ),
 		'show_in_rest' => true,
 	) );
@@ -613,6 +615,10 @@ function jsvn_seed_pages() {
 		'news' => array(
 			'title'   => 'お知らせ',
 			'content' => "<p>日本訪問看護学会からのお知らせを掲載します。最新のお知らせは下記の一覧をご覧ください。</p>",
+		),
+		'events' => array(
+			'title'   => '学術大会・研究会',
+			'content' => "<p>日本訪問看護学会が主催・共催する学術大会、研究会、セミナー等の情報を掲載します。</p>\n<p>開催が決まり次第、こちらと［学術大会］（管理画面）からご案内します。</p>",
 		),
 
 		// --- 追加ページ（他学会サイトの定番構成に合わせて拡充）---

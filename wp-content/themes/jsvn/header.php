@@ -36,7 +36,7 @@ $has_utility = has_nav_menu( 'utility' );
 			) );
 			?>
 		<?php else : ?>
-			<a href="<?php echo esc_url( home_url( '/contact/' ) ); ?>">お問い合わせ</a>
+			<a href="<?php echo esc_url( jsvn_resolve_url( home_url( '/contact/' ) ) ); ?>">お問い合わせ</a>
 			<a href="<?php echo esc_url( jsvn_login_url() ); ?>" target="_blank" rel="noopener">会員ログイン（学会バンク）</a>
 		<?php endif; ?>
 	</div>
