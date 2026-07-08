@@ -59,11 +59,16 @@ $jsvn_slides = jsvn_hero_images();
 				</div>
 				<div class="jsvn-news__list">
 					<?php
-					$news = new WP_Query( array(
+					$news_args = array(
 						'post_type'           => 'post',
 						'posts_per_page'      => 6,
 						'ignore_sticky_posts' => true,
-					) );
+					);
+					$jsvn_blog_cid = jsvn_blog_cat_id();
+					if ( $jsvn_blog_cid ) {
+						$news_args['category__not_in'] = array( $jsvn_blog_cid ); // ブログはお知らせ欄に出さない
+					}
+					$news = new WP_Query( $news_args );
 					if ( $news->have_posts() ) :
 						while ( $news->have_posts() ) : $news->the_post();
 							$cats      = get_the_category();

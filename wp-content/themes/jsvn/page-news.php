@@ -27,11 +27,16 @@ while ( have_posts() ) : the_post();
 			<?php endif; ?>
 
 			<?php
-			$jsvn_news = new WP_Query( array(
+			$jsvn_news_args = array(
 				'post_type'           => 'post',
 				'posts_per_page'      => 50,
 				'ignore_sticky_posts' => true,
-			) );
+			);
+			$jsvn_blog_cid = jsvn_blog_cat_id();
+			if ( $jsvn_blog_cid ) {
+				$jsvn_news_args['category__not_in'] = array( $jsvn_blog_cid ); // ブログはお知らせ一覧に出さない
+			}
+			$jsvn_news = new WP_Query( $jsvn_news_args );
 			if ( $jsvn_news->have_posts() ) :
 				?>
 				<div class="jsvn-news__list">

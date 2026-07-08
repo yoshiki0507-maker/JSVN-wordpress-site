@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit; // 直接アクセスを禁止
 }
 
-define( 'JSVN_VERSION', '1.3.0' );
+define( 'JSVN_VERSION', '1.4.0' );
 
 /**
  * テーマの基本セットアップ
@@ -174,6 +174,15 @@ function jsvn_category_class( $category_slug ) {
 		'academic' => 'jsvn-news__cat--academic',
 	);
 	return isset( $map[ $category_slug ] ) ? $map[ $category_slug ] : '';
+}
+
+/**
+ * ブログ用カテゴリー（スラッグ blog）のIDを返す。無ければ0。
+ * お知らせ欄からブログ投稿を除外する等に使用。
+ */
+function jsvn_blog_cat_id() {
+	$term = get_term_by( 'slug', 'blog', 'category' );
+	return $term ? (int) $term->term_id : 0;
 }
 
 /**
@@ -731,6 +740,7 @@ function jsvn_maybe_seed() {
 		return;
 	}
 	jsvn_seed_pages();
+	jsvn_seed_terms();
 	if ( function_exists( 'jsvn_seed_menu' ) ) {
 		jsvn_seed_menu();
 	}
@@ -738,6 +748,18 @@ function jsvn_maybe_seed() {
 	update_option( 'jsvn_seed_version', JSVN_VERSION );
 }
 add_action( 'admin_init', 'jsvn_maybe_seed' );
+
+/**
+ * ブログ欄で使うカテゴリー「ブログ」（スラッグ blog）を自動作成する。
+ * これにより /category/blog/ が404にならず、投稿にこのカテゴリーを付けると
+ * トップページのブログ欄に表示される。
+ */
+function jsvn_seed_terms() {
+	if ( ! term_exists( 'blog', 'category' ) ) {
+		wp_insert_term( 'ブログ', 'category', array( 'slug' => 'blog' ) );
+	}
+}
+add_action( 'after_switch_theme', 'jsvn_seed_terms' );
 
 /* =============================================================
  *  役員名簿（顔写真＋所属＋資格＋経歴）
