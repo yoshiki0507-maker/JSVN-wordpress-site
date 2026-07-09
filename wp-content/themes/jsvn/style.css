@@ -4,7 +4,7 @@ Theme URI: https://jsvn.example.jp/
 Author: JSVN Web Team
 Author URI: https://jsvn.example.jp/
 Description: 日本訪問看護学会の公式サイト用カスタムテーマ。訪問看護の「温かさ」と学会としての「学術的な信頼感」を両立させたデザインです。WordPress 6.x 対応。
-Version: 1.5.0
+Version: 1.6.0
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -654,6 +654,27 @@ ul, ol { margin: 0 0 1.2em; padding-left: 1.4em; }
 .jsvn-sponsor:hover { box-shadow: var(--jsvn-shadow-sm); transform: translateY(-2px); color: var(--jsvn-green); }
 .jsvn-sponsor img { max-height: 48px; width: auto; }
 .jsvn-sponsors__more { display: block; text-align: center; padding: .3rem 0 .2rem; font-size: .84rem; font-weight: 700; }
+.jsvn-sponsors__empty { margin: 0; font-size: .82rem; color: var(--jsvn-ink-soft); line-height: 1.7; }
+
+/* 協賛バナー（小さめ・2列グリッド） */
+.jsvn-sponsorlist { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
+.jsvn-sponsorlist__item {
+  display: flex; align-items: center; justify-content: center;
+  padding: .45rem; background: #fff;
+  border: 1px solid var(--jsvn-line); border-radius: var(--jsvn-radius);
+  transition: box-shadow .2s ease, transform .2s ease;
+}
+.jsvn-sponsorlist__item:hover { box-shadow: var(--jsvn-shadow-sm); transform: translateY(-2px); }
+.jsvn-sponsorlist__item img { max-height: 34px; width: auto; }
+
+/* サイドバー：最新のブログ */
+.jsvn-miniposts { list-style: none; margin: 0; padding: 0; }
+.jsvn-miniposts li { border-bottom: 1px dashed var(--jsvn-line); }
+.jsvn-miniposts li:last-child { border-bottom: none; }
+.jsvn-miniposts a { display: block; padding: .5rem 0; }
+.jsvn-miniposts__date { display: block; font-size: .72rem; letter-spacing: .04em; color: var(--jsvn-gold); font-weight: 700; }
+.jsvn-miniposts__title { display: block; font-size: .9rem; color: var(--jsvn-ink); line-height: 1.6; }
+.jsvn-miniposts a:hover .jsvn-miniposts__title { color: var(--jsvn-green); }
 
 /* サイド：サブメニュー */
 .jsvn-sidemenu { border: 1px solid var(--jsvn-line); border-radius: var(--jsvn-radius); background: #fff; overflow: hidden; }

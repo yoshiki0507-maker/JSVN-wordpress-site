@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit; // 直接アクセスを禁止
 }
 
-define( 'JSVN_VERSION', '1.5.0' );
+define( 'JSVN_VERSION', '1.6.0' );
 
 /**
  * テーマの基本セットアップ
@@ -183,6 +183,108 @@ function jsvn_category_class( $category_slug ) {
 function jsvn_blog_cat_id() {
 	$term = get_term_by( 'slug', 'blog', 'category' );
 	return $term ? (int) $term->term_id : 0;
+}
+
+/**
+ * 最新のブログ投稿（カテゴリー blog）をリスト表示する。
+ * 投稿があれば true、無ければ false を返す。
+ */
+function jsvn_render_latest_blog( $count = 3 ) {
+	$args = array(
+		'post_type'           => 'post',
+		'posts_per_page'      => (int) $count,
+		'ignore_sticky_posts' => true,
+	);
+	$cid = jsvn_blog_cat_id();
+	if ( $cid ) {
+		$args['cat'] = $cid;
+	}
+	$q = new WP_Query( $args );
+	if ( ! $q->have_posts() ) {
+		wp_reset_postdata();
+		return false;
+	}
+	echo '<ul class="jsvn-miniposts">';
+	while ( $q->have_posts() ) {
+		$q->the_post();
+		echo '<li><a href="' . esc_url( get_permalink() ) . '">';
+		echo '<span class="jsvn-miniposts__date">' . esc_html( get_the_date( 'Y.m.d' ) ) . '</span>';
+		echo '<span class="jsvn-miniposts__title">' . esc_html( get_the_title() ) . '</span>';
+		echo '</a></li>';
+	}
+	echo '</ul>';
+	wp_reset_postdata();
+	return true;
+}
+
+/**
+ * 協賛企業バナーの登録枠数
+ */
+function jsvn_sponsor_slot_count() {
+	return 12;
+}
+
+/**
+ * カスタマイザーに「協賛企業バナー」設定を追加（画像＋リンクURLを複数）。
+ * ウィジェット画面を使わず、日本語の画面でバナーを登録できるようにする。
+ */
+function jsvn_customize_sponsors( $wp_customize ) {
+	$wp_customize->add_section( 'jsvn_sponsors_sec', array(
+		'title'       => __( '協賛企業バナー', 'jsvn' ),
+		'priority'    => 46,
+		'description' => __( 'サイドバー・トップページに表示する協賛企業／賛助会員のバナー画像とリンク先を登録します。上から順に、登録した分だけ小さめに並びます。', 'jsvn' ),
+	) );
+	for ( $i = 1; $i <= jsvn_sponsor_slot_count(); $i++ ) {
+		$wp_customize->add_setting( "jsvn_sponsor_img_$i", array( 'default' => '', 'sanitize_callback' => 'esc_url_raw' ) );
+		$wp_customize->add_control( new WP_Customize_Image_Control( $wp_customize, "jsvn_sponsor_img_$i", array(
+			/* translators: %d: banner slot number */
+			'label'   => sprintf( __( 'バナー画像 %d', 'jsvn' ), $i ),
+			'section' => 'jsvn_sponsors_sec',
+		) ) );
+		$wp_customize->add_setting( "jsvn_sponsor_url_$i", array( 'default' => '', 'sanitize_callback' => 'esc_url_raw' ) );
+		$wp_customize->add_control( "jsvn_sponsor_url_$i", array(
+			/* translators: %d: banner slot number */
+			'label'   => sprintf( __( 'バナー %d のリンク先URL', 'jsvn' ), $i ),
+			'section' => 'jsvn_sponsors_sec',
+			'type'    => 'url',
+		) );
+	}
+}
+add_action( 'customize_register', 'jsvn_customize_sponsors' );
+
+/**
+ * 登録済みの協賛バナー配列を返す（画像が設定されている枠のみ）。
+ */
+function jsvn_sponsor_banners() {
+	$out = array();
+	for ( $i = 1; $i <= jsvn_sponsor_slot_count(); $i++ ) {
+		$img = get_theme_mod( "jsvn_sponsor_img_$i", '' );
+		if ( $img ) {
+			$out[] = array( 'img' => $img, 'url' => get_theme_mod( "jsvn_sponsor_url_$i", '' ) );
+		}
+	}
+	return $out;
+}
+
+/**
+ * 協賛バナーを小さめに並べて出力する。
+ */
+function jsvn_render_sponsor_banners() {
+	$banners = jsvn_sponsor_banners();
+	if ( empty( $banners ) ) {
+		return false;
+	}
+	echo '<div class="jsvn-sponsorlist">';
+	foreach ( $banners as $b ) {
+		$img = '<img src="' . esc_url( $b['img'] ) . '" alt="' . esc_attr__( '協賛企業バナー', 'jsvn' ) . '" loading="lazy">';
+		if ( ! empty( $b['url'] ) ) {
+			echo '<a class="jsvn-sponsorlist__item" href="' . esc_url( $b['url'] ) . '" target="_blank" rel="noopener">' . $img . '</a>';
+		} else {
+			echo '<span class="jsvn-sponsorlist__item">' . $img . '</span>';
+		}
+	}
+	echo '</div>';
+	return true;
 }
 
 /**
