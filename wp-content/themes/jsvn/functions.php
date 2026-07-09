@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit; // 直接アクセスを禁止
 }
 
-define( 'JSVN_VERSION', '1.4.1' );
+define( 'JSVN_VERSION', '1.5.0' );
 
 /**
  * テーマの基本セットアップ

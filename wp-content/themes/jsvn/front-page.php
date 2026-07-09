@@ -209,7 +209,12 @@ $jsvn_slides = jsvn_hero_images();
 			<div class="jsvn-blog">
 				<div class="jsvn-blog__head">
 					<h2><?php jsvn_e( 'blog_heading', 'ブログ' ); ?></h2>
-					<a class="jsvn-textlink" href="<?php echo esc_url( home_url( '/category/blog/' ) ); ?>">ブログ一覧へ &rsaquo;</a>
+					<?php
+					// パーマリンク設定に依存しない正しいカテゴリーURLを使う
+					$jsvn_blog_cid  = jsvn_blog_cat_id();
+					$jsvn_blog_link = $jsvn_blog_cid ? get_category_link( $jsvn_blog_cid ) : home_url( '/category/blog/' );
+					?>
+					<a class="jsvn-textlink" href="<?php echo esc_url( $jsvn_blog_link ); ?>">ブログ一覧へ &rsaquo;</a>
 				</div>
 				<div class="jsvn-blog__list">
 					<?php
