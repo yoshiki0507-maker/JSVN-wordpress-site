@@ -2,21 +2,15 @@
 /**
  * サイドバー
  *
- * ウィジェット未設定でも日本語で自動表示：
+ * テーマ側で日本語自動表示（英語のウィジェット画面は使いません）：
  *  - 最新のブログ（3件）
- *  - 協賛企業バナー（小さめ／カスタマイザーで登録）
+ *  - 協賛企業バナー（小さめ／[外観 > カスタマイズ > 協賛企業バナー] で登録）
  *  - 入会のご案内
- * ※ [外観 > ウィジェット] の「サイドバー」にウィジェットを追加した場合は
- *   それが上部に加わります（英語のウィジェット画面を触らなくてもOK）。
  *
  * @package JSVN
  */
 ?>
 <aside class="jsvn-sidebar" aria-label="サイドバー">
-
-	<?php if ( is_active_sidebar( 'sidebar-1' ) ) : ?>
-		<?php dynamic_sidebar( 'sidebar-1' ); ?>
-	<?php endif; ?>
 
 	<section class="widget">
 		<h3 class="widget-title">最新のブログ</h3>

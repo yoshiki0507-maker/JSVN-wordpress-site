@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit; // 直接アクセスを禁止
 }
 
-define( 'JSVN_VERSION', '1.6.0' );
+define( 'JSVN_VERSION', '1.6.1' );
 
 /**
  * テーマの基本セットアップ
@@ -99,31 +99,17 @@ function jsvn_resource_hints( $hints, $relation_type ) {
 add_filter( 'wp_resource_hints', 'jsvn_resource_hints', 10, 2 );
 
 /**
- * ウィジェットエリア
+ * ウィジェットエリアについて
+ *
+ * このテーマは、英語のウィジェット画面を使わずに運用できるよう、
+ * サイドバーの内容（最新のブログ・協賛企業バナー・入会案内）を
+ * テーマ側で日本語自動表示します。協賛企業バナーは
+ * [外観 > カスタマイズ > 協賛企業バナー] から登録してください。
+ *
+ * そのためウィジェットエリアは登録していません。
+ * WordPress標準の「Recent Posts」「Categories」等のデフォルトウィジェットは
+ * このテーマでは表示されません（それらはWordPress本体の初期ウィジェットです）。
  */
-function jsvn_widgets() {
-	register_sidebar( array(
-		'name'          => __( 'サイドバー', 'jsvn' ),
-		'id'            => 'sidebar-1',
-		'description'   => __( '記事・固定ページの横に表示されるエリアです。', 'jsvn' ),
-		'before_widget' => '<section id="%1$s" class="widget %2$s">',
-		'after_widget'  => '</section>',
-		'before_title'  => '<h3 class="widget-title">',
-		'after_title'   => '</h3>',
-	) );
-
-	// トップページ右サイドの「協賛企業・企業バナー」枠
-	register_sidebar( array(
-		'name'          => __( '協賛企業バナー（トップ右）', 'jsvn' ),
-		'id'            => 'sponsors',
-		'description'   => __( 'トップページ右側に表示される企業様用のバナー・リンク枠です。画像ウィジェットやカスタムHTMLで企業バナーを追加できます。', 'jsvn' ),
-		'before_widget' => '',
-		'after_widget'  => '',
-		'before_title'  => '',
-		'after_title'   => '',
-	) );
-}
-add_action( 'widgets_init', 'jsvn_widgets' );
 
 /**
  * カスタム投稿タイプ: 学術大会 / 研究会（イベント）

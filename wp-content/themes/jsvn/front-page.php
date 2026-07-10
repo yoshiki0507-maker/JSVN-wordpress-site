@@ -134,11 +134,7 @@ $jsvn_slides = jsvn_hero_images();
 			<section class="jsvn-sponsors" aria-label="協賛企業">
 				<h3 class="jsvn-sponsors__head"><?php jsvn_e( 'sponsors_heading', '協賛企業・賛助会員' ); ?></h3>
 				<div class="jsvn-sponsors__body">
-					<?php if ( jsvn_render_sponsor_banners() ) : ?>
-						<?php /* カスタマイザーで登録した協賛バナーを小さめに表示 */ ?>
-					<?php elseif ( is_active_sidebar( 'sponsors' ) ) : ?>
-						<?php dynamic_sidebar( 'sponsors' ); ?>
-					<?php else : ?>
+					<?php if ( ! jsvn_render_sponsor_banners() ) : ?>
 						<p class="jsvn-sponsors__empty">［外観 &gt; カスタマイズ &gt; 協賛企業バナー］から企業バナーを登録すると、ここに表示されます。</p>
 					<?php endif; ?>
 					<a class="jsvn-sponsors__more" href="<?php echo esc_url( home_url( '/join/' ) ); ?>">企業会員のご案内 &rsaquo;</a>
