@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit; // 直接アクセスを禁止
 }
 
-define( 'JSVN_VERSION', '1.6.1' );
+define( 'JSVN_VERSION', '1.7.0' );
 
 /**
  * テーマの基本セットアップ
@@ -237,6 +237,147 @@ function jsvn_customize_sponsors( $wp_customize ) {
 	}
 }
 add_action( 'customize_register', 'jsvn_customize_sponsors' );
+
+/* -------------------------------------------------------------
+ *  YouTube動画カルーセル ＋ 学術集会フライヤー（トップ中央）
+ * ------------------------------------------------------------- */
+
+/**
+ * YouTubeの各種URL（youtu.be / watch?v= / embed / shorts / live）や
+ * 11桁の動画IDから、動画IDを取り出す。取れなければ空文字。
+ */
+function jsvn_extract_youtube_id( $url ) {
+	$url = trim( (string) $url );
+	if ( '' === $url ) {
+		return '';
+	}
+	if ( preg_match( '/^[A-Za-z0-9_-]{11}$/', $url ) ) {
+		return $url;
+	}
+	if ( preg_match( '~(?:youtu\.be/|youtube\.com/(?:watch\?v=|embed/|shorts/|live/)|[?&]v=)([A-Za-z0-9_-]{11})~', $url, $m ) ) {
+		return $m[1];
+	}
+	return '';
+}
+
+/** YouTube登録枠の数 */
+function jsvn_youtube_slot_count() {
+	return 6;
+}
+
+/**
+ * 登録されたYouTube動画IDの配列を返す。
+ */
+function jsvn_youtube_ids() {
+	$ids = array();
+	for ( $i = 1; $i <= jsvn_youtube_slot_count(); $i++ ) {
+		$id = jsvn_extract_youtube_id( get_theme_mod( "jsvn_yt_$i", '' ) );
+		if ( $id ) {
+			$ids[] = $id;
+		}
+	}
+	return $ids;
+}
+
+/**
+ * カスタマイザー：YouTube動画・学術集会フライヤー
+ */
+function jsvn_customize_media( $wp_customize ) {
+	// YouTube動画
+	$wp_customize->add_section( 'jsvn_youtube_sec', array(
+		'title'       => __( 'YouTube動画（トップ）', 'jsvn' ),
+		'priority'    => 47,
+		'description' => __( 'トップページ中央に、YouTube動画をスライド表示します。動画のURL（例：https://youtu.be/xxxxxxxxxxx）を上から入れてください。2本以上で自動スライドになります。', 'jsvn' ),
+	) );
+	for ( $i = 1; $i <= jsvn_youtube_slot_count(); $i++ ) {
+		$wp_customize->add_setting( "jsvn_yt_$i", array( 'default' => '', 'sanitize_callback' => 'esc_url_raw' ) );
+		$wp_customize->add_control( "jsvn_yt_$i", array(
+			/* translators: %d: 動画枠の番号 */
+			'label'   => sprintf( __( 'YouTube動画 %d のURL', 'jsvn' ), $i ),
+			'section' => 'jsvn_youtube_sec',
+			'type'    => 'url',
+		) );
+	}
+
+	// 学術集会フライヤー
+	$wp_customize->add_section( 'jsvn_flyer_sec', array(
+		'title'       => __( '学術集会フライヤー（トップ）', 'jsvn' ),
+		'priority'    => 48,
+		'description' => __( 'トップページ中央に、学術集会・研究会の案内フライヤー画像を掲載します。画像を登録し、必要ならリンク先URLを設定してください。', 'jsvn' ),
+	) );
+	$wp_customize->add_setting( 'jsvn_flyer_img', array( 'default' => '', 'sanitize_callback' => 'esc_url_raw' ) );
+	$wp_customize->add_control( new WP_Customize_Image_Control( $wp_customize, 'jsvn_flyer_img', array(
+		'label'   => __( 'フライヤー画像', 'jsvn' ),
+		'section' => 'jsvn_flyer_sec',
+	) ) );
+	$wp_customize->add_setting( 'jsvn_flyer_url', array( 'default' => '', 'sanitize_callback' => 'esc_url_raw' ) );
+	$wp_customize->add_control( 'jsvn_flyer_url', array(
+		'label'       => __( 'フライヤーのリンク先URL（任意）', 'jsvn' ),
+		'description' => __( '詳細ページや申込ページのURL。空欄なら画像のみ表示します。', 'jsvn' ),
+		'section'     => 'jsvn_flyer_sec',
+		'type'        => 'url',
+	) );
+}
+add_action( 'customize_register', 'jsvn_customize_media' );
+
+/**
+ * YouTube動画カルーセルを出力（サムネイル表示・クリックで再生・自動スライド）。
+ * 動画があれば true。
+ */
+function jsvn_render_youtube() {
+	$ids = jsvn_youtube_ids();
+	if ( empty( $ids ) ) {
+		return false;
+	}
+	echo '<section class="jsvn-ytsec">';
+	echo '<h2 class="jsvn-home-h2">' . esc_html( jsvn_text( 'youtube_heading', '動画で見る日本訪問看護学会' ) ) . '</h2>';
+	echo '<div class="jsvn-yt" data-jsvn-yt>';
+	echo '<div class="jsvn-yt__viewport"><div class="jsvn-yt__track">';
+	foreach ( $ids as $id ) {
+		$thumb = 'https://i.ytimg.com/vi/' . $id . '/hqdefault.jpg';
+		$embed = 'https://www.youtube-nocookie.com/embed/' . $id . '?autoplay=1&rel=0';
+		echo '<div class="jsvn-yt__slide">';
+		echo '<button type="button" class="jsvn-yt__play" data-embed="' . esc_attr( $embed ) . '" aria-label="' . esc_attr__( '動画を再生', 'jsvn' ) . '">';
+		echo '<img src="' . esc_url( $thumb ) . '" alt="" loading="lazy">';
+		echo '<span class="jsvn-yt__btn" aria-hidden="true"></span>';
+		echo '</button>';
+		echo '</div>';
+	}
+	echo '</div></div>'; // .jsvn-yt__track / .jsvn-yt__viewport
+	if ( count( $ids ) > 1 ) {
+		echo '<button type="button" class="jsvn-yt__nav jsvn-yt__nav--prev" aria-label="' . esc_attr__( '前の動画', 'jsvn' ) . '">&lsaquo;</button>';
+		echo '<button type="button" class="jsvn-yt__nav jsvn-yt__nav--next" aria-label="' . esc_attr__( '次の動画', 'jsvn' ) . '">&rsaquo;</button>';
+		echo '<div class="jsvn-yt__dots">';
+		foreach ( $ids as $i => $id ) {
+			echo '<button type="button" class="jsvn-yt__dot' . ( 0 === $i ? ' is-active' : '' ) . '" data-i="' . esc_attr( $i ) . '" aria-label="' . esc_attr( sprintf( __( 'スライド%d', 'jsvn' ), $i + 1 ) ) . '"></button>';
+		}
+		echo '</div>';
+	}
+	echo '</div>'; // .jsvn-yt
+	echo '</section>';
+	return true;
+}
+
+/**
+ * 学術集会フライヤーを出力。画像があれば true。
+ */
+function jsvn_render_flyer() {
+	$img = get_theme_mod( 'jsvn_flyer_img', '' );
+	if ( ! $img ) {
+		return false;
+	}
+	$url    = get_theme_mod( 'jsvn_flyer_url', '' );
+	$imgtag = '<img class="jsvn-flyer__img" src="' . esc_url( $img ) . '" alt="' . esc_attr__( '学術集会 案内フライヤー', 'jsvn' ) . '" loading="lazy">';
+	echo '<section class="jsvn-flyer">';
+	echo '<h2 class="jsvn-home-h2">' . esc_html( jsvn_text( 'flyer_heading', '学術集会・研究会のご案内' ) ) . '</h2>';
+	if ( $url ) {
+		echo '<a class="jsvn-flyer__link" href="' . esc_url( $url ) . '" target="_blank" rel="noopener">' . $imgtag . '</a>';
+	} else {
+		echo $imgtag;
+	}
+	echo '</section>';
+	return true;
+}
 
 /**
  * 登録済みの協賛バナー配列を返す（画像が設定されている枠のみ）。
@@ -1376,6 +1517,13 @@ function jsvn_content_fields() {
 				'home_founding_heading' => array( '見出し', 'text', '設立趣旨' ),
 				'home_founding_p1'      => array( '本文1', 'textarea', '少子高齢化の進展とともに、療養の場は病院から地域・在宅へと大きく広がっています。訪問看護師は利用者の生活の場に入り、病状だけでなくその人の価値観や生活背景、家族、地域とのつながりを総合的に捉えながら、医療と生活を結ぶ重要な役割を担っています。' ),
 				'home_founding_p2'      => array( '本文2', 'textarea', '日々の臨床で培われた優れた実践や知見は、事業所や地域に留まりがちです。日本訪問看護学会は「訪問看護師の臨床知を、社会を動かす力へ。」を理念に、現場で生まれる疑問や工夫、成果を学術的知見へと高め、臨床・教育・研究・制度へ還元することを目的として設立します。' ),
+			),
+		),
+		'media_home' => array(
+			'title'  => 'トップの動画・フライヤー見出し',
+			'fields' => array(
+				'youtube_heading' => array( 'YouTube動画の見出し', 'text', '動画で見る日本訪問看護学会' ),
+				'flyer_heading'   => array( '学術集会フライヤーの見出し', 'text', '学術集会・研究会のご案内' ),
 			),
 		),
 		'pillars' => array(

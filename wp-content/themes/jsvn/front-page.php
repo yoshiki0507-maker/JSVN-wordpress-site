@@ -105,6 +105,12 @@ $jsvn_slides = jsvn_hero_images();
 				</p>
 			</section>
 
+			<!-- YouTube動画（自動スライド） -->
+			<?php jsvn_render_youtube(); ?>
+
+			<!-- 学術集会フライヤー -->
+			<?php jsvn_render_flyer(); ?>
+
 		</main>
 
 		<!-- ===== サイドカラム ===== -->

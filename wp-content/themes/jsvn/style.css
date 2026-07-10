@@ -4,7 +4,7 @@ Theme URI: https://jsvn.example.jp/
 Author: JSVN Web Team
 Author URI: https://jsvn.example.jp/
 Description: 日本訪問看護学会の公式サイト用カスタムテーマ。訪問看護の「温かさ」と学会としての「学術的な信頼感」を両立させたデザインです。WordPress 6.x 対応。
-Version: 1.6.1
+Version: 1.7.0
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -675,6 +675,53 @@ ul, ol { margin: 0 0 1.2em; padding-left: 1.4em; }
 .jsvn-miniposts__date { display: block; font-size: .72rem; letter-spacing: .04em; color: var(--jsvn-gold); font-weight: 700; }
 .jsvn-miniposts__title { display: block; font-size: .9rem; color: var(--jsvn-ink); line-height: 1.6; }
 .jsvn-miniposts a:hover .jsvn-miniposts__title { color: var(--jsvn-green); }
+
+/* ==========================================================================
+   YouTube動画カルーセル（トップ中央）
+   ========================================================================== */
+.jsvn-ytsec { margin-top: 2.6rem; }
+.jsvn-yt { position: relative; }
+.jsvn-yt__viewport { overflow: hidden; border-radius: var(--jsvn-radius); box-shadow: var(--jsvn-shadow-sm); background: #000; }
+.jsvn-yt__track { display: flex; transition: transform .5s cubic-bezier(.4, 0, .2, 1); }
+.jsvn-yt__slide { min-width: 100%; }
+.jsvn-yt__play {
+  display: block; position: relative; width: 100%; padding: 0; border: 0;
+  background: #000; cursor: pointer; aspect-ratio: 16 / 9;
+}
+.jsvn-yt__play img { width: 100%; height: 100%; object-fit: cover; opacity: .82; transition: opacity .25s ease, transform .4s ease; }
+.jsvn-yt__play:hover img { opacity: 1; transform: scale(1.02); }
+.jsvn-yt__btn {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: 74px; height: 52px; border-radius: 14px; background: rgba(31, 90, 60, .88);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, .35); transition: background .2s ease, transform .2s ease;
+}
+.jsvn-yt__btn::before {
+  content: ""; position: absolute; left: 53%; top: 50%; transform: translate(-50%, -50%);
+  border-style: solid; border-width: 11px 0 11px 19px; border-color: transparent transparent transparent #fff;
+}
+.jsvn-yt__play:hover .jsvn-yt__btn { background: var(--jsvn-coral); transform: translate(-50%, -50%) scale(1.06); }
+.jsvn-yt__frame { position: relative; width: 100%; aspect-ratio: 16 / 9; }
+.jsvn-yt__frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.jsvn-yt__nav {
+  position: absolute; top: calc(50% - 1.2rem); transform: translateY(-50%); z-index: 3;
+  width: 40px; height: 40px; border-radius: 50%; border: 0;
+  background: rgba(255, 255, 255, .92); color: var(--jsvn-navy);
+  font-size: 1.5rem; line-height: 1; cursor: pointer; box-shadow: var(--jsvn-shadow-sm);
+  display: flex; align-items: center; justify-content: center;
+}
+.jsvn-yt__nav--prev { left: 10px; }
+.jsvn-yt__nav--next { right: 10px; }
+.jsvn-yt__nav:hover { background: #fff; color: var(--jsvn-green); }
+.jsvn-yt__dots { display: flex; justify-content: center; gap: .5rem; margin-top: .9rem; }
+.jsvn-yt__dot { width: 9px; height: 9px; border-radius: 50%; border: 0; background: var(--jsvn-line); cursor: pointer; padding: 0; transition: background .2s ease, transform .2s ease; }
+.jsvn-yt__dot.is-active { background: var(--jsvn-green); transform: scale(1.25); }
+
+/* 学術集会フライヤー */
+.jsvn-flyer { margin-top: 2.6rem; }
+.jsvn-flyer__img,
+.jsvn-flyer__link img { width: 100%; border-radius: var(--jsvn-radius); box-shadow: var(--jsvn-shadow-sm); border: 1px solid var(--jsvn-line); }
+.jsvn-flyer__link { display: block; transition: transform .2s ease, box-shadow .2s ease; }
+.jsvn-flyer__link:hover { transform: translateY(-2px); }
 
 /* サイド：サブメニュー */
 .jsvn-sidemenu { border: 1px solid var(--jsvn-line); border-radius: var(--jsvn-radius); background: #fff; overflow: hidden; }

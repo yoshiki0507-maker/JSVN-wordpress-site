@@ -169,3 +169,56 @@
 		start();
 	});
 })();
+
+/**
+ * YouTube動画カルーセル（自動スライド／クリックで再生）
+ */
+(function () {
+	'use strict';
+	document.addEventListener('DOMContentLoaded', function () {
+		var root = document.querySelector('[data-jsvn-yt]');
+		if (!root) return;
+		var track = root.querySelector('.jsvn-yt__track');
+		var slides = root.querySelectorAll('.jsvn-yt__slide');
+		var dots = root.querySelectorAll('.jsvn-yt__dot');
+		var prev = root.querySelector('.jsvn-yt__nav--prev');
+		var next = root.querySelector('.jsvn-yt__nav--next');
+		var idx = 0, timer = null, stopped = false;
+
+		function show(n) {
+			idx = (n + slides.length) % slides.length;
+			if (track) track.style.transform = 'translateX(-' + (idx * 100) + '%)';
+			dots.forEach(function (d, i) { d.classList.toggle('is-active', i === idx); });
+		}
+		function start() { if (slides.length < 2 || stopped) return; stop(); timer = setInterval(function () { show(idx + 1); }, 6000); }
+		function stop() { if (timer) { clearInterval(timer); timer = null; } }
+
+		dots.forEach(function (d) {
+			d.addEventListener('click', function () { show(parseInt(d.getAttribute('data-i'), 10)); if (!stopped) start(); });
+		});
+		if (prev) prev.addEventListener('click', function () { show(idx - 1); if (!stopped) start(); });
+		if (next) next.addEventListener('click', function () { show(idx + 1); if (!stopped) start(); });
+
+		// クリックで再生（サムネイル → 埋め込みプレーヤーに差し替え）。再生中は自動送り停止。
+		root.querySelectorAll('.jsvn-yt__play').forEach(function (btn) {
+			btn.addEventListener('click', function () {
+				var src = btn.getAttribute('data-embed');
+				if (!src) return;
+				var frame = document.createElement('div');
+				frame.className = 'jsvn-yt__frame';
+				var iframe = document.createElement('iframe');
+				iframe.setAttribute('src', src);
+				iframe.setAttribute('title', 'YouTube');
+				iframe.setAttribute('allow', 'autoplay; encrypted-media; picture-in-picture; web-share');
+				iframe.setAttribute('allowfullscreen', '');
+				frame.appendChild(iframe);
+				btn.parentNode.replaceChild(frame, btn);
+				stopped = true;
+				stop();
+			});
+		});
+
+		show(0);
+		start();
+	});
+})();
