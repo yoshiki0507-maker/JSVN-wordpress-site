@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit; // 直接アクセスを禁止
 }
 
-define( 'JSVN_VERSION', '1.7.0' );
+define( 'JSVN_VERSION', '1.7.1' );
 
 /**
  * テーマの基本セットアップ
@@ -1327,6 +1327,46 @@ function jsvn_member_counts() {
 }
 
 /**
+ * 会員が在籍している都道府県を「都・道・府・県」ごとに数え、
+ * 「2県」「1都2県」「1道1府6県」のような表記を返す。
+ * 47都道府県すべてに在籍すれば「全国」。0なら「—」。
+ *
+ * @return array{label:string, present:int} label=表記, present=在籍都道府県数
+ */
+function jsvn_member_area_label() {
+	$counts   = jsvn_member_counts();
+	$standard = array_keys( jsvn_member_counts_defaults() ); // 47都道府県（正式名）
+	$tally    = array( '都' => 0, '道' => 0, '府' => 0, '県' => 0 );
+	$present  = 0;
+
+	foreach ( $standard as $name ) {
+		$v = isset( $counts[ $name ] ) ? (int) $counts[ $name ] : 0;
+		if ( $v >= 1 ) {
+			$present++;
+			$suffix = function_exists( 'mb_substr' ) ? mb_substr( $name, -1 ) : substr( $name, -3 );
+			if ( ! isset( $tally[ $suffix ] ) ) {
+				$suffix = '県'; // 想定外の名称は県として集計
+			}
+			$tally[ $suffix ]++;
+		}
+	}
+
+	if ( 0 === $present ) {
+		return array( 'label' => '—', 'present' => 0 );
+	}
+	if ( $present >= 47 ) {
+		return array( 'label' => '全国', 'present' => 47 );
+	}
+	$label = '';
+	foreach ( array( '都', '道', '府', '県' ) as $s ) {
+		if ( $tally[ $s ] > 0 ) {
+			$label .= $tally[ $s ] . $s;
+		}
+	}
+	return array( 'label' => $label, 'present' => $present );
+}
+
+/**
  * 会員数に応じた塗り色（シーケンシャル緑）
  */
 function jsvn_member_color( $v ) {
@@ -1381,10 +1421,11 @@ function jsvn_render_member_map() {
 	}
 
 	echo '<div class="jsvn-members">';
+	$area = jsvn_member_area_label();
 	echo '<div class="jsvn-members__stats">';
 	echo '<div class="jsvn-mstat"><span class="jsvn-mstat__n">' . esc_html( number_format( $total ) ) . '<small>名</small></span><span class="jsvn-mstat__l">会員総数</span></div>';
-	echo '<div class="jsvn-mstat jsvn-mstat--gold"><span class="jsvn-mstat__n">47<small>都道府県</small></span><span class="jsvn-mstat__l">活動エリア</span></div>';
-	echo '<div class="jsvn-mstat"><span class="jsvn-mstat__n">全国</span><span class="jsvn-mstat__l">会員在籍</span></div>';
+	echo '<div class="jsvn-mstat jsvn-mstat--gold"><span class="jsvn-mstat__n">' . esc_html( $area['present'] ) . '<small>／47都道府県</small></span><span class="jsvn-mstat__l">活動エリア</span></div>';
+	echo '<div class="jsvn-mstat"><span class="jsvn-mstat__n jsvn-mstat__n--area">' . esc_html( $area['label'] ) . '</span><span class="jsvn-mstat__l">会員在籍</span></div>';
 	echo '</div>';
 	echo '<div class="jsvn-members__grid">';
 	echo '<div class="jsvn-members__mapwrap">' . $svg . '<div class="jsvn-members__legend">' . $legend . '</div></div>';
