@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit; // 直接アクセスを禁止
 }
 
-define( 'JSVN_VERSION', '1.11.0' );
+define( 'JSVN_VERSION', '1.11.1' );
 
 /**
  * テーマの基本セットアップ
@@ -798,9 +798,12 @@ add_action( 'after_switch_theme', 'jsvn_seed_menu', 20 );
 function jsvn_join_page_content() {
 	return "<p>訪問看護に関わるすべての方を歓迎します。職種・経験は問いません。入会をご希望の方は、以下をご確認ください。</p>\n"
 		. "<h2>会員種別と年会費</h2>\n"
+		. "<h3>入会金</h3>\n"
+		. "<table><tbody>\n"
+		. "<tr><th>入会時のみ（初回のみ）</th><td>3,000円</td></tr>\n"
+		. "</tbody></table>\n"
 		. "<h3>個人会員</h3>\n"
 		. "<table><tbody>\n"
-		. "<tr><th>入会金（入会時のみ）</th><td>3,000円</td></tr>\n"
 		. "<tr><th>訪問看護所属会員</th><td>年会費 5,000円</td></tr>\n"
 		. "<tr><th>通常会員</th><td>年会費 7,000円</td></tr>\n"
 		. "<tr><th>一般・学生会員</th><td>年会費 2,000円</td></tr>\n"
@@ -1018,7 +1021,7 @@ add_action( 'admin_init', 'jsvn_maybe_seed' );
  */
 function jsvn_sync_join_content() {
 	$flag = 'jsvn_join_content_ver';
-	$want = 'fees-2026-08d';
+	$want = 'fees-2026-08e';
 	if ( get_option( $flag ) === $want ) {
 		return;
 	}
@@ -1027,10 +1030,16 @@ function jsvn_sync_join_content() {
 		$content = (string) $page->post_content;
 		$before  = $content;
 
-		// 入会金（3,000円）を個人会員表の先頭に一度だけ追加（最初の<tbody>直後）
-		if ( false === strpos( $content, '入会金' ) ) {
-			$adm = '<tr><th>入会金（入会時のみ）</th><td>3,000円</td></tr>' . "\n";
-			$tmp = preg_replace( '~<tbody[^>]*>~i', '$0' . "\n" . $adm, $content, 1 );
+		// 入会金を「個人会員の上」に独立セクションとして配置する。
+		// (1) 表の中にある入会金の行を削除（過去バージョンで個人会員表に入れていた分）
+		$tmp = preg_replace( '~<tr\b[^>]*>(?:(?!</tr>).)*?入会金(?:(?!</tr>).)*?</tr>\s*~su', '', $content );
+		if ( null !== $tmp ) {
+			$content = $tmp;
+		}
+		// (2) まだ独立見出しが無ければ、個人会員の直前に入会金セクションを挿入
+		if ( false === strpos( $content, '<h3>入会金</h3>' ) ) {
+			$adm_section = "<h3>入会金</h3>\n<table><tbody>\n<tr><th>入会時のみ（初回のみ）</th><td>3,000円</td></tr>\n</tbody></table>\n";
+			$tmp = preg_replace( '~(<h3\b[^>]*>\s*個人会員\s*</h3>)~u', $adm_section . '$1', $content, 1 );
 			if ( null !== $tmp ) {
 				$content = $tmp;
 			}
