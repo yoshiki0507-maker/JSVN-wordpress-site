@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit; // 直接アクセスを禁止
 }
 
-define( 'JSVN_VERSION', '1.7.1' );
+define( 'JSVN_VERSION', '1.8.0' );
 
 /**
  * テーマの基本セットアップ
@@ -1174,6 +1174,98 @@ function jsvn_seed_officers() {
 add_action( 'after_switch_theme', 'jsvn_seed_officers' );
 
 /* =============================================================
+ *  賛助会員（名前・所属のみのシンプル一覧）
+ * ============================================================= */
+
+/**
+ * 賛助会員リストのテキスト（1行に「名前,所属」）を配列に変換。
+ * カンマは半角・全角どちらでもOK。所属は省略可。
+ *
+ * @return array 各要素 array('name'=>string, 'affil'=>string)
+ */
+function jsvn_parse_supporters( $text ) {
+	$out = array();
+	if ( ! is_string( $text ) || '' === trim( $text ) ) {
+		return $out;
+	}
+	$lines = preg_split( '/\r\n|\r|\n/', $text );
+	foreach ( $lines as $line ) {
+		$line = trim( $line );
+		if ( '' === $line ) {
+			continue;
+		}
+		$parts = preg_split( '/[,，、\t]+/u', $line, 2 );
+		$name  = trim( $parts[0] );
+		$affil = isset( $parts[1] ) ? trim( $parts[1] ) : '';
+		if ( '' !== $name ) {
+			$out[] = array( 'name' => $name, 'affil' => $affil );
+		}
+	}
+	return $out;
+}
+
+/**
+ * 登録済みの賛助会員配列を返す。
+ */
+function jsvn_supporters() {
+	$raw = get_theme_mod( 'jsvn_supporters', '' );
+	return apply_filters( 'jsvn_supporters', jsvn_parse_supporters( $raw ) );
+}
+
+/**
+ * カスタマイザーに「賛助会員」設定（名前,所属の一覧）を追加。
+ */
+function jsvn_customize_supporters( $wp_customize ) {
+	$wp_customize->add_section( 'jsvn_supporters_sec', array(
+		'title'       => __( '賛助会員', 'jsvn' ),
+		'priority'    => 49,
+		'description' => __( '「役員・理事名簿」ページに表示する賛助会員の一覧です。1行に1名（1社）、「名前,所属」の形式で入力してください。所属は空欄でも構いません。例）山田 太郎,○○株式会社', 'jsvn' ),
+	) );
+	$wp_customize->add_setting( 'jsvn_supporters', array(
+		'default'           => '',
+		'sanitize_callback' => 'sanitize_textarea_field',
+	) );
+	$wp_customize->add_control( 'jsvn_supporters', array(
+		'label'       => __( '賛助会員一覧（名前,所属）', 'jsvn' ),
+		'section'     => 'jsvn_supporters_sec',
+		'type'        => 'textarea',
+		'input_attrs' => array(
+			'rows'        => 10,
+			'placeholder' => "山田 太郎,○○株式会社\n佐藤 花子,△△訪問看護ステーション",
+		),
+	) );
+}
+add_action( 'customize_register', 'jsvn_customize_supporters' );
+
+/**
+ * 賛助会員一覧を出力（名前・所属のみのシンプル表示）。登録があれば true。
+ */
+function jsvn_render_supporters() {
+	$list = jsvn_supporters();
+	if ( empty( $list ) ) {
+		return false;
+	}
+	echo '<section class="jsvn-supporters">';
+	echo '<h2 class="jsvn-officer-role-h">' . esc_html( jsvn_text( 'supporters_heading', '賛助会員' ) ) . '<span>' . count( $list ) . '件</span></h2>';
+	$lead = jsvn_text( 'supporters_lead', '本会の活動を温かくご支援いただいている賛助会員の皆さまです。（順不同・敬称略）' );
+	if ( $lead ) {
+		echo '<p class="jsvn-supporters__lead">' . esc_html( $lead ) . '</p>';
+	}
+	echo '<ul class="jsvn-supporters__list">';
+	foreach ( $list as $s ) {
+		echo '<li class="jsvn-supporter">';
+		echo '<span class="jsvn-supporter__name">' . esc_html( $s['name'] ) . '</span>';
+		if ( '' !== $s['affil'] ) {
+			echo '<span class="jsvn-supporter__affil">' . esc_html( $s['affil'] ) . '</span>';
+		}
+		echo '</li>';
+	}
+	echo '</ul>';
+	echo '</section>';
+	return true;
+}
+
+/* =============================================================
  *  SNS（Instagram / X / Facebook / YouTube）とブログ
  * ============================================================= */
 
@@ -1565,6 +1657,13 @@ function jsvn_content_fields() {
 			'fields' => array(
 				'youtube_heading' => array( 'YouTube動画の見出し', 'text', '動画で見る日本訪問看護学会' ),
 				'flyer_heading'   => array( '学術集会フライヤーの見出し', 'text', '学術集会・研究会のご案内' ),
+			),
+		),
+		'supporters' => array(
+			'title'  => '賛助会員の見出し',
+			'fields' => array(
+				'supporters_heading' => array( '見出し', 'text', '賛助会員' ),
+				'supporters_lead'    => array( '説明文（空欄で非表示）', 'textarea', '本会の活動を温かくご支援いただいている賛助会員の皆さまです。（順不同・敬称略）' ),
 			),
 		),
 		'pillars' => array(

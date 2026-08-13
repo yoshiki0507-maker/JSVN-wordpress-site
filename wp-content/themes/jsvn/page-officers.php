@@ -27,6 +27,8 @@ while ( have_posts() ) : the_post();
 				}
 				// 役員名簿を描画
 				jsvn_render_officers();
+				// 賛助会員を描画（登録があれば）
+				jsvn_render_supporters();
 				?>
 			</article>
 		</div>
