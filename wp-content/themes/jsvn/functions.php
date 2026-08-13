@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit; // 直接アクセスを禁止
 }
 
-define( 'JSVN_VERSION', '1.8.1' );
+define( 'JSVN_VERSION', '1.8.2' );
 
 /**
  * テーマの基本セットアップ
@@ -1020,7 +1020,7 @@ add_action( 'init', 'jsvn_register_officer_cpt' );
  * 役職の選択肢（表示順もこの順）
  */
 function jsvn_officer_roles() {
-	return array( '理事長', '副理事長', '常任理事', '理事', '監事', '名誉会員' );
+	return array( '理事長', '副理事長', '常任理事', '理事', '監事', '顧問', '名誉会員' );
 }
 
 /**
