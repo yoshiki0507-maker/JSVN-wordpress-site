@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit; // 直接アクセスを禁止
 }
 
-define( 'JSVN_VERSION', '1.8.2' );
+define( 'JSVN_VERSION', '1.9.0' );
 
 /**
  * テーマの基本セットアップ
@@ -790,6 +790,32 @@ add_action( 'after_switch_theme', 'jsvn_seed_menu', 20 );
  * すでに同じスラッグのページがあればスキップ（重複作成しない）。
  * 中身はあとから自由に編集できる「たたき台」です。
  */
+
+/**
+ * 入会案内ページの本文（会員種別・年会費など）。
+ * シード（新規作成）と、既存ページの一度きり更新の両方でこれを使う。
+ */
+function jsvn_join_page_content() {
+	return "<p>訪問看護に関わるすべての方を歓迎します。職種・経験は問いません。入会をご希望の方は、以下をご確認ください。</p>\n"
+		. "<h2>会員種別と年会費（予定）</h2>\n"
+		. "<h3>個人会員</h3>\n"
+		. "<table><tbody>\n"
+		. "<tr><th>訪問看護所属会員</th><td>年会費 5,000円</td></tr>\n"
+		. "<tr><th>通常会員</th><td>年会費 7,000円</td></tr>\n"
+		. "<tr><th>一般・学生会員</th><td>年会費 2,000円</td></tr>\n"
+		. "</tbody></table>\n"
+		. "<h3>賛助・企業会員</h3>\n"
+		. "<table><tbody>\n"
+		. "<tr><th>賛助会員</th><td>年会費 15,000円</td></tr>\n"
+		. "<tr><th>企業会員</th><td>年会費 30,000円</td></tr>\n"
+		. "</tbody></table>\n"
+		. "<p><em>※ 会員種別の詳細・要件は今後確定します。</em></p>\n"
+		. "<h2>会員特典</h2>\n"
+		. "<ul>\n<li>学術集会・研究会への会員価格での参加</li>\n<li>学会誌・ニュースレターの購読</li>\n<li>研修プログラム／認定制度の利用</li>\n<li>多職種・全国の仲間とのネットワーク</li>\n</ul>\n"
+		. "<h2>お手続き</h2>\n"
+		. "<p>入会手続きは会員管理システム「学会バンク」を通じて行う予定です。準備が整い次第、こちらにお申し込みリンクを掲載します。各種様式は<a href=\"/downloads/\">各種手続き・様式ダウンロード</a>をご覧ください。</p>";
+}
+
 function jsvn_seed_pages() {
 	$lorem = "<p>このページは準備中です。内容が決まり次第、こちらに掲載します。</p>";
 
@@ -844,7 +870,7 @@ function jsvn_seed_pages() {
 		),
 		'join' => array(
 			'title'   => '入会のご案内',
-			'content' => "<p>訪問看護に関わるすべての方を歓迎します。職種・経験は問いません。入会をご希望の方は、以下をご確認ください。</p>\n<h2>会員種別と年会費（予定）</h2>\n<h3>個人会員</h3>\n<table><tbody>\n<tr><th>訪問看護所属会員</th><td>年会費 5,000円</td></tr>\n<tr><th>通常会員</th><td>年会費 7,000円</td></tr>\n<tr><th>他職種連携会員</th><td>年会費 4,000円</td></tr>\n<tr><th>一般・学生会員</th><td>年会費 1,500円</td></tr>\n<tr><th>プラチナNs会員</th><td>年会費 2,000円</td></tr>\n</tbody></table>\n<h3>賛助・企業会員</h3>\n<table><tbody>\n<tr><th>賛助会員</th><td>年会費 15,000円（1口）</td></tr>\n<tr><th>企業会員</th><td>年会費 30,000円（1口）</td></tr>\n</tbody></table>\n<p><em>※ 会員種別の詳細・要件は今後確定します。</em></p>\n<h2>会員特典</h2>\n<ul>\n<li>学術集会・研究会への会員価格での参加</li>\n<li>学会誌・ニュースレターの購読</li>\n<li>研修プログラム／認定制度の利用</li>\n<li>多職種・全国の仲間とのネットワーク</li>\n</ul>\n<h2>お手続き</h2>\n<p>入会手続きは会員管理システム「学会バンク」を通じて行う予定です。準備が整い次第、こちらにお申し込みリンクを掲載します。各種様式は<a href=\"/downloads/\">各種手続き・様式ダウンロード</a>をご覧ください。</p>",
+			'content' => jsvn_join_page_content(),
 		),
 		'contact' => array(
 			'title'   => 'お問い合わせ',
@@ -977,6 +1003,29 @@ function jsvn_maybe_seed() {
 	update_option( 'jsvn_seed_version', JSVN_VERSION );
 }
 add_action( 'admin_init', 'jsvn_maybe_seed' );
+
+/**
+ * 入会案内ページの会費表を最新内容へ一度だけ更新する。
+ * 既存サイト（すでにページがDBにある）でも、テーマ更新後の管理画面アクセス時に
+ * 一度だけ反映される。$want を変えれば、将来また内容を差し替えられる。
+ * ※ 一度きりのため、その後に手動編集した内容を上書きすることはありません。
+ */
+function jsvn_sync_join_content() {
+	$flag = 'jsvn_join_content_ver';
+	$want = 'fees-2026-08';
+	if ( get_option( $flag ) === $want ) {
+		return;
+	}
+	$page = get_page_by_path( 'join', OBJECT, 'page' );
+	if ( $page ) {
+		wp_update_post( array(
+			'ID'           => $page->ID,
+			'post_content' => jsvn_join_page_content(),
+		) );
+	}
+	update_option( $flag, $want );
+}
+add_action( 'admin_init', 'jsvn_sync_join_content' );
 
 /**
  * ブログ欄で使うカテゴリー「ブログ」（スラッグ blog）を自動作成する。
