@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit; // 直接アクセスを禁止
 }
 
-define( 'JSVN_VERSION', '1.9.0' );
+define( 'JSVN_VERSION', '1.9.1' );
 
 /**
  * テーマの基本セットアップ
@@ -1005,23 +1005,58 @@ function jsvn_maybe_seed() {
 add_action( 'admin_init', 'jsvn_maybe_seed' );
 
 /**
- * 入会案内ページの会費表を最新内容へ一度だけ更新する。
- * 既存サイト（すでにページがDBにある）でも、テーマ更新後の管理画面アクセス時に
- * 一度だけ反映される。$want を変えれば、将来また内容を差し替えられる。
- * ※ 一度きりのため、その後に手動編集した内容を上書きすることはありません。
+ * 入会案内ページの「会費表の該当部分だけ」を一度だけ安全に書き換える。
+ *
+ * ページ全体は上書きしません（手動で編集した他の文章はそのまま残ります）。
+ * 会費行が見つからなければ何も変更しません。$want を変えれば将来また実行できます。
+ *  - 他職種連携会員／プラチナNs会員の行を削除
+ *  - 一般・学生会員：1,500円 → 2,000円
+ *  - 賛助会員・企業会員の「（1口）」表記を削除
+ * ※ 表を <th>/<td> どちらで組んでいても（ブロックエディタ編集後でも）動くように、
+ *   行内のラベル文字で判定します。
  */
 function jsvn_sync_join_content() {
 	$flag = 'jsvn_join_content_ver';
-	$want = 'fees-2026-08';
+	$want = 'fees-2026-08b';
 	if ( get_option( $flag ) === $want ) {
 		return;
 	}
 	$page = get_page_by_path( 'join', OBJECT, 'page' );
 	if ( $page ) {
-		wp_update_post( array(
-			'ID'           => $page->ID,
-			'post_content' => jsvn_join_page_content(),
-		) );
+		$content = (string) $page->post_content;
+		$before  = $content;
+
+		// 行削除ヘルパー（<tr>…ラベル…</tr> を1行だけ安全に除去）
+		$remove_row = function ( $html, $label ) {
+			$pattern = '~<tr\b[^>]*>(?:(?!</tr>).)*?' . preg_quote( $label, '~' ) . '(?:(?!</tr>).)*?</tr>\s*~su';
+			$out     = preg_replace( $pattern, '', $html );
+			return ( null === $out ) ? $html : $out;
+		};
+
+		$content = $remove_row( $content, '他職種連携会員' );
+		$content = $remove_row( $content, 'プラチナ' ); // プラチナNs会員
+
+		// 一般・学生会員の行内だけ 1,500 → 2,000
+		$tmp = preg_replace_callback(
+			'~<tr\b[^>]*>(?:(?!</tr>).)*?一般・学生会員(?:(?!</tr>).)*?</tr>~su',
+			function ( $m ) {
+				return str_replace( array( '1,500', '1500' ), '2,000', $m[0] );
+			},
+			$content
+		);
+		if ( null !== $tmp ) {
+			$content = $tmp;
+		}
+
+		// 「（1口）」表記を削除（会費以外には現れない表記）
+		$content = str_replace( array( '（1口）', '（１口）', '(1口)' ), '', $content );
+
+		if ( $content !== $before ) {
+			wp_update_post( array(
+				'ID'           => $page->ID,
+				'post_content' => $content,
+			) );
+		}
 	}
 	update_option( $flag, $want );
 }
