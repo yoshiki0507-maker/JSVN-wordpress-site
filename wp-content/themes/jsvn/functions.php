@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit; // 直接アクセスを禁止
 }
 
-define( 'JSVN_VERSION', '1.8.0' );
+define( 'JSVN_VERSION', '1.8.1' );
 
 /**
  * テーマの基本セットアップ
@@ -1246,7 +1246,7 @@ function jsvn_render_supporters() {
 		return false;
 	}
 	echo '<section class="jsvn-supporters">';
-	echo '<h2 class="jsvn-officer-role-h">' . esc_html( jsvn_text( 'supporters_heading', '賛助会員' ) ) . '<span>' . count( $list ) . '件</span></h2>';
+	echo '<h2 class="jsvn-officer-role-h">' . esc_html( jsvn_text( 'supporters_heading', '賛助会員' ) ) . '<span>' . count( $list ) . '名</span></h2>';
 	$lead = jsvn_text( 'supporters_lead', '本会の活動を温かくご支援いただいている賛助会員の皆さまです。（順不同・敬称略）' );
 	if ( $lead ) {
 		echo '<p class="jsvn-supporters__lead">' . esc_html( $lead ) . '</p>';
