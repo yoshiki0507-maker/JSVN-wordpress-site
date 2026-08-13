@@ -4,7 +4,7 @@ Theme URI: https://jsvn.example.jp/
 Author: JSVN Web Team
 Author URI: https://jsvn.example.jp/
 Description: 日本訪問看護学会の公式サイト用カスタムテーマ。訪問看護の「温かさ」と学会としての「学術的な信頼感」を両立させたデザインです。WordPress 6.x 対応。
-Version: 1.9.1
+Version: 1.10.0
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -1008,6 +1008,45 @@ ul, ol { margin: 0 0 1.2em; padding-left: 1.4em; }
   .jsvn-article th { width: 34%; }
 }
 .jsvn-article ol, .jsvn-article ul { padding-left:1.5rem; }
+
+/* ==========================================================================
+   入会案内ページ：会費表の特別デザイン（列比率を統一・値段に高級感）
+   ========================================================================== */
+.jsvn-page-join .jsvn-article h3 {
+  font-size: 1.15rem; color: var(--jsvn-navy); margin: 2.2rem 0 .8rem;
+  padding-left: .75rem; border-left: 5px solid var(--jsvn-gold);
+}
+.jsvn-page-join .jsvn-article table {
+  table-layout: fixed; width: 100%; margin: 1rem 0 2.2rem;
+  border-collapse: separate; border-spacing: 0;
+  border: 1px solid var(--jsvn-gold-line); border-radius: 12px; overflow: hidden;
+  box-shadow: 0 10px 30px rgba(22, 61, 41, .09);
+}
+.jsvn-page-join .jsvn-article table :is(th, td) {
+  border: 0; border-bottom: 1px solid var(--jsvn-line);
+  padding: 1.05rem 1.4rem; vertical-align: middle; white-space: normal; word-break: break-word;
+}
+.jsvn-page-join .jsvn-article table tr:last-child :is(th, td) { border-bottom: 0; }
+/* 会員名（左）— 2つの表で幅を均一に */
+.jsvn-page-join .jsvn-article table :is(th, td):first-child {
+  width: 57%; background: var(--jsvn-green-soft); color: var(--jsvn-navy);
+  font-weight: 700; font-size: .98rem; text-align: left; white-space: normal;
+}
+/* 値段（右）— 金のゴールドで高級感・目を引く */
+.jsvn-page-join .jsvn-article table :is(th, td):last-child {
+  width: 43%; text-align: right; white-space: nowrap;
+  border-left: 1px solid var(--jsvn-gold-line);
+  background: linear-gradient(180deg, #fffdf6 0%, #fbf3e2 100%);
+  font-family: var(--jsvn-serif); font-weight: 700;
+  font-size: 1.32rem; letter-spacing: .01em; color: #9c7532;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, .6);
+}
+.jsvn-page-join .jsvn-article table tr:hover :is(th, td):last-child { color: #8a6528; }
+@media (max-width: 600px) {
+  .jsvn-page-join .jsvn-article table :is(th, td) { padding: .8rem .85rem; }
+  .jsvn-page-join .jsvn-article table :is(th, td):first-child { width: 54%; font-size: .9rem; }
+  .jsvn-page-join .jsvn-article table :is(th, td):last-child { width: 46%; font-size: 1.08rem; }
+}
 .jsvn-article li { margin:.35rem 0; }
 .jsvn-article blockquote {
   margin:1.5rem 0; padding:1rem 1.4rem; background:var(--jsvn-cream);

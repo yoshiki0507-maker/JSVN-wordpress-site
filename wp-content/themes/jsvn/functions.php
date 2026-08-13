@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit; // 直接アクセスを禁止
 }
 
-define( 'JSVN_VERSION', '1.9.1' );
+define( 'JSVN_VERSION', '1.10.0' );
 
 /**
  * テーマの基本セットアップ
@@ -800,6 +800,7 @@ function jsvn_join_page_content() {
 		. "<h2>会員種別と年会費（予定）</h2>\n"
 		. "<h3>個人会員</h3>\n"
 		. "<table><tbody>\n"
+		. "<tr><th>入会金（入会時のみ）</th><td>3,000円</td></tr>\n"
 		. "<tr><th>訪問看護所属会員</th><td>年会費 5,000円</td></tr>\n"
 		. "<tr><th>通常会員</th><td>年会費 7,000円</td></tr>\n"
 		. "<tr><th>一般・学生会員</th><td>年会費 2,000円</td></tr>\n"
@@ -1017,7 +1018,7 @@ add_action( 'admin_init', 'jsvn_maybe_seed' );
  */
 function jsvn_sync_join_content() {
 	$flag = 'jsvn_join_content_ver';
-	$want = 'fees-2026-08b';
+	$want = 'fees-2026-08c';
 	if ( get_option( $flag ) === $want ) {
 		return;
 	}
@@ -1025,6 +1026,15 @@ function jsvn_sync_join_content() {
 	if ( $page ) {
 		$content = (string) $page->post_content;
 		$before  = $content;
+
+		// 入会金（3,000円）を個人会員表の先頭に一度だけ追加（最初の<tbody>直後）
+		if ( false === strpos( $content, '入会金' ) ) {
+			$adm = '<tr><th>入会金（入会時のみ）</th><td>3,000円</td></tr>' . "\n";
+			$tmp = preg_replace( '~<tbody[^>]*>~i', '$0' . "\n" . $adm, $content, 1 );
+			if ( null !== $tmp ) {
+				$content = $tmp;
+			}
+		}
 
 		// 行削除ヘルパー（<tr>…ラベル…</tr> を1行だけ安全に除去）
 		$remove_row = function ( $html, $label ) {
@@ -1061,6 +1071,20 @@ function jsvn_sync_join_content() {
 	update_option( $flag, $want );
 }
 add_action( 'admin_init', 'jsvn_sync_join_content' );
+
+/**
+ * 入会案内ページに専用のbodyクラスを付与（会費表の特別デザイン用）。
+ */
+function jsvn_body_class_join( $classes ) {
+	if ( is_page() ) {
+		$obj = get_queried_object();
+		if ( $obj && isset( $obj->post_name ) && 'join' === $obj->post_name ) {
+			$classes[] = 'jsvn-page-join';
+		}
+	}
+	return $classes;
+}
+add_filter( 'body_class', 'jsvn_body_class_join' );
 
 /**
  * ブログ欄で使うカテゴリー「ブログ」（スラッグ blog）を自動作成する。
