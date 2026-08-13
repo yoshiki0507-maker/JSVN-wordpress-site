@@ -4,7 +4,7 @@ Theme URI: https://jsvn.example.jp/
 Author: JSVN Web Team
 Author URI: https://jsvn.example.jp/
 Description: 日本訪問看護学会の公式サイト用カスタムテーマ。訪問看護の「温かさ」と学会としての「学術的な信頼感」を両立させたデザインです。WordPress 6.x 対応。
-Version: 1.10.0
+Version: 1.11.0
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -1010,42 +1010,53 @@ ul, ol { margin: 0 0 1.2em; padding-left: 1.4em; }
 .jsvn-article ol, .jsvn-article ul { padding-left:1.5rem; }
 
 /* ==========================================================================
-   入会案内ページ：会費表の特別デザイン（列比率を統一・値段に高級感）
+   入会案内ページ：会費を「おしゃれなカード」で表示（表組みに見せない）
    ========================================================================== */
 .jsvn-page-join .jsvn-article h3 {
-  font-size: 1.15rem; color: var(--jsvn-navy); margin: 2.2rem 0 .8rem;
-  padding-left: .75rem; border-left: 5px solid var(--jsvn-gold);
+  font-size: 1.1rem; color: var(--jsvn-navy); margin: 2.3rem 0 1rem;
+  padding-left: .8rem; border-left: 5px solid var(--jsvn-gold); letter-spacing: .02em;
+}
+/* table要素をすべてブロック化し、カード風レイアウトに作り替える */
+.jsvn-page-join .jsvn-article table,
+.jsvn-page-join .jsvn-article table tbody,
+.jsvn-page-join .jsvn-article table tr,
+.jsvn-page-join .jsvn-article table th,
+.jsvn-page-join .jsvn-article table td {
+  display: block; border: 0; padding: 0; background: none; white-space: normal;
 }
 .jsvn-page-join .jsvn-article table {
-  table-layout: fixed; width: 100%; margin: 1rem 0 2.2rem;
-  border-collapse: separate; border-spacing: 0;
-  border: 1px solid var(--jsvn-gold-line); border-radius: 12px; overflow: hidden;
-  box-shadow: 0 10px 30px rgba(22, 61, 41, .09);
+  width: 100%; margin: .6rem 0 2rem; box-shadow: none; border-radius: 0;
 }
-.jsvn-page-join .jsvn-article table :is(th, td) {
-  border: 0; border-bottom: 1px solid var(--jsvn-line);
-  padding: 1.05rem 1.4rem; vertical-align: middle; white-space: normal; word-break: break-word;
+.jsvn-page-join .jsvn-article table tbody { display: flex; flex-direction: column; gap: .8rem; }
+.jsvn-page-join .jsvn-article table tr {
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  background: linear-gradient(180deg, #ffffff 0%, #fcfaf2 100%);
+  border: 1px solid var(--jsvn-line); border-left: 4px solid var(--jsvn-gold);
+  border-radius: 14px; padding: 1.1rem 1.6rem;
+  box-shadow: 0 6px 18px rgba(22, 61, 41, .06);
+  transition: transform .2s ease, box-shadow .2s ease;
 }
-.jsvn-page-join .jsvn-article table tr:last-child :is(th, td) { border-bottom: 0; }
-/* 会員名（左）— 2つの表で幅を均一に */
-.jsvn-page-join .jsvn-article table :is(th, td):first-child {
-  width: 57%; background: var(--jsvn-green-soft); color: var(--jsvn-navy);
-  font-weight: 700; font-size: .98rem; text-align: left; white-space: normal;
+.jsvn-page-join .jsvn-article table tr:hover {
+  transform: translateY(-2px); box-shadow: 0 12px 30px rgba(22, 61, 41, .12);
 }
-/* 値段（右）— 金のゴールドで高級感・目を引く */
-.jsvn-page-join .jsvn-article table :is(th, td):last-child {
-  width: 43%; text-align: right; white-space: nowrap;
-  border-left: 1px solid var(--jsvn-gold-line);
-  background: linear-gradient(180deg, #fffdf6 0%, #fbf3e2 100%);
+/* 会員名（左）— 余白いっぱいに広がり横書きになるよう flex:1 */
+.jsvn-page-join .jsvn-article table th {
+  flex: 1 1 auto; min-width: 0;
+  color: var(--jsvn-navy); font-weight: 700; font-size: 1.04rem; text-align: left; line-height: 1.4;
+}
+/* 値段（右）— 金属光沢のゴールド＋明朝体で目を引く */
+.jsvn-page-join .jsvn-article table td {
+  flex: 0 0 auto; text-align: right; white-space: nowrap;
   font-family: var(--jsvn-serif); font-weight: 700;
-  font-size: 1.32rem; letter-spacing: .01em; color: #9c7532;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, .6);
+  font-size: 1.5rem; letter-spacing: .01em; line-height: 1.2;
+  color: #9c7532;
+  background: linear-gradient(92deg, #9c7532 0%, #d8b155 48%, #b8892f 100%);
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
 }
-.jsvn-page-join .jsvn-article table tr:hover :is(th, td):last-child { color: #8a6528; }
 @media (max-width: 600px) {
-  .jsvn-page-join .jsvn-article table :is(th, td) { padding: .8rem .85rem; }
-  .jsvn-page-join .jsvn-article table :is(th, td):first-child { width: 54%; font-size: .9rem; }
-  .jsvn-page-join .jsvn-article table :is(th, td):last-child { width: 46%; font-size: 1.08rem; }
+  .jsvn-page-join .jsvn-article table tr { padding: .95rem 1.15rem; gap: .7rem; }
+  .jsvn-page-join .jsvn-article table th { font-size: .95rem; }
+  .jsvn-page-join .jsvn-article table td { font-size: 1.22rem; }
 }
 .jsvn-article li { margin:.35rem 0; }
 .jsvn-article blockquote {

@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit; // 直接アクセスを禁止
 }
 
-define( 'JSVN_VERSION', '1.10.0' );
+define( 'JSVN_VERSION', '1.11.0' );
 
 /**
  * テーマの基本セットアップ
@@ -797,7 +797,7 @@ add_action( 'after_switch_theme', 'jsvn_seed_menu', 20 );
  */
 function jsvn_join_page_content() {
 	return "<p>訪問看護に関わるすべての方を歓迎します。職種・経験は問いません。入会をご希望の方は、以下をご確認ください。</p>\n"
-		. "<h2>会員種別と年会費（予定）</h2>\n"
+		. "<h2>会員種別と年会費</h2>\n"
 		. "<h3>個人会員</h3>\n"
 		. "<table><tbody>\n"
 		. "<tr><th>入会金（入会時のみ）</th><td>3,000円</td></tr>\n"
@@ -808,7 +808,7 @@ function jsvn_join_page_content() {
 		. "<h3>賛助・企業会員</h3>\n"
 		. "<table><tbody>\n"
 		. "<tr><th>賛助会員</th><td>年会費 15,000円</td></tr>\n"
-		. "<tr><th>企業会員</th><td>年会費 30,000円</td></tr>\n"
+		. "<tr><th>企業会員</th><td>年会費 30,000円（1口）</td></tr>\n"
 		. "</tbody></table>\n"
 		. "<p><em>※ 会員種別の詳細・要件は今後確定します。</em></p>\n"
 		. "<h2>会員特典</h2>\n"
@@ -1018,7 +1018,7 @@ add_action( 'admin_init', 'jsvn_maybe_seed' );
  */
 function jsvn_sync_join_content() {
 	$flag = 'jsvn_join_content_ver';
-	$want = 'fees-2026-08c';
+	$want = 'fees-2026-08d';
 	if ( get_option( $flag ) === $want ) {
 		return;
 	}
@@ -1034,6 +1034,28 @@ function jsvn_sync_join_content() {
 			if ( null !== $tmp ) {
 				$content = $tmp;
 			}
+		}
+
+		// 見出しの「（予定）」を削除
+		$content = str_replace(
+			array( '会員種別と年会費（予定）', '会員種別と年会費(予定)' ),
+			'会員種別と年会費',
+			$content
+		);
+
+		// 企業会員の行に「（1口）」を付与（無ければ）
+		$tmp = preg_replace_callback(
+			'~<tr\b[^>]*>(?:(?!</tr>).)*?企業会員(?:(?!</tr>).)*?</tr>~su',
+			function ( $m ) {
+				if ( false !== strpos( $m[0], '（1口）' ) || false !== strpos( $m[0], '(1口)' ) ) {
+					return $m[0];
+				}
+				return preg_replace( '~(30[,，]?000\s*円)~u', '$1（1口）', $m[0], 1 );
+			},
+			$content
+		);
+		if ( null !== $tmp ) {
+			$content = $tmp;
 		}
 
 		// 行削除ヘルパー（<tr>…ラベル…</tr> を1行だけ安全に除去）
