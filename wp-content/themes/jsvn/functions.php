@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit; // 直接アクセスを禁止
 }
 
-define( 'JSVN_VERSION', '1.11.1' );
+define( 'JSVN_VERSION', '1.12.0' );
 
 /**
  * テーマの基本セットアップ
@@ -1172,18 +1172,21 @@ add_action( 'add_meta_boxes', 'jsvn_officer_metabox' );
 
 function jsvn_officer_metabox_cb( $post ) {
 	wp_nonce_field( 'jsvn_officer_save', 'jsvn_officer_nonce' );
-	$role    = get_post_meta( $post->ID, '_jsvn_role', true );
-	$affil   = get_post_meta( $post->ID, '_jsvn_affiliation', true );
-	$license = get_post_meta( $post->ID, '_jsvn_license', true );
+	$role  = get_post_meta( $post->ID, '_jsvn_role', true );
+	$kana  = get_post_meta( $post->ID, '_jsvn_kana', true );
+	$affil = get_post_meta( $post->ID, '_jsvn_affiliation', true );
+	$term  = get_post_meta( $post->ID, '_jsvn_term', true );
 
 	echo '<p><label><strong>役職</strong><br><select name="jsvn_role" style="width:100%;">';
 	foreach ( jsvn_officer_roles() as $r ) {
 		echo '<option value="' . esc_attr( $r ) . '"' . selected( $role, $r, false ) . '>' . esc_html( $r ) . '</option>';
 	}
 	echo '</select></label></p>';
+	echo '<p><label><strong>氏名のふりがな（並び替え用）</strong><br><input type="text" name="jsvn_kana" value="' . esc_attr( $kana ) . '" style="width:100%;" placeholder="例）やまだ たろう"></label></p>';
+	echo '<p style="color:#777;font-size:12px;margin:-4px 0 10px;">同じ役職の中で、このふりがなの五十音順（あいうえお順）に並びます。空欄なら氏名順になります。</p>';
 	echo '<p><label><strong>所属・肩書</strong><br><input type="text" name="jsvn_affiliation" value="' . esc_attr( $affil ) . '" style="width:100%;" placeholder="例）○○大学大学院 教授"></label></p>';
-	echo '<p><label><strong>保有資格・ライセンス</strong><br><input type="text" name="jsvn_license" value="' . esc_attr( $license ) . '" style="width:100%;" placeholder="例）看護師／保健師／博士（看護学）"></label></p>';
-	echo '<p style="color:#777;font-size:12px;line-height:1.6;">顔写真は右の「アイキャッチ画像」、経歴は本文に入力してください。並び順は「順序」で調整できます。</p>';
+	echo '<p><label><strong>任期</strong><br><input type="text" name="jsvn_term" value="' . esc_attr( $term ) . '" style="width:100%;" placeholder="例）2026年4月〜2028年3月"></label></p>';
+	echo '<p style="color:#777;font-size:12px;line-height:1.6;">氏名は上の「タイトル」欄に入力してください。このページでは顔写真は使いません。</p>';
 }
 
 function jsvn_officer_save( $post_id ) {
@@ -1196,7 +1199,7 @@ function jsvn_officer_save( $post_id ) {
 	if ( ! current_user_can( 'edit_post', $post_id ) ) {
 		return;
 	}
-	foreach ( array( 'jsvn_role' => '_jsvn_role', 'jsvn_affiliation' => '_jsvn_affiliation', 'jsvn_license' => '_jsvn_license' ) as $field => $key ) {
+	foreach ( array( 'jsvn_role' => '_jsvn_role', 'jsvn_kana' => '_jsvn_kana', 'jsvn_affiliation' => '_jsvn_affiliation', 'jsvn_term' => '_jsvn_term' ) as $field => $key ) {
 		if ( isset( $_POST[ $field ] ) ) {
 			update_post_meta( $post_id, $key, sanitize_text_field( wp_unslash( $_POST[ $field ] ) ) );
 		}
@@ -1232,34 +1235,28 @@ function jsvn_render_officers() {
 		if ( empty( $grouped[ $role ] ) ) {
 			continue;
 		}
-		$is_lead = ( '理事長' === $role );
+		// 同じ役職の中で、氏名のふりがな（無ければ氏名）の五十音順に並べ替え
+		usort( $grouped[ $role ], function ( $a, $b ) {
+			$ka = get_post_meta( $a, '_jsvn_kana', true );
+			$kb = get_post_meta( $b, '_jsvn_kana', true );
+			if ( '' === $ka ) { $ka = get_the_title( $a ); }
+			if ( '' === $kb ) { $kb = get_the_title( $b ); }
+			return strcmp( $ka, $kb );
+		} );
 		echo '<h2 class="jsvn-officer-role-h">' . esc_html( $role ) . '<span>' . count( $grouped[ $role ] ) . '名</span></h2>';
-		echo '<div class="jsvn-officers' . ( $is_lead ? ' jsvn-officers--lead' : '' ) . '">';
+		echo '<div class="jsvn-officers">';
 		foreach ( $grouped[ $role ] as $id ) {
-			$affil   = get_post_meta( $id, '_jsvn_affiliation', true );
-			$license = get_post_meta( $id, '_jsvn_license', true );
-			$bio     = get_post_field( 'post_content', $id );
-			echo '<article class="jsvn-officer' . ( $is_lead ? ' jsvn-officer--lead' : '' ) . '">';
-			echo '<div class="jsvn-officer__photo">';
-			if ( has_post_thumbnail( $id ) ) {
-				echo get_the_post_thumbnail( $id, 'medium' );
-			} else {
-				echo '<span class="jsvn-officer__noimg" aria-hidden="true"></span>';
-			}
-			echo '</div>';
-			echo '<div class="jsvn-officer__body">';
-			echo '<p class="jsvn-officer__role">' . esc_html( $role ) . '</p>';
+			$affil = get_post_meta( $id, '_jsvn_affiliation', true );
+			$term  = get_post_meta( $id, '_jsvn_term', true );
+			echo '<article class="jsvn-officer">';
 			echo '<h3 class="jsvn-officer__name">' . esc_html( get_the_title( $id ) ) . '</h3>';
 			if ( $affil ) {
 				echo '<p class="jsvn-officer__affil">' . esc_html( $affil ) . '</p>';
 			}
-			if ( $license ) {
-				echo '<p class="jsvn-officer__license"><span>資格</span>' . esc_html( $license ) . '</p>';
+			if ( $term ) {
+				echo '<p class="jsvn-officer__term"><span>任期</span>' . esc_html( $term ) . '</p>';
 			}
-			if ( $bio ) {
-				echo '<div class="jsvn-officer__bio">' . wp_kses_post( wpautop( $bio ) ) . '</div>';
-			}
-			echo '</div></article>';
+			echo '</article>';
 		}
 		echo '</div>';
 	}
@@ -1305,7 +1302,7 @@ function jsvn_seed_officers() {
 		if ( $id && ! is_wp_error( $id ) ) {
 			update_post_meta( $id, '_jsvn_role', $s[0] );
 			update_post_meta( $id, '_jsvn_affiliation', $s[2] );
-			update_post_meta( $id, '_jsvn_license', $s[3] );
+			update_post_meta( $id, '_jsvn_term', '2026年4月〜2028年3月' );
 		}
 		$i++;
 	}
