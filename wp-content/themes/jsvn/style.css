@@ -4,7 +4,7 @@ Theme URI: https://jsvn.example.jp/
 Author: JSVN Web Team
 Author URI: https://jsvn.example.jp/
 Description: 日本訪問看護学会の公式サイト用カスタムテーマ。訪問看護の「温かさ」と学会としての「学術的な信頼感」を両立させたデザインです。WordPress 6.x 対応。
-Version: 1.12.0
+Version: 1.12.1
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -755,7 +755,8 @@ ul, ol { margin: 0 0 1.2em; padding-left: 1.4em; }
   transition: transform .2s ease, box-shadow .2s ease;
 }
 .jsvn-officer:hover { transform: translateY(-2px); box-shadow: var(--jsvn-shadow); }
-.jsvn-officer__name {
+/* .jsvn-article h3 の上マージンを打ち消し（枠上部の余白を詰める）*/
+.jsvn-officers .jsvn-officer__name {
   font-family: var(--jsvn-serif); font-size: 1.24rem; font-weight: 700;
   color: var(--jsvn-navy); margin: 0 0 .35rem; line-height: 1.3;
 }
