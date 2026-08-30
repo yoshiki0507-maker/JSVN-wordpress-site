@@ -122,11 +122,17 @@ require __DIR__ . '/lib/auth.php';
   .strip .blk.off{ background:#EEEFEC; border-color:#D8DAD5; cursor:default; }
   .strip .blk:hover{ transform:scale(1.18); }
   .strip .blk:focus-visible{ outline:2px solid var(--teal); outline-offset:1px; }
+  table.ov-table th, table.ov-table td{ padding:6px 6px; }
+  table.ov-table .strip{ gap:3px; }
+  table.ov-table .strip .blk{ width:17px; height:17px; border-radius:5px; }
+  table.ov-table .staff-cell{ gap:6px; }
+  table.ov-table .avatar{ width:22px; height:22px; font-size:10px; }
 
   .staff-row-item{ display:flex; align-items:center; justify-content:space-between; background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:9px 12px; margin-bottom:6px; }
   .role-pill{ font-size:10px; font-weight:700; padding:2px 9px; border-radius:999px; margin-left:8px; }
   .role-pill.nurse{ background:var(--teal-tint); color:var(--teal-deep); }
   .role-pill.therapist{ background:var(--indigo-tint); color:var(--indigo); }
+  .role-pill.office{ background:#EDEDF0; color:#5B6B67; }
 
   form.intake{ background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:20px 22px; display:grid; grid-template-columns:1fr 1fr; gap:16px 22px; }
   form.intake .full{ grid-column:1/-1; }
@@ -230,6 +236,7 @@ require __DIR__ . '/lib/auth.php';
         </div>
       </div>
       <div class="summary-row" id="summaryRow-看護師"></div>
+      <p class="page-sub" id="bufferNote-看護師" style="margin:-14px 0 14px;"></p>
       <div class="legend" id="legend-看護師"><span><i style="background:var(--sage-tint);border:1px solid var(--sage)"></i>空き</span>
         <span><i style="background:var(--amber-tint);border:1px solid var(--amber)"></i>一部空き（隔週・月次ローテーション）</span>
         <span><i style="background:var(--brick-tint);border:1px solid var(--brick)"></i>使用中（満枠）</span>
@@ -248,6 +255,7 @@ require __DIR__ . '/lib/auth.php';
         </div>
       </div>
       <div class="summary-row" id="summaryRow-セラピスト"></div>
+      <p class="page-sub" id="bufferNote-セラピスト" style="margin:-14px 0 14px;"></p>
       <div class="legend" id="legend-セラピスト"><span><i style="background:var(--sage-tint);border:1px solid var(--sage)"></i>空き</span>
         <span><i style="background:var(--amber-tint);border:1px solid var(--amber)"></i>一部空き（隔週・月次ローテーション）</span>
         <span><i style="background:var(--brick-tint);border:1px solid var(--brick)"></i>使用中（満枠）</span>
@@ -358,20 +366,33 @@ require __DIR__ . '/lib/auth.php';
       <p class="page-sub">このアプリ上で登録・終了処理をした件数を月ごとに集計しています（Excel側の既存データは対象になりません）。</p>
       <div class="report-grid" id="reportGrid"></div>
       <table class="grid" id="reportTable"></table>
+      <h3 style="font-size:14px;color:var(--teal-deep);margin:26px 0 8px;">終了理由の内訳（全期間）</h3>
+      <table class="grid" id="reasonTable"></table>
     </section>
 
     <section id="panel-settings" class="panel">
       <h2 class="page-title">設定</h2>
       <p class="page-sub">時間帯の枠構成や、居宅介護支援事業所・医療機関のマスタを編集できます。</p>
 
-      <h3 style="font-size:14px;color:var(--teal-deep);margin:8px 0 8px;">スタッフ管理</h3>
-      <p class="page-sub" style="margin-bottom:10px;">看護師・セラピストの追加や削除ができます。削除は、そのスタッフに現在ご利用中の予定がない場合のみ行えます。</p>
+      <h3 style="font-size:14px;color:var(--teal-deep);margin:8px 0 8px;">空き枠数の計算調整</h3>
+      <p class="page-sub" style="margin-bottom:10px;">出勤予定でも、休み明けや夜勤明けなどで実際には稼働できないスタッフがいます。①②の「空き余地」の数字を計算するとき、看護師・セラピストそれぞれ勤務予定人数から何名分を差し引くか設定できます（0なら差し引きなし）。事業所の実情に合わせて調整してください。</p>
+      <div class="setting-row"><label style="margin:0;flex:0 0 auto;min-width:220px;">看護師：勤務予定から差し引く人数</label><input type="number" id="bufferNurse" min="0" style="max-width:100px;" value="0"></div>
+      <div class="setting-row"><label style="margin:0;flex:0 0 auto;min-width:220px;">セラピスト：勤務予定から差し引く人数</label><input type="number" id="bufferTherapist" min="0" style="max-width:100px;" value="0"></div>
+
+      <h3 style="font-size:14px;color:var(--teal-deep);margin:30px 0 8px;">スタッフ管理</h3>
+      <p class="page-sub" style="margin-bottom:10px;">看護師・セラピスト・事務員の追加や削除ができます。削除は、そのスタッフに現在ご利用中の予定がない場合のみ行えます。↑↓で並び順を自由に変更できます（①②の表示順に反映されます）。セラピストは職種（理学療法士・作業療法士・言語聴覚士）を選べます。事務員は名簿に載るだけで、空き状況の対象にはなりません。</p>
       <div id="staffList"></div>
-      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center;">
         <input type="text" id="newStaffName" placeholder="スタッフ名" style="max-width:180px;">
         <select id="newStaffRole" style="max-width:140px;">
           <option value="看護師">看護師</option>
           <option value="セラピスト">セラピスト</option>
+          <option value="事務員">事務員</option>
+        </select>
+        <select id="newStaffJobTitle" style="max-width:160px;display:none;">
+          <option value="理学療法士">理学療法士</option>
+          <option value="作業療法士">作業療法士</option>
+          <option value="言語聴覚士">言語聴覚士</option>
         </select>
         <button class="btn btn-ghost btn-small" id="addStaffBtn">＋ スタッフを追加</button>
       </div>
@@ -403,11 +424,14 @@ require __DIR__ . '/lib/auth.php';
         <input type="text" id="newHospName" placeholder="医療機関名を入力">
         <button class="btn btn-ghost btn-small" id="addHospBtn">＋ 追加</button>
       </div>
+
+      <h3 style="font-size:14px;color:var(--brick);margin:34px 0 8px;">データ管理</h3>
+      <p class="page-sub" style="margin-bottom:10px;">この操作は全員が共有しているデータに影響します。取り扱いに注意してください。</p>
+      <button class="btn btn-ghost btn-small" id="resetBtn" style="border-color:var(--brick);color:var(--brick);">共有データを初期状態に戻す（全員に影響します）</button>
     </section>
 
     <div class="footer-actions">
-      <a href="logout.php" class="btn btn-ghost btn-small" style="text-decoration:none;margin-right:8px;">ログアウト</a>
-      <button class="btn btn-ghost btn-small" id="resetBtn">共有データを初期状態に戻す（全員に影響します）</button>
+      <a href="logout.php" class="btn btn-ghost btn-small" style="text-decoration:none;">ログアウト</a>
     </div>
   </main>
 </div>
@@ -427,6 +451,8 @@ const SEED = {"days": ["月", "火", "水", "木", "金"], "slotLabels": ["9:00"
 const DAYS = ['月','火','水','木','金','土','日'];
 const WEEKS = [1,2,3,4];
 const ROLES = ['看護師','セラピスト'];
+const JOB_TITLES = ['理学療法士','作業療法士','言語聴覚士'];
+const END_REASONS = ['入所','看取り','卒業'];
 
 const PATTERNS = {
   weekly:      { label:'毎週',            kind:'weekly' },
@@ -453,6 +479,10 @@ function staffNames(role){
 }
 function staffInfo(name){
   return state.staff.find(s=>s.name===name) || {name, role:'看護師'};
+}
+function roleLabel(name){
+  const info = staffInfo(name);
+  return info.jobTitle || info.role;
 }
 function labelForWeeks(weeks){
   const sorted = (weeks||[1,2,3,4]).slice().sort((a,b)=>a-b);
@@ -486,30 +516,14 @@ function freshState(){
   const staff = SEED.staffOrder.map(name=>({name, role:'看護師'}));
   const staffWorkdays = {};
   staff.forEach(s=>{ staffWorkdays[s.name] = (SEED.staffWorkdays[s.name]||[]).slice(); });
-  const bookings = {};
-  Object.entries(SEED.legacyOccupancy || {}).forEach(([key, slotArray])=>{
-    const [staffName, day] = key.split('|');
-    slotArray.forEach((occupants, slotIdx)=>{
-      occupants.forEach(occ=>{
-        const id = newId();
-        bookings[id] = {
-          staff: staffName, day, slotIdx,
-          weeks: (occ.weeks && occ.weeks.length ? occ.weeks.slice() : WEEKS.slice()),
-          patternValue: null,
-          name:'', disease:'', alone:'不明', careManager:'', hospital:'',
-          timeNote: occ.timeNote || '', note:'（Excel取り込み時点の既存予定／お名前は未登録です）',
-          startDate: todayStr()
-        };
-      });
-    });
-  });
   return {
     staff,
     slotLabels: SEED.slotLabels.slice(),
     staffWorkdays,
-    bookings,
+    bookings: {},
     eventLog: [],
-    referralSources: { careManagers: [], hospitals: [] }
+    referralSources: { careManagers: [], hospitals: [] },
+    staffBuffer: { '看護師': 0, 'セラピスト': 0 }
   };
 }
 
@@ -526,6 +540,7 @@ function migrateState(loaded){
   }
   if(!loaded.referralSources) loaded.referralSources = { careManagers: [], hospitals: [] };
   if(!loaded.slotLabels) loaded.slotLabels = SEED.slotLabels.slice();
+  if(!loaded.staffBuffer) loaded.staffBuffer = { '看護師': 0, 'セラピスト': 0 };
 
   if(loaded.bookings) return loaded;
 
@@ -637,13 +652,14 @@ document.getElementById('slotModal').addEventListener('click', (e)=>{
 
 function patternLabelOf(b){ return labelForWeeks(b.weeks); }
 
-async function endBookingById(id){
+async function endBookingById(id, reason){
   const b = state.bookings[id];
   if(!b) return;
-  if(!confirm(`${b.day}曜 ${state.slotLabels[b.slotIdx]}〜（${b.staff}／${b.name||'名前未登録'}）を終了にします。よろしいですか？`)) return;
+  if(!reason){ alert('終了理由を選択してください。'); return; }
+  if(!confirm(`${b.day}曜 ${state.slotLabels[b.slotIdx]}〜（${b.staff}／${b.name||'名前未登録'}）を「${reason}」として終了にします。よろしいですか？`)) return;
   state.eventLog.push({
     id:newId(), type:'終了', date: todayStr(), name: b.name||'', staff:b.staff, day:b.day, slot:b.slotIdx,
-    careManager: b.careManager||'', hospital: b.hospital||''
+    careManager: b.careManager||'', hospital: b.hospital||'', reason
   });
   delete state.bookings[id];
   await saveState();
@@ -659,7 +675,7 @@ function openSlotModal(staff, day, slotIdx){
   const bks = bookingsAt(staff, day, slotIdx);
   const used = occupiedWeeksAt(staff, day, slotIdx);
   const freeWeeks = WEEKS.filter(w=>!used.has(w));
-  let html = `<div class="modal-head">${day}曜　${state.slotLabels[slotIdx]}〜</div><div class="modal-sub">担当：${staff}（${staffInfo(staff).role}）</div>`;
+  let html = `<div class="modal-head">${day}曜　${state.slotLabels[slotIdx]}〜</div><div class="modal-sub">担当：${staff}（${roleLabel(staff)}）</div>`;
   if(!bks.length){
     html += `<div class="free-note">この枠は現在すべての週で空いています</div>`;
   }else{
@@ -673,7 +689,13 @@ function openSlotModal(staff, day, slotIdx){
         ${b.timeNote?`<div class="brow">時刻メモ：${b.timeNote}</div>`:''}
         ${b.note?`<div class="brow">備考：${b.note}</div>`:''}
         <div class="brow">登録日：${b.startDate||'―'}</div>
-        <button class="btn btn-danger btn-small" style="margin-top:8px;" data-end="${b.id}">この予定を終了する</button>
+        <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+          <select class="end-reason-select" data-reason-for="${b.id}" style="padding:6px 8px;border:1px solid var(--line);border-radius:7px;font-size:12px;font-family:var(--font-ui);">
+            <option value="">終了理由を選択</option>
+            ${END_REASONS.map(r=>`<option value="${r}">${r}</option>`).join('')}
+          </select>
+          <button class="btn btn-danger btn-small" data-end="${b.id}">終了する</button>
+        </div>
       </div>`;
     });
     if(freeWeeks.length){
@@ -682,7 +704,10 @@ function openSlotModal(staff, day, slotIdx){
   }
   content.innerHTML = html;
   content.querySelectorAll('[data-end]').forEach(btn=>{
-    btn.addEventListener('click', ()=>endBookingById(btn.dataset.end));
+    btn.addEventListener('click', ()=>{
+      const sel = content.querySelector(`[data-reason-for="${btn.dataset.end}"]`);
+      endBookingById(btn.dataset.end, sel ? sel.value : '');
+    });
   });
   modal.hidden = false;
 }
@@ -693,6 +718,7 @@ function renderOverview(role){
   const hintEl = document.getElementById('slotHint-'+role);
   if(hintEl) hintEl.textContent = state.slotLabels.join(' → ');
 
+  const buffer = (state.staffBuffer && state.staffBuffer[role]) || 0;
   const summaryRow = document.getElementById('summaryRow-'+role);
   summaryRow.innerHTML = '';
   DAYS.forEach(day=>{
@@ -705,11 +731,18 @@ function renderOverview(role){
       }
     });
     if(total===0) return;
+    const adjustedFree = Math.max(0, free - buffer*slotCount());
     const card = document.createElement('div');
     card.className = 'summary-card';
-    card.innerHTML = `<div class="day">${day}曜</div><div class="num">${free}</div><div class="unit">枠 空き余地</div>`;
+    card.innerHTML = `<div class="day">${day}曜</div><div class="num">${adjustedFree}</div><div class="unit">枠 空き余地</div>`;
     summaryRow.appendChild(card);
   });
+  const bufferNoteEl = document.getElementById('bufferNote-'+role);
+  if(bufferNoteEl){
+    bufferNoteEl.textContent = buffer>0
+      ? `※${role} ${buffer}名分を勤務予定人数から差し引いて計算しています（⑦設定で変更できます）`
+      : '';
+  }
 
   const table = document.getElementById('overviewTable-'+role);
   if(!names.length){
@@ -1015,7 +1048,7 @@ function renderEndList(){
     const el = document.createElement('div');
     el.className = 'end-row';
     const nameTxt = b.name || '（名前未入力）';
-    const role = staffInfo(b.staff).role;
+    const role = roleLabel(b.staff);
     let metaTxt = `${role}／${patternLabelOf(b)}／疾患：${b.disease||'―'}／独居：${b.alone||'―'}／居宅：${b.careManager||'―'}／医療機関：${b.hospital||'―'}`;
     if(b.timeNote) metaTxt += `／時刻メモ：${b.timeNote}`;
     el.innerHTML = `
@@ -1023,9 +1056,16 @@ function renderEndList(){
         <div><strong>${b.day}曜 ${state.slotLabels[b.slotIdx]}〜</strong>　担当：${b.staff}　－　${nameTxt}</div>
         <div class="meta">${metaTxt}</div>
       </div>
-      <button class="btn btn-danger btn-small">終了する</button>
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+        <select class="end-reason-select" style="padding:6px 8px;border:1px solid var(--line);border-radius:7px;font-size:12px;font-family:var(--font-ui);">
+          <option value="">終了理由を選択</option>
+          ${END_REASONS.map(r=>`<option value="${r}">${r}</option>`).join('')}
+        </select>
+        <button class="btn btn-danger btn-small">終了する</button>
+      </div>
     `;
-    el.querySelector('button').addEventListener('click', ()=>endBookingById(b.id));
+    const reasonSel = el.querySelector('.end-reason-select');
+    el.querySelector('button').addEventListener('click', ()=>endBookingById(b.id, reasonSel.value));
     wrap.appendChild(el);
   });
 }
@@ -1105,18 +1145,44 @@ function renderReport(){
     html += `<tr><td>${m}</td><td>${v.new}</td><td>${v.end}</td><td>${v.new-v.end>=0?'+':''}${v.new-v.end}</td></tr>`;
   });
   table.innerHTML = html;
+
+  const reasonCounts = {};
+  END_REASONS.forEach(r=>{ reasonCounts[r] = 0; });
+  reasonCounts['未選択'] = 0;
+  state.eventLog.forEach(ev=>{
+    if(ev.type!=='終了') return;
+    const r = ev.reason && reasonCounts.hasOwnProperty(ev.reason) ? ev.reason : '未選択';
+    reasonCounts[r]++;
+  });
+  const reasonTable = document.getElementById('reasonTable');
+  if(reasonTable){
+    let rhtml = '<tr><th>終了理由</th><th>件数</th></tr>';
+    Object.entries(reasonCounts).forEach(([k,v])=>{ rhtml += `<tr><td>${k}</td><td>${v}件</td></tr>`; });
+    reasonTable.innerHTML = rhtml;
+  }
 }
 
 // ---------- ⑦ 設定 ----------
-async function addStaffMember(name, role){
+async function addStaffMember(name, role, jobTitle){
   if(state.staff.some(s=>s.name===name)){
     alert('同じ名前のスタッフが既に登録されています。');
     return;
   }
-  state.staff.push({name, role});
+  const entry = {name, role};
+  if(role==='セラピスト' && jobTitle) entry.jobTitle = jobTitle;
+  state.staff.push(entry);
   state.staffWorkdays[name] = [];
   await saveState();
   renderSettings();
+}
+async function moveStaff(idx, dir){
+  const newIdx = idx+dir;
+  if(newIdx<0 || newIdx>=state.staff.length) return;
+  const arr = state.staff;
+  [arr[idx], arr[newIdx]] = [arr[newIdx], arr[idx]];
+  await saveState();
+  renderSettings();
+  renderOverview('看護師'); renderOverview('セラピスト');
 }
 async function removeStaffMember(name){
   const hasBooking = Object.values(state.bookings).some(b=>b.staff===name);
@@ -1168,6 +1234,8 @@ async function moveSlot(idx, dir){
 
 function renderSettings(){
   renderStaffList();
+  document.getElementById('bufferNurse').value = (state.staffBuffer && state.staffBuffer['看護師']) || 0;
+  document.getElementById('bufferTherapist').value = (state.staffBuffer && state.staffBuffer['セラピスト']) || 0;
 
   const list = document.getElementById('slotSettingsList');
   list.innerHTML = '';
@@ -1199,12 +1267,32 @@ function renderStaffList(){
   const wrap = document.getElementById('staffList');
   if(!state.staff.length){ wrap.innerHTML = '<p class="page-sub">スタッフが登録されていません。</p>'; return; }
   wrap.innerHTML = '';
-  state.staff.forEach(s=>{
+  state.staff.forEach((s, idx)=>{
     const row = document.createElement('div');
     row.className = 'staff-row-item';
-    const pillClass = s.role==='セラピスト' ? 'therapist' : 'nurse';
-    row.innerHTML = `<span>${s.name}<span class="role-pill ${pillClass}">${s.role}</span></span><button class="icon-btn danger">削除</button>`;
-    row.querySelector('button').addEventListener('click', ()=>removeStaffMember(s.name));
+    const pillClass = s.role==='セラピスト' ? 'therapist' : s.role==='事務員' ? 'office' : 'nurse';
+    const labelText = s.jobTitle || s.role;
+    const jobTitleSelectHtml = s.role==='セラピスト'
+      ? `<select class="job-title-select" style="margin-left:8px;padding:4px 6px;border:1px solid var(--line);border-radius:6px;font-size:11.5px;font-family:var(--font-ui);">${JOB_TITLES.map(t=>`<option value="${t}" ${s.jobTitle===t?'selected':''}>${t}</option>`).join('')}</select>`
+      : '';
+    row.innerHTML = `
+      <span style="display:flex;align-items:center;flex-wrap:wrap;">${s.name}<span class="role-pill ${pillClass}">${labelText}</span>${jobTitleSelectHtml}</span>
+      <span style="display:flex;gap:4px;flex-shrink:0;">
+        <button class="icon-btn" data-act="up" ${idx===0?'disabled':''} title="上へ">↑</button>
+        <button class="icon-btn" data-act="down" ${idx===state.staff.length-1?'disabled':''} title="下へ">↓</button>
+        <button class="icon-btn danger" data-act="del">削除</button>
+      </span>
+    `;
+    row.querySelector('[data-act="up"]').addEventListener('click', ()=>moveStaff(idx,-1));
+    row.querySelector('[data-act="down"]').addEventListener('click', ()=>moveStaff(idx,1));
+    row.querySelector('[data-act="del"]').addEventListener('click', ()=>removeStaffMember(s.name));
+    const jtSelect = row.querySelector('.job-title-select');
+    if(jtSelect){
+      jtSelect.addEventListener('change', async ()=>{
+        const staffObj = state.staff.find(x=>x.name===s.name);
+        if(staffObj){ staffObj.jobTitle = jtSelect.value; await saveState(); }
+      });
+    }
     wrap.appendChild(row);
   });
 }
@@ -1255,13 +1343,34 @@ function renderWorkdayTable(role){
   });
 }
 
+document.getElementById('newStaffRole').addEventListener('change', ()=>{
+  const roleSelect = document.getElementById('newStaffRole');
+  const jtSelect = document.getElementById('newStaffJobTitle');
+  jtSelect.style.display = roleSelect.value==='セラピスト' ? '' : 'none';
+});
 document.getElementById('addStaffBtn').addEventListener('click', ()=>{
   const nameInput = document.getElementById('newStaffName');
   const roleSelect = document.getElementById('newStaffRole');
+  const jtSelect = document.getElementById('newStaffJobTitle');
   const name = nameInput.value.trim();
   if(!name) return;
-  addStaffMember(name, roleSelect.value);
+  const jobTitle = roleSelect.value==='セラピスト' ? jtSelect.value : undefined;
+  addStaffMember(name, roleSelect.value, jobTitle);
   nameInput.value = '';
+});
+document.getElementById('bufferNurse').addEventListener('change', async (e)=>{
+  const v = Math.max(0, parseInt(e.target.value,10)||0);
+  e.target.value = v;
+  state.staffBuffer['看護師'] = v;
+  await saveState();
+  renderOverview('看護師');
+});
+document.getElementById('bufferTherapist').addEventListener('change', async (e)=>{
+  const v = Math.max(0, parseInt(e.target.value,10)||0);
+  e.target.value = v;
+  state.staffBuffer['セラピスト'] = v;
+  await saveState();
+  renderOverview('セラピスト');
 });
 document.getElementById('addSlotBtn').addEventListener('click', ()=>{
   const input = document.getElementById('newSlotLabel');

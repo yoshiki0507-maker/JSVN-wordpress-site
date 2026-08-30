@@ -29,9 +29,10 @@ DEPLOY.md            … CoreServerへのデプロイ手順
 ## データモデル（index.php内のJS、MySQLの app_state.data カラムにJSON文字列として保存）
 ```
 state = {
-  staff: [{name, role: '看護師'|'セラピスト'}, ...],
+  staff: [{name, role: '看護師'|'セラピスト'|'事務員', jobTitle?: '理学療法士'|'作業療法士'|'言語聴覚士'}, ...],
   slotLabels: string[],                 // 時間帯の名称（並び替え可能）
   staffWorkdays: { [staffName]: 曜日配列 },
+  staffBuffer: { '看護師': number, 'セラピスト': number }, // ①②の空き枠数計算で差し引くスタッフ人数
   bookings: {
     [bookingId]: {
       staff, day, slotIdx,
@@ -39,15 +40,18 @@ state = {
       name, disease, alone, careManager, hospital, timeNote, note, startDate
     }
   },
-  eventLog: [{type:'新規'|'終了', date, name, staff, day, slot, careManager, hospital}, ...],
+  eventLog: [{type:'新規'|'終了', date, name, staff, day, slot, careManager, hospital, reason?}, ...],
+  // reason（終了理由）は type:'終了' のときのみ。'入所'|'看取り'|'卒業' のいずれか
   referralSources: { careManagers: string[], hospitals: string[] }
 }
 ```
 - 1つの(staff, day, slotIdx)に対して複数の`booking`が共存できる（隔週・月次ローテーション対応）。
   週の重複チェックは`isRotationFree()` / `isFullyFree()`を参照。
-- 初期データは`SEED`定数（HTML内に埋め込み済みJSON）。元のExcel（訪問予定表）から
-  スタッフの勤務曜日と、既存予定の曜日パターン（第1週・隔週など）を抽出したもの。
-  利用者名・疾患名などの個人情報はSEEDには一切含まれていない（プライバシー配慮のため）。
+- `staff`配列の並び順がそのまま①②の表示順になる（⑦設定の↑↓で自由に並べ替え可能）。
+- `role`が`セラピスト`のスタッフは`jobTitle`（理学療法士・作業療法士・言語聴覚士）を持てる。
+  画面表示は`jobTitle`があればそちらを優先（`roleLabel()`参照）。`事務員`は①②の対象外（職員名簿にのみ表示）。
+- 初期データ（新規登録時・リセット時）は`staff`・`slotLabels`・`staffWorkdays`のみ`SEED`定数から復元する。
+  `bookings`（利用者情報）は常に空の状態から始まる。
 
 ## 既知の制約・今後の検討事項
 1. **同時編集は後勝ち（last-write-wins）**：複数管理者がほぼ同時に保存すると、後から保存した方の
