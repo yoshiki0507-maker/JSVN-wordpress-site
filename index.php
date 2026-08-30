@@ -76,7 +76,7 @@ require __DIR__ . '/lib/auth.php';
   .summary-card .unit{ font-size:10.5px; color:var(--ink-soft); }
 
   .ov-body{ display:flex; gap:20px; align-items:flex-start; }
-  .ov-main{ flex:0 0 auto; }
+  .ov-main{ flex:0 0 auto; max-width:620px; }
   .ov-alert{
     flex:1; min-width:260px; background:var(--surface); border:1px solid var(--line);
     border-radius:var(--radius); padding:14px; box-sizing:border-box;
