@@ -1148,7 +1148,7 @@ function renderOverview(role){
   const bufferNoteEl = document.getElementById('bufferNote-'+role);
   if(bufferNoteEl){
     bufferNoteEl.textContent = buffer>0
-      ? `※${role} ${buffer}名分を勤務予定人数から差し引いて計算しています（⑧設定で変更できます。新規登録・提案の候補にも反映されます）`
+      ? `※${role} ${buffer}名分を勤務予定人数から差し引いて計算しています`
       : '';
   }
 
