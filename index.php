@@ -1147,15 +1147,15 @@ function renderOverview(role){
   }
   const bufferNoteEl = document.getElementById('bufferNote-'+role);
   if(bufferNoteEl){
-    const parts = [];
-    if(buffer>0) parts.push(`${role} ${buffer}名分を勤務予定人数から差し引いて計算しています（⑧設定で変更できます。新規登録・提案の候補にも反映されます）`);
-    parts.push('土曜・日曜は定休日のため上の受け入れ可能人数には含めていません（ご希望があれば個別に登録できます）');
-    bufferNoteEl.textContent = '※' + parts.join('／');
+    bufferNoteEl.textContent = buffer>0
+      ? `※${role} ${buffer}名分を勤務予定人数から差し引いて計算しています（⑧設定で変更できます。新規登録・提案の候補にも反映されます）`
+      : '';
   }
 
   const table = document.getElementById('overviewTable-'+role);
   if(!names.length){
     table.innerHTML = `<tr><th>担当スタッフ</th></tr><tr><td style="color:var(--ink-soft);">${role}がまだ登録されていません。⑦スタッフ管理から追加してください。</td></tr>`;
+    syncOverviewAlertHeight(role);
     return;
   }
   const slotLabels = slotLabelsFor(role);
@@ -2117,6 +2117,15 @@ document.getElementById('resetBtn').addEventListener('click', async ()=>{
   updatePatternUI();
   renderOverview('看護師');
   renderOverview('セラピスト');
+  // サマリーカード列の高さが後から変わる場合（フォント読み込み・ウィンドウ幅の変更など）にも
+  // 右側のアラート枠の高さがずれたままにならないよう、継続的に監視して揃え続ける
+  if(window.ResizeObserver){
+    ['看護師','セラピスト'].forEach(role=>{
+      const main = document.getElementById('ovMain-'+role);
+      if(!main) return;
+      new ResizeObserver(()=>syncOverviewAlertHeight(role)).observe(main);
+    });
+  }
 })();
 
 </script>
