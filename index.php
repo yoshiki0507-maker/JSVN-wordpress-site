@@ -76,17 +76,17 @@ require __DIR__ . '/lib/auth.php';
   .summary-card .unit{ font-size:10.5px; color:var(--ink-soft); }
 
   .ov-body{ display:flex; gap:20px; align-items:flex-start; }
-  .ov-main{ flex:1; min-width:0; }
+  .ov-main{ flex:0 0 auto; }
   .ov-alert{
-    width:260px; flex:0 0 260px; background:var(--surface); border:1px solid var(--line);
+    flex:1; min-width:260px; background:var(--surface); border:1px solid var(--line);
     border-radius:var(--radius); padding:14px;
   }
   .ov-alert-title{ font-size:13px; font-weight:700; color:var(--teal-deep); margin:0 0 4px; }
   .ov-alert-sub{ font-size:11px; color:var(--ink-soft); margin:0 0 10px; }
-  .ov-alert-list{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:6px; max-height:440px; overflow-y:auto; }
+  .ov-alert-list{ list-style:none; margin:0; padding:0; display:flex; flex-wrap:wrap; gap:8px; max-height:300px; overflow-y:auto; }
   .ov-alert-list li{
-    font-size:12px; background:var(--sage-tint); border:1px solid var(--sage); border-radius:7px;
-    padding:6px 9px; display:flex; justify-content:space-between; align-items:center; gap:6px;
+    flex:0 0 auto; min-width:130px; font-size:12px; background:var(--sage-tint); border:1px solid var(--sage);
+    border-radius:7px; padding:6px 9px; display:flex; justify-content:space-between; align-items:center; gap:8px;
   }
   .ov-alert-list li .cnt{ font-weight:700; color:var(--sage); white-space:nowrap; }
   .ov-alert-empty{ font-size:12px; color:var(--ink-soft); margin:0; }
@@ -247,6 +247,7 @@ require __DIR__ . '/lib/auth.php';
     main{ padding:18px 16px 50px; }
     form.intake{ grid-template-columns:1fr; }
     .ov-body{ flex-direction:column; }
+    .ov-main{ width:100%; }
     .ov-alert{ width:100%; flex:1 1 auto; }
   }
   @media print{
@@ -297,19 +298,19 @@ require __DIR__ . '/lib/auth.php';
           <p class="page-sub" style="margin:2px 0 6px;font-weight:700;color:var(--teal-deep);">月〜金 合計からの受け入れ可能人数</p>
           <div class="summary-row" id="capacityRow-看護師"></div>
           <p class="page-sub" id="bufferNote-看護師" style="margin:-6px 0 14px;"></p>
-          <div class="legend" id="legend-看護師"><span><i style="background:var(--sage-tint);border:1px solid var(--sage)"></i>空き</span>
-            <span><i style="background:var(--amber-tint);border:1px solid var(--amber)"></i>一部空き（隔週・月次ローテーション）</span>
-            <span><i style="background:var(--brick-tint);border:1px solid var(--brick)"></i>使用中（満枠）</span>
-            <span><i style="background:#EEEFEC;border:1px solid #D8DAD5"></i>非勤務日</span></div>
-          <div style="overflow-x:auto;">
-            <table class="grid ov-table" id="overviewTable-看護師"></table>
-          </div>
         </div>
         <aside class="ov-alert no-print">
           <p class="ov-alert-title">🔔 受け入れ枠アラート</p>
           <p class="ov-alert-sub">受け入れ枠が2件以上空いている曜日・時間帯です</p>
           <ul class="ov-alert-list" id="slotAlertList-看護師"></ul>
         </aside>
+      </div>
+      <div class="legend" id="legend-看護師"><span><i style="background:var(--sage-tint);border:1px solid var(--sage)"></i>空き</span>
+        <span><i style="background:var(--amber-tint);border:1px solid var(--amber)"></i>一部空き（隔週・月次ローテーション）</span>
+        <span><i style="background:var(--brick-tint);border:1px solid var(--brick)"></i>使用中（満枠）</span>
+        <span><i style="background:#EEEFEC;border:1px solid #D8DAD5"></i>非勤務日</span></div>
+      <div style="overflow-x:auto;">
+        <table class="grid ov-table" id="overviewTable-看護師"></table>
       </div>
     </section>
 
@@ -328,19 +329,19 @@ require __DIR__ . '/lib/auth.php';
           <p class="page-sub" style="margin:2px 0 6px;font-weight:700;color:var(--teal-deep);">月〜金 合計からの受け入れ可能人数</p>
           <div class="summary-row" id="capacityRow-セラピスト"></div>
           <p class="page-sub" id="bufferNote-セラピスト" style="margin:-6px 0 14px;"></p>
-          <div class="legend" id="legend-セラピスト"><span><i style="background:var(--sage-tint);border:1px solid var(--sage)"></i>空き</span>
-            <span><i style="background:var(--amber-tint);border:1px solid var(--amber)"></i>一部空き（隔週・月次ローテーション）</span>
-            <span><i style="background:var(--brick-tint);border:1px solid var(--brick)"></i>使用中（満枠）</span>
-            <span><i style="background:#EEEFEC;border:1px solid #D8DAD5"></i>非勤務日</span></div>
-          <div style="overflow-x:auto;">
-            <table class="grid ov-table" id="overviewTable-セラピスト"></table>
-          </div>
         </div>
         <aside class="ov-alert no-print">
           <p class="ov-alert-title">🔔 受け入れ枠アラート</p>
           <p class="ov-alert-sub">受け入れ枠が2件以上空いている曜日・時間帯です</p>
           <ul class="ov-alert-list" id="slotAlertList-セラピスト"></ul>
         </aside>
+      </div>
+      <div class="legend" id="legend-セラピスト"><span><i style="background:var(--sage-tint);border:1px solid var(--sage)"></i>空き</span>
+        <span><i style="background:var(--amber-tint);border:1px solid var(--amber)"></i>一部空き（隔週・月次ローテーション）</span>
+        <span><i style="background:var(--brick-tint);border:1px solid var(--brick)"></i>使用中（満枠）</span>
+        <span><i style="background:#EEEFEC;border:1px solid #D8DAD5"></i>非勤務日</span></div>
+      <div style="overflow-x:auto;">
+        <table class="grid ov-table" id="overviewTable-セラピスト"></table>
       </div>
     </section>
 
