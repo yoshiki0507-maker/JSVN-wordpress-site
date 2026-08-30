@@ -243,11 +243,11 @@ require __DIR__ . '/lib/auth.php';
     <h1>訪問看護<br>空き枠管理</h1>
     <button data-panel="overview-nurse" class="active">① 空き状況〈看護師〉</button>
     <button data-panel="overview-therapist">② 空き状況〈セラピスト〉</button>
-    <button data-panel="staff">③ スタッフ管理</button>
-    <button data-panel="intake">④ 新規登録・提案</button>
-    <button data-panel="end">⑤ 終了処理</button>
-    <button data-panel="referral">⑥ リスト分析</button>
-    <button data-panel="report">⑦ 月次レポート</button>
+    <button data-panel="intake">③ 新規登録・提案</button>
+    <button data-panel="end">④ 終了処理</button>
+    <button data-panel="referral">⑤ リスト分析</button>
+    <button data-panel="report">⑥ 月次レポート</button>
+    <button data-panel="staff">⑦ スタッフ管理</button>
     <button data-panel="settings">⑧ 設定</button>
     <button type="button" class="nav-logout" id="navLogout">ログアウト</button>
   </nav>
@@ -327,11 +327,13 @@ require __DIR__ . '/lib/auth.php';
           <label for="f-name">利用者様 氏名</label>
           <input type="text" id="f-name" placeholder="例：山田太郎">
         </div>
+        <div class="full" id="existingPatientNotice" style="display:none;background:var(--amber-tint);border:1px solid var(--amber);border-radius:8px;padding:8px 12px;font-size:12.5px;"></div>
         <div>
           <label for="f-pattern">訪問頻度パターン</label>
           <select id="f-pattern">
             <option value="weekly">毎週（曜日を指定・複数日選択可）</option>
             <option value="daily">毎日（月〜金・週5回）</option>
+            <option value="daily7">毎日（月〜日・週7回、土日訪問あり）</option>
             <option value="biweekly_13">隔週（第1・3週）</option>
             <option value="biweekly_135">隔週（第1・3・5週）</option>
             <option value="biweekly_24">隔週（第2・4週）</option>
@@ -349,6 +351,8 @@ require __DIR__ . '/lib/auth.php';
             <option value="3">週3回</option>
             <option value="4">週4回</option>
             <option value="5">週5回（毎日）</option>
+            <option value="6">週6回</option>
+            <option value="7">週7回（毎日・土日含む）</option>
           </select>
         </div>
         <div class="full">
@@ -473,6 +477,13 @@ require __DIR__ . '/lib/auth.php';
       <table class="grid" id="reportTable"></table>
       <h3 style="font-size:14px;color:var(--teal-deep);margin:26px 0 8px;">終了理由の内訳（全期間）</h3>
       <table class="grid" id="reasonTable"></table>
+
+      <h3 style="font-size:14px;color:var(--teal-deep);margin:26px 0 8px;">疾患名の内訳（現在の利用者）</h3>
+      <div style="overflow-x:auto;"><table class="grid" id="diseaseTable"></table></div>
+      <h3 style="font-size:14px;color:var(--teal-deep);margin:26px 0 8px;">主保険の内訳（現在の利用者）</h3>
+      <div style="overflow-x:auto;"><table class="grid" id="insuranceTable"></table></div>
+      <h3 style="font-size:14px;color:var(--teal-deep);margin:26px 0 8px;">独居の内訳（現在の利用者）</h3>
+      <div style="overflow-x:auto;"><table class="grid" id="aloneTable"></table></div>
     </section>
 
     <section id="panel-settings" class="panel">
@@ -499,10 +510,10 @@ require __DIR__ . '/lib/auth.php';
         <button class="btn btn-ghost btn-small" id="addSlotBtn-セラピスト">＋ 枠を追加</button>
       </div>
 
-      <h3 style="font-size:14px;color:var(--teal-deep);margin:30px 0 8px;">看護師の勤務曜日</h3>
-      <p class="page-sub" style="margin-bottom:10px;">土曜・日曜に勤務するスタッフはチェックを入れてください（未チェックの曜日は空き状況・提案の対象になりません）。</p>
+      <h3 style="font-size:14px;color:var(--teal-deep);margin:30px 0 8px;">看護師の勤務体系（曜日・時間帯）</h3>
+      <p class="page-sub" style="margin-bottom:10px;">①の空き状況と同じように、枠（時間帯）ごとにタップしてON/OFFを切り替えられます。お昼で帰るなど、曜日によって勤務する枠が違うスタッフにも対応できます。土曜・日曜も含め、勤務しない枠は空き状況・自動提案の対象になりません。</p>
       <div style="overflow-x:auto;"><table class="grid" id="workdayTable-看護師"></table></div>
-      <h3 style="font-size:14px;color:var(--teal-deep);margin:24px 0 8px;">セラピストの勤務曜日</h3>
+      <h3 style="font-size:14px;color:var(--teal-deep);margin:24px 0 8px;">セラピストの勤務体系（曜日・時間帯）</h3>
       <div style="overflow-x:auto;"><table class="grid" id="workdayTable-セラピスト"></table></div>
 
       <h3 style="font-size:14px;color:var(--teal-deep);margin:30px 0 8px;">居宅介護支援事業所マスタ</h3>
@@ -560,6 +571,7 @@ const SERVICE_DURATIONS = ['30','60','90'];
 const PATTERNS = {
   weekly:       { label:'毎週',              kind:'weekly' },
   daily:        { label:'毎日（月〜金・週5回）', kind:'weekly', fixedFreq:5 },
+  daily7:       { label:'毎日（月〜日・週7回、土日訪問あり）', kind:'weekly', fixedFreq:7, includeWeekend:true },
   biweekly_13:  { label:'隔週（第1・3週）',   kind:'rotation', weeks:[1,3] },
   biweekly_135: { label:'隔週（第1・3・5週）', kind:'rotation', weeks:[1,3,5] },
   biweekly_24:  { label:'隔週（第2・4週）',   kind:'rotation', weeks:[2,4] },
@@ -569,7 +581,7 @@ const PATTERNS = {
   monthly_4:    { label:'月1回（第4週）',     kind:'rotation', weeks:[4] },
 };
 
-let state = null; // { staff, slotLabels, staffWorkdays, bookings, eventLog, referralSources }
+let state = null; // { staff, slotLabels, staffWorkSlots, bookings, eventLog, referralSources }
 let uidCounter = 0;
 function newId(){ uidCounter++; return Date.now()+'-'+uidCounter+'-'+Math.random().toString(36).slice(2,6); }
 
@@ -622,12 +634,17 @@ async function loadState(){
 
 function freshState(){
   const staff = SEED.staffOrder.map(name=>({name, role:'看護師'}));
-  const staffWorkdays = {};
-  staff.forEach(s=>{ staffWorkdays[s.name] = (SEED.staffWorkdays[s.name]||[]).slice(); });
+  const nSlots = SEED.slotLabels.length;
+  const staffWorkSlots = {};
+  staff.forEach(s=>{
+    const obj = {};
+    (SEED.staffWorkdays[s.name]||[]).forEach(d=>{ obj[d] = Array.from({length:nSlots},(_,i)=>i); });
+    staffWorkSlots[s.name] = obj;
+  });
   return {
     staff,
     slotLabels: { '看護師': SEED.slotLabels.slice(), 'セラピスト': SEED.slotLabels.slice() },
-    staffWorkdays,
+    staffWorkSlots,
     bookings: {},
     eventLog: [],
     referralSources: { careManagers: [], hospitals: [] },
@@ -639,20 +656,28 @@ function migrateState(loaded){
   // スタッフ一覧が無い旧バージョンの場合、SEEDの看護師一覧として補完
   if(!loaded.staff){
     const names = new Set(SEED.staffOrder);
-    Object.keys(loaded.staffWorkdays||{}).forEach(n=>names.add(n));
+    Object.keys(loaded.staffWorkdays||loaded.staffWorkSlots||{}).forEach(n=>names.add(n));
     loaded.staff = Array.from(names).map(name=>({name, role:'看護師'}));
   }
-  if(!loaded.staffWorkdays){
-    loaded.staffWorkdays = {};
-    loaded.staff.forEach(s=>{ loaded.staffWorkdays[s.name] = (SEED.staffWorkdays[s.name]||[]).slice(); });
-  }
-  if(!loaded.referralSources) loaded.referralSources = { careManagers: [], hospitals: [] };
   if(!loaded.slotLabels){
     loaded.slotLabels = { '看護師': SEED.slotLabels.slice(), 'セラピスト': SEED.slotLabels.slice() };
   }else if(Array.isArray(loaded.slotLabels)){
     // 旧形式（看護師・セラピスト共通の単一配列）からの移行
     loaded.slotLabels = { '看護師': loaded.slotLabels.slice(), 'セラピスト': loaded.slotLabels.slice() };
   }
+  if(!loaded.staffWorkSlots){
+    // 旧形式（曜日単位のON/OFF）からの移行：出勤日はその職種の全枠を勤務扱いにする
+    loaded.staffWorkSlots = {};
+    loaded.staff.forEach(s=>{
+      const nSlots = (loaded.slotLabels[s.role] || loaded.slotLabels['看護師'] || []).length;
+      const days = (loaded.staffWorkdays && loaded.staffWorkdays[s.name]) || (SEED.staffWorkdays[s.name]||[]);
+      const obj = {};
+      days.forEach(d=>{ obj[d] = Array.from({length:nSlots},(_,i)=>i); });
+      loaded.staffWorkSlots[s.name] = obj;
+    });
+  }
+  delete loaded.staffWorkdays;
+  if(!loaded.referralSources) loaded.referralSources = { careManagers: [], hospitals: [] };
   if(!loaded.staffBuffer) loaded.staffBuffer = { '看護師': 0, 'セラピスト': 0 };
   loaded.staff.forEach(s=>{
     if(!s.qualifications){ s.qualifications = s.jobTitle ? [s.jobTitle] : []; }
@@ -701,8 +726,14 @@ async function saveState(){
   }
 }
 
+function workSlotsFor(staff, day){
+  return (state.staffWorkSlots[staff] && state.staffWorkSlots[staff][day]) || [];
+}
+function worksOnSlot(staff, day, slotIdx){
+  return workSlotsFor(staff, day).includes(slotIdx);
+}
 function worksOn(staff, day){
-  return (state.staffWorkdays[staff]||[]).includes(day);
+  return workSlotsFor(staff, day).length > 0;
 }
 function bookingsAt(staff, day, slotIdx){
   return Object.entries(state.bookings)
@@ -798,10 +829,9 @@ function refSelectOptions(list, current){
 }
 
 function bookingReadView(b){
-  const companionHtml = b.companion ? `
-        <div class="brow" style="margin-top:6px;padding-top:6px;border-top:1px dashed var(--line);">
-          同枠のもう1名：<strong>${b.companion.name}</strong>（${b.companion.timeNote||'時刻メモなし'}）
-          ／疾患：${b.companion.disease||'―'}／主保険：${b.companion.insuranceType||'―'}
+  const pairNote = (b.pairId && pairedBookingAt(b)) ? `
+        <div class="brow" style="margin-top:6px;padding-top:6px;border-top:1px dashed var(--line);color:var(--ink-soft);">
+          👫 同枠のご夫婦・ペア登録です（もう1名は別のカードに表示されています。編集・終了はそれぞれ個別に行えます）
         </div>` : '';
   return `
         <div class="btag">${patternLabelOf(b)}</div>
@@ -813,7 +843,7 @@ function bookingReadView(b){
         ${b.timeNote?`<div class="brow">時刻メモ：${b.timeNote}</div>`:''}
         ${b.note?`<div class="brow">備考：${b.note}</div>`:''}
         <div class="brow">登録日：${b.startDate||'―'}</div>
-        ${companionHtml}
+        ${pairNote}
         <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
           <button class="btn btn-ghost btn-small" data-edit="${b.id}">編集する</button>
           <select class="end-reason-select" data-reason-for="${b.id}" style="padding:6px 8px;border:1px solid var(--line);border-radius:7px;font-size:12px;font-family:var(--font-ui);">
@@ -848,11 +878,6 @@ function bookingEditView(b){
         <label>医療機関</label><select class="edit-field" data-f="hospital">${refSelectOptions(state.referralSources.hospitals, b.hospital)}</select>
         <label>実施時刻メモ</label><input type="text" class="edit-field" data-f="timeNote" value="${(b.timeNote||'').replace(/"/g,'&quot;')}">
         <label>備考</label><textarea class="edit-field" data-f="note" rows="2">${b.note||''}</textarea>
-        <label style="margin-top:10px;">同枠のもう1名（氏名を空欄にすると削除されます）</label>
-        <input type="text" class="edit-field" placeholder="氏名" data-f="companion.name" value="${(b.companion&&b.companion.name||'').replace(/"/g,'&quot;')}">
-        <input type="text" class="edit-field" placeholder="実施時刻メモ（例：12:15〜）" data-f="companion.timeNote" value="${(b.companion&&b.companion.timeNote||'').replace(/"/g,'&quot;')}" style="margin-top:6px;">
-        <input type="text" class="edit-field" placeholder="疾患名" data-f="companion.disease" value="${(b.companion&&b.companion.disease||'').replace(/"/g,'&quot;')}" style="margin-top:6px;">
-        <select class="edit-field" data-f="companion.insuranceType" style="margin-top:6px;">${refSelectOptions(INSURANCE_TYPES, b.companion&&b.companion.insuranceType)}</select>
         <div style="margin-top:8px;display:flex;gap:6px;">
           <button class="btn btn-primary btn-small" data-save="${b.id}">保存</button>
           <button class="btn btn-ghost btn-small" data-cancel="${b.id}">キャンセル</button>
@@ -899,14 +924,8 @@ function openSlotModal(staff, day, slotIdx){
       card.querySelectorAll('.edit-field').forEach(f=>{
         let val = (f.value||'').trim();
         if(f.dataset.f==='slotIdx') val = Number(val);
-        if(f.dataset.f.startsWith('companion.')){
-          if(!updates.companion) updates.companion = Object.assign({}, orig.companion || {});
-          updates.companion[f.dataset.f.split('.')[1]] = val;
-        }else{
-          updates[f.dataset.f] = val;
-        }
+        updates[f.dataset.f] = val;
       });
-      if(updates.companion && !updates.companion.name) updates.companion = null;
       const newDay = updates.day !== undefined ? updates.day : orig.day;
       const newSlotIdx = updates.slotIdx !== undefined ? updates.slotIdx : orig.slotIdx;
       const moved = (newDay !== orig.day || newSlotIdx !== orig.slotIdx);
@@ -945,8 +964,8 @@ function renderOverview(role){
   WEEKDAYS.forEach(day=>{
     let free = 0, total = 0;
     names.forEach(staff=>{
-      if(!worksOn(staff, day)) return;
       for(let i=0;i<nSlots;i++){
+        if(!worksOnSlot(staff, day, i)) continue;
         total++;
         if(slotVisualState(staff,day,i)!=='busy') free++;
       }
@@ -985,7 +1004,7 @@ function renderOverview(role){
 
   const table = document.getElementById('overviewTable-'+role);
   if(!names.length){
-    table.innerHTML = `<tr><th>担当スタッフ</th></tr><tr><td style="color:var(--ink-soft);">${role}がまだ登録されていません。③スタッフ管理から追加してください。</td></tr>`;
+    table.innerHTML = `<tr><th>担当スタッフ</th></tr><tr><td style="color:var(--ink-soft);">${role}がまだ登録されていません。⑦スタッフ管理から追加してください。</td></tr>`;
     return;
   }
   const slotLabels = slotLabelsFor(role);
@@ -995,26 +1014,27 @@ function renderOverview(role){
     html += `<tr><td><div class="staff-cell"><div class="avatar ${avatarClass}">${staff.trim()[0]||'?'}</div><span class="staff-name">${staff}</span></div></td>`;
     DAYS.forEach(day=>{
       const isWeekend = (day==='土' || day==='日');
-      if(!worksOn(staff, day)){
-        html += isWeekend
-          ? `<td style="color:var(--ink-soft);font-size:11px;">―</td>`
-          : `<td><div class="strip">${slotLabels.map(()=>`<div class="blk off"></div>`).join('')}</div></td>`;
-      }else if(isWeekend){
-        const dayBookings = [];
-        for(let i=0;i<nSlots;i++){
-          bookingsAt(staff,day,i).forEach(b=>dayBookings.push(Object.assign({slotIdx:i}, b)));
-        }
-        if(!dayBookings.length){
-          html += `<td style="color:var(--sage);font-size:11px;">空き</td>`;
+      if(isWeekend){
+        if(!worksOn(staff, day)){
+          html += `<td style="color:var(--ink-soft);font-size:11px;">―</td>`;
         }else{
-          dayBookings.sort((a,b)=>a.slotIdx-b.slotIdx);
-          const items = dayBookings.map(b=>
-            `<li><button type="button" data-staff="${staff}" data-day="${day}" data-slot="${b.slotIdx}" style="all:unset;cursor:pointer;color:var(--teal-deep);text-decoration:underline;">${slotLabels[b.slotIdx]}〜 ${b.name||'（名前未登録）'}</button></li>`
-          ).join('');
-          html += `<td><ul style="margin:0;padding-left:14px;font-size:11px;">${items}</ul></td>`;
+          const dayBookings = [];
+          for(let i=0;i<nSlots;i++){
+            bookingsAt(staff,day,i).forEach(b=>dayBookings.push(Object.assign({slotIdx:i}, b)));
+          }
+          if(!dayBookings.length){
+            html += `<td style="color:var(--sage);font-size:11px;">空き</td>`;
+          }else{
+            dayBookings.sort((a,b)=>a.slotIdx-b.slotIdx);
+            const items = dayBookings.map(b=>
+              `<li><button type="button" data-staff="${staff}" data-day="${day}" data-slot="${b.slotIdx}" style="all:unset;cursor:pointer;color:var(--teal-deep);text-decoration:underline;">${slotLabels[b.slotIdx]}〜 ${b.name||'（名前未登録）'}</button></li>`
+            ).join('');
+            html += `<td><ul style="margin:0;padding-left:14px;font-size:11px;">${items}</ul></td>`;
+          }
         }
       }else{
         const blks = slotLabels.map((label,i)=>{
+          if(!worksOnSlot(staff,day,i)) return `<div class="blk off"></div>`;
           const st = slotVisualState(staff,day,i);
           return `<button type="button" class="blk ${st==='free'?'':st}" data-staff="${staff}" data-day="${day}" data-slot="${i}" aria-label="${day}曜${label} ${staff}"></button>`;
         }).join('');
@@ -1029,7 +1049,7 @@ function renderOverview(role){
   });
 }
 
-// ---------- ④ 新規登録・提案 ----------
+// ---------- ③ 新規登録・提案 ----------
 let selectedDays = [];
 let selectedSlots = [];
 
@@ -1096,10 +1116,12 @@ function populateReferralSelects(){
   buildSlotChips();
 }
 
-function orderedDays(preferred){
+function orderedDays(preferred, includeWeekend){
   // 土日は定休日のため、希望として明示的に選ばれていない限り自動探索の対象外にする
-  if(!preferred || !preferred.length) return WEEKDAYS.slice();
-  return DAYS.filter(d=>preferred.includes(d)).concat(WEEKDAYS.filter(d=>!preferred.includes(d)));
+  // （「毎日（月〜日）」など土日訪問を含むパターンのときは includeWeekend=true で土日も探索対象にする）
+  const base = includeWeekend ? DAYS.slice() : WEEKDAYS.slice();
+  if(!preferred || !preferred.length) return base;
+  return DAYS.filter(d=>preferred.includes(d)).concat(base.filter(d=>!preferred.includes(d)));
 }
 function orderedSlots(preferred, role){
   const all = slotLabelsFor(role).map((_,i)=>i);
@@ -1119,8 +1141,8 @@ function suggestionPool(role){
   return names.filter(n=>!reserved.has(n));
 }
 
-function findWeeklySuggestions(freq, preferredDays, preferredSlots, role){
-  const dayOrder = orderedDays(preferredDays);
+function findWeeklySuggestions(freq, preferredDays, preferredSlots, role, includeWeekend){
+  const dayOrder = orderedDays(preferredDays, includeWeekend);
   const slotOrder = orderedSlots(preferredSlots, role);
   const pool = suggestionPool(role);
   const results = [];
@@ -1129,7 +1151,7 @@ function findWeeklySuggestions(freq, preferredDays, preferredSlots, role){
     const workdays = dayOrder.filter(d=>worksOn(staff,d));
     if(workdays.length < freq) return;
     for(const slotIdx of slotOrder){
-      const freeDays = workdays.filter(d=>isFullyFree(staff,d,slotIdx));
+      const freeDays = workdays.filter(d=>worksOnSlot(staff,d,slotIdx) && isFullyFree(staff,d,slotIdx));
       if(freeDays.length >= freq){
         tier1Map.set(staff, {tier:1, staff, slotIdx, days: freeDays.slice(0,freq), load: totalLoad(staff)});
         break;
@@ -1147,7 +1169,7 @@ function findWeeklySuggestions(freq, preferredDays, preferredSlots, role){
       const picks = [];
       workdays.forEach(d=>{
         for(const s of slotOrder){
-          if(isFullyFree(staff,d,s)){ picks.push({day:d, slot:s}); break; }
+          if(worksOnSlot(staff,d,s) && isFullyFree(staff,d,s)){ picks.push({day:d, slot:s}); break; }
         }
       });
       if(picks.length >= freq){
@@ -1164,7 +1186,7 @@ function findWeeklySuggestions(freq, preferredDays, preferredSlots, role){
       for(const staff of pool){
         if(!worksOn(staff,d)) continue;
         let found = -1;
-        for(const s of slotOrder){ if(isFullyFree(staff,d,s)){ found = s; break; } }
+        for(const s of slotOrder){ if(worksOnSlot(staff,d,s) && isFullyFree(staff,d,s)){ found = s; break; } }
         if(found>=0){ picks.push({day:d, slot:found, staff}); break; }
       }
     }
@@ -1186,7 +1208,7 @@ function findRotationSuggestions(candWeeks, preferredDays, preferredSlots, role)
     for(const day of dayOrder){
       if(!worksOn(staff,day)) continue;
       for(const slotIdx of slotOrder){
-        if(isRotationFree(staff,day,slotIdx,candWeeks)){
+        if(worksOnSlot(staff,day,slotIdx) && isRotationFree(staff,day,slotIdx,candWeeks)){
           found.push({tier:'rotation', staff, day, slotIdx, load: totalLoad(staff)});
           seenStaff.add(staff);
           break;
@@ -1236,29 +1258,52 @@ function labelSuggestion(s, preferredDays, role){
   return { tag:'代替案（複数の担当者に分かれます）', text: txt, sub:'継続性より、まず枠の確保を優先した案です' };
 }
 
+function pairedBookingAt(b){
+  if(!b.pairId) return null;
+  return Object.entries(state.bookings)
+    .filter(([id,o])=>o.pairId===b.pairId && id!==b.id)
+    .map(([id,o])=>Object.assign({id}, o))[0] || null;
+}
+
 async function confirmSuggestion(s, patient, patternValue){
   const date = todayStr();
   const pattern = PATTERNS[patternValue];
-  const create = (staff, day, slotIdx, weeks)=>{
+  const pairId = patient.companion ? newId() : null;
+  const create = (staff, day, slotIdx, weeks, person, linkId)=>{
     const id = newId();
     state.bookings[id] = {
       staff, day, slotIdx, weeks, patternValue,
-      name: patient.name, disease: patient.disease, alone: patient.alone, note: patient.note,
-      careManager: patient.careManager, hospital: patient.hospital, timeNote: patient.timeNote,
-      insuranceType: patient.insuranceType, serviceDuration: patient.serviceDuration,
-      companion: patient.companion,
+      name: person.name, disease: person.disease, alone: person.alone, note: person.note,
+      careManager: person.careManager, hospital: person.hospital, timeNote: person.timeNote,
+      insuranceType: person.insuranceType, serviceDuration: person.serviceDuration,
+      pairId: linkId || null,
       startDate: date
     };
     state.eventLog.push({
-      id: newId(), type:'新規', date, name: patient.name,
-      staff, day, slot: slotIdx, careManager: patient.careManager, hospital: patient.hospital,
-      companion: patient.companion ? patient.companion.name : null
+      id: newId(), type:'新規', date, name: person.name,
+      staff, day, slot: slotIdx, careManager: person.careManager, hospital: person.hospital
     });
   };
-  if(s.tier==='rotation'){ create(s.staff, s.day, s.slotIdx, pattern.weeks); }
-  else if(s.tier===1){ s.days.forEach(d=>create(s.staff, d, s.slotIdx, WEEKS.slice())); }
-  else if(s.tier===2){ s.picks.forEach(p=>create(s.staff, p.day, p.slot, WEEKS.slice())); }
-  else { s.picks.forEach(p=>create(p.staff, p.day, p.slot, WEEKS.slice())); }
+  const createBoth = (staff, day, slotIdx, weeks)=>{
+    create(staff, day, slotIdx, weeks, patient, pairId);
+    if(patient.companion){
+      create(staff, day, slotIdx, weeks, {
+        name: patient.companion.name,
+        disease: patient.companion.disease,
+        insuranceType: patient.companion.insuranceType,
+        timeNote: patient.companion.timeNote,
+        serviceDuration: patient.serviceDuration,
+        alone: patient.alone,
+        careManager: patient.careManager,
+        hospital: patient.hospital,
+        note: patient.note
+      }, pairId);
+    }
+  };
+  if(s.tier==='rotation'){ createBoth(s.staff, s.day, s.slotIdx, pattern.weeks); }
+  else if(s.tier===1){ s.days.forEach(d=>createBoth(s.staff, d, s.slotIdx, WEEKS.slice())); }
+  else if(s.tier===2){ s.picks.forEach(p=>createBoth(s.staff, p.day, p.slot, WEEKS.slice())); }
+  else { s.picks.forEach(p=>createBoth(p.staff, p.day, p.slot, WEEKS.slice())); }
   await saveState();
   const companionMsg = patient.companion ? `（${patient.companion.name}様と合わせて2名）` : '';
   showToast(`${patient.name || '利用者様'} を登録しました${companionMsg}`);
@@ -1266,6 +1311,7 @@ async function confirmSuggestion(s, patient, patternValue){
   document.getElementById('intakeForm').reset();
   document.getElementById('companionOuterWrap').style.display = 'none';
   document.getElementById('companionFields').style.display = 'none';
+  hideExistingPatientNotice();
   selectedDays = []; selectedSlots = [];
   updatePatternUI();
   buildSlotChips();
@@ -1283,6 +1329,41 @@ document.getElementById('f-duration').addEventListener('change', ()=>{
 document.getElementById('f-companion-enable').addEventListener('change', (e)=>{
   document.getElementById('companionFields').style.display = e.target.checked ? '' : 'none';
 });
+
+// 既存利用者への「サービス内容の追加」対応：同姓同名の登録中の予約があれば案内し、内容の引き継ぎができるようにする
+function findExistingBookingsByName(name){
+  name = (name||'').trim();
+  if(!name) return [];
+  return Object.entries(state.bookings)
+    .filter(([id,b])=>(b.name||'').trim()===name)
+    .map(([id,b])=>Object.assign({id}, b));
+}
+function hideExistingPatientNotice(){
+  const notice = document.getElementById('existingPatientNotice');
+  notice.style.display = 'none';
+  notice.innerHTML = '';
+}
+function updateExistingPatientNotice(){
+  const name = document.getElementById('f-name').value.trim();
+  const notice = document.getElementById('existingPatientNotice');
+  const existing = findExistingBookingsByName(name);
+  if(!name || !existing.length){ hideExistingPatientNotice(); return; }
+  notice.style.display = '';
+  notice.innerHTML = `⚠ 「${name}」は現在${existing.length}件の枠をご利用中です。ここで登録すると<strong>サービス内容の追加</strong>（新しい枠の追加）になります。ご利用中の内容を減らす場合は「④ 終了処理」から個別に終了してください。`
+    + `<button type="button" class="btn btn-ghost btn-small" id="prefillExistingBtn" style="margin-left:6px;">登録済みの内容を引き継ぐ</button>`;
+  document.getElementById('prefillExistingBtn').addEventListener('click', ()=>{
+    const b = existing[0];
+    document.getElementById('f-disease').value = b.disease||'';
+    document.getElementById('f-insurance').value = b.insuranceType||'';
+    document.getElementById('f-duration').value = b.serviceDuration||'60';
+    document.getElementById('f-duration').dispatchEvent(new Event('change'));
+    document.getElementById('f-alone').value = b.alone||'不明';
+    document.getElementById('f-cm').value = b.careManager||'';
+    document.getElementById('f-hosp').value = b.hospital||'';
+    showToast('登録済みの内容を引き継ぎました');
+  });
+}
+document.getElementById('f-name').addEventListener('input', updateExistingPatientNotice);
 
 document.getElementById('intakeForm').addEventListener('submit', (e)=>{
   e.preventDefault();
@@ -1316,7 +1397,7 @@ document.getElementById('intakeForm').addEventListener('submit', (e)=>{
     freq
   };
   const sugg = pattern.kind==='weekly'
-    ? findWeeklySuggestions(freq, selectedDays, selectedSlots, role)
+    ? findWeeklySuggestions(freq, selectedDays, selectedSlots, role, !!pattern.includeWeekend)
     : findRotationSuggestions(pattern.weeks, selectedDays, selectedSlots, role);
   const box = document.getElementById('suggestions');
   if(!sugg.length){
@@ -1341,7 +1422,7 @@ document.getElementById('intakeForm').addEventListener('submit', (e)=>{
   });
 });
 
-// ---------- ⑤ 終了処理 ----------
+// ---------- ④ 終了処理 ----------
 function renderEndList(){
   const wrap = document.getElementById('endList');
   const searchInput = document.getElementById('endSearch');
@@ -1363,7 +1444,10 @@ function renderEndList(){
     const bSlotLabel = slotLabelsFor(staffInfo(b.staff).role)[b.slotIdx];
     let metaTxt = `${roleTxt}／${patternLabelOf(b)}／疾患：${b.disease||'―'}／独居：${b.alone||'―'}／居宅：${b.careManager||'―'}／医療機関：${b.hospital||'―'}`;
     if(b.timeNote) metaTxt += `／時刻メモ：${b.timeNote}`;
-    if(b.companion) metaTxt += `／同枠のもう1名：${b.companion.name}`;
+    if(b.pairId){
+      const paired = pairedBookingAt(b);
+      if(paired) metaTxt += `／同枠のペア：${paired.name||'（名前未登録）'}`;
+    }
     el.innerHTML = `
       <div>
         <div><strong>${b.day}曜 ${bSlotLabel}〜</strong>　担当：${b.staff}　－　${nameTxt}</div>
@@ -1384,7 +1468,7 @@ function renderEndList(){
 }
 document.getElementById('endSearch').addEventListener('input', renderEndList);
 
-// ---------- ⑥ リスト分析 ----------
+// ---------- ⑤ リスト分析 ----------
 function renderReferralAnalysisTable(tableId, field, label){
   const patients = new Map();
   Object.values(state.bookings).forEach(b=>{
@@ -1426,7 +1510,7 @@ function renderReferralAnalysis(){
   renderReferralAnalysisTable('hospTable', 'hospital', '医療機関');
 }
 
-// ---------- ⑦ 月次レポート ----------
+// ---------- ⑥ 月次レポート ----------
 function renderReport(){
   const byMonth = {};
   state.eventLog.forEach(ev=>{
@@ -1434,7 +1518,6 @@ function renderReport(){
     if(!byMonth[m]) byMonth[m] = { newSet:new Set(), end:0 };
     if(ev.type==='新規'){
       byMonth[m].newSet.add(ev.name ? ('n:'+ev.name) : ('n:__anon_'+ev.id));
-      if(ev.companion) byMonth[m].newSet.add('c:'+ev.companion+'__'+(ev.name||ev.id));
     }else{
       byMonth[m].end++;
     }
@@ -1443,7 +1526,7 @@ function renderReport(){
   const grid = document.getElementById('reportGrid');
   const table = document.getElementById('reportTable');
   if(!months.length){
-    grid.innerHTML = '<p class="page-sub">まだ登録・終了の記録がありません。④⑤の操作をすると、ここに集計されます。</p>';
+    grid.innerHTML = '<p class="page-sub">まだ登録・終了の記録がありません。③④の操作をすると、ここに集計されます。</p>';
     table.innerHTML = '';
     return;
   }
@@ -1480,16 +1563,20 @@ function renderReport(){
     Object.entries(reasonCounts).forEach(([k,v])=>{ rhtml += `<tr><td>${k}</td><td>${v}件</td></tr>`; });
     reasonTable.innerHTML = rhtml;
   }
+
+  renderReferralAnalysisTable('diseaseTable', 'disease', '疾患名');
+  renderReferralAnalysisTable('insuranceTable', 'insuranceType', '主保険');
+  renderReferralAnalysisTable('aloneTable', 'alone', '独居');
 }
 
-// ---------- ③ スタッフ管理 ----------
+// ---------- ⑦ スタッフ管理 ----------
 async function addStaffMember(name, role){
   if(state.staff.some(s=>s.name===name)){
     alert('同じ名前のスタッフが既に登録されています。');
     return;
   }
   state.staff.push({name, role, qualifications: []});
-  state.staffWorkdays[name] = [];
+  state.staffWorkSlots[name] = {};
   await saveState();
   renderStaffList();
 }
@@ -1510,7 +1597,7 @@ async function removeStaffMember(name){
   }
   if(!confirm(`「${name}」を削除します。よろしいですか？`)) return;
   state.staff = state.staff.filter(s=>s.name!==name);
-  delete state.staffWorkdays[name];
+  delete state.staffWorkSlots[name];
   await saveState();
   renderStaffList();
   renderOverview('看護師'); renderOverview('セラピスト');
@@ -1526,8 +1613,8 @@ async function renameStaffMember(oldName, newName){
   const staffObj = state.staff.find(s=>s.name===oldName);
   if(!staffObj) return;
   staffObj.name = newName;
-  state.staffWorkdays[newName] = state.staffWorkdays[oldName] || [];
-  delete state.staffWorkdays[oldName];
+  state.staffWorkSlots[newName] = state.staffWorkSlots[oldName] || {};
+  delete state.staffWorkSlots[oldName];
   Object.values(state.bookings).forEach(b=>{ if(b.staff===oldName) b.staff = newName; });
   state.eventLog.forEach(ev=>{ if(ev.staff===oldName) ev.staff = newName; });
   await saveState();
@@ -1719,24 +1806,30 @@ function renderWorkdayTable(role){
     table.innerHTML = `<tr><th>${role}</th></tr><tr><td style="color:var(--ink-soft);">まだ登録がありません</td></tr>`;
     return;
   }
+  const slotLabels = slotLabelsFor(role);
   let html = '<tr><th>スタッフ</th>' + DAYS.map(d=>`<th>${d}</th>`).join('') + '</tr>';
   names.forEach(staff=>{
     html += `<tr><td class="staff-name">${staff}</td>`;
     DAYS.forEach(day=>{
-      const checked = worksOn(staff,day) ? 'checked' : '';
-      html += `<td style="text-align:center;"><input type="checkbox" data-staff="${staff}" data-day="${day}" ${checked}></td>`;
+      const blks = slotLabels.map((label,i)=>{
+        const on = worksOnSlot(staff,day,i);
+        return `<button type="button" class="blk ${on?'':'off'}" data-staff="${staff}" data-day="${day}" data-slot="${i}" title="${day}曜 ${label} ${on?'勤務':'非勤務'}" aria-label="${staff} ${day}曜 ${label}（${on?'勤務':'非勤務'}、タップで切替）"></button>`;
+      }).join('');
+      html += `<td><div class="strip">${blks}</div></td>`;
     });
     html += '</tr>';
   });
   table.innerHTML = html;
-  table.querySelectorAll('input[type=checkbox]').forEach(cb=>{
-    cb.addEventListener('change', async ()=>{
-      const staff = cb.dataset.staff, day = cb.dataset.day;
-      const set = new Set(state.staffWorkdays[staff]||[]);
-      if(cb.checked) set.add(day); else set.delete(day);
-      state.staffWorkdays[staff] = DAYS.filter(d=>set.has(d));
+  table.querySelectorAll('[data-staff][data-day][data-slot]').forEach(el=>{
+    el.addEventListener('click', async ()=>{
+      const staff = el.dataset.staff, day = el.dataset.day, slotIdx = Number(el.dataset.slot);
+      if(!state.staffWorkSlots[staff]) state.staffWorkSlots[staff] = {};
+      const set = new Set(state.staffWorkSlots[staff][day] || []);
+      if(set.has(slotIdx)) set.delete(slotIdx); else set.add(slotIdx);
+      state.staffWorkSlots[staff][day] = Array.from(set).sort((a,b)=>a-b);
       await saveState();
-      renderOverview('看護師'); renderOverview('セラピスト');
+      renderWorkdayTable(role);
+      renderOverview(role);
     });
   });
 }
