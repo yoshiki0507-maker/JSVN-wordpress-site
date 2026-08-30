@@ -48,9 +48,10 @@ state = {
       staff, day, slotIdx,
       weeks: number[],                  // 1-5。[1,2,3,4,5]なら毎週、[1,3]なら隔週、[1,3,5]なら隔週(第1・3・5週)など
       patternValue,                     // 'weekly'|'daily'|'daily7'|'biweekly_13'|... （登録時の頻度パターン）
-      name, disease, insuranceType, serviceDuration, alone, careManager, hospital, timeNote, note, startDate,
+      name, disease, insuranceType, serviceDuration, alone, careManager, hospital, district, timeNote, note, startDate,
       pairId: string | null
       // insuranceType: '医療保険'|'介護保険'|'精神'|'小児'（任意）。serviceDuration: '30'|'60'|'90'（分）
+      // district: ⑧設定「地区マスタ」に登録した地区名（任意、例：さいたま市緑区）
       // pairId はご夫婦など同じ枠に2名を登録した場合、両者に同じ値を持たせて紐付けるためのID。
       // 実体としては2件の独立したbooking（別々のid）なので、編集・終了はそれぞれ個別に行える。
       // 対になっている予約は pairedBookingAt(booking) で取得できる。
@@ -58,7 +59,8 @@ state = {
   },
   eventLog: [{type:'新規'|'終了', date, name, staff, day, slot, careManager, hospital, reason?}, ...],
   // reason（終了理由）は type:'終了' のときのみ。'入所'|'看取り'|'卒業' のいずれか
-  referralSources: { careManagers: string[], hospitals: string[] }
+  referralSources: { careManagers: string[], hospitals: string[] },
+  districts: string[] // 地区マスタ（⑧設定で追加・削除。③新規登録・提案の「地区」選択肢になる）
 }
 ```
 - 1つの(staff, day, slotIdx)に対して複数の`booking`が共存できる（隔週・月次ローテーション対応、
@@ -109,8 +111,15 @@ state = {
   個別に編集・終了できる。
 - 各画面の「🖨 PDF出力」ボタンはブラウザの印刷機能（`window.print()`）を呼び出す実装。専用ライブラリは
   使わず、印刷時は`@media print`でナビや操作ボタンを非表示にして該当パネルのみを出力する。
+- ⑤リスト分析・⑥月次レポートには「📥 CSV出力」ボタンもあり、そのパネル内に表示されているすべての
+  表（`table.grid`）を、見出し（h3）ごとにまとめて1つのCSVファイルとしてダウンロードできる
+  （`exportPanelCsv(panelId, filename)`。Excelで文字化けしないようUTF-8 BOM付きで出力）。
 - ⑥月次レポートには、登録・終了の月別集計や終了理由の内訳に加えて、現在の利用者を対象にした
-  疾患名・主保険・独居の内訳表も表示する（⑤リスト分析の紹介元分析と同じ集計ロジックを再利用）。
+  疾患名・主保険・独居・地区の内訳表も表示する（⑤リスト分析の紹介元分析と同じ集計ロジックを再利用）。
+  地区は⑧設定の「地区マスタ」で事業所ごとに自由に登録する（例：さいたま市緑区、川口市）。
+- ①②の空き状況の右側には「🔔 受け入れ枠アラート」を表示する。月〜金・曜日×時間帯（枠）ごとに、
+  空き枠数の調整（バッファ）を差し引いたうえで空いているスタッフ数を数え、2件以上空いている
+  枠を一覧表示する（`computeSlotAlerts(role, threshold)`）。しきい値は関数の引数で変更できる。
 
 ## 既知の制約・今後の検討事項
 1. **同時編集は後勝ち（last-write-wins）**：複数管理者がほぼ同時に保存すると、後から保存した方の
