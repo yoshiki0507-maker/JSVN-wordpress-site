@@ -35,19 +35,22 @@ DEPLOY.md            … CoreServerへのデプロイ手順
 state = {
   staff: [{name, role: '看護師'|'セラピスト'|'事務員', qualifications: string[]}, ...],
   // qualifications の例: ['理学療法士'], ['特定行為看護師','皮膚・排泄ケア認定看護師'] など。複数可・自由記述の資格も可
-  slotLabels: string[],                 // 時間帯の名称（並び替え可能）
+  slotLabels: { '看護師': string[], 'セラピスト': string[] }, // 時間帯の名称。職種ごとに独立（並び替え可能）
   staffWorkdays: { [staffName]: 曜日配列 },
-  staffBuffer: { '看護師': number, 'セラピスト': number }, // ①②の空き枠数計算で差し引くスタッフ人数
+  staffBuffer: { '看護師': number, 'セラピスト': number }, // ①②の空き枠数計算・④の新規提案の候補選定の両方で差し引くスタッフ人数
   bookings: {
     [bookingId]: {
       staff, day, slotIdx,
       weeks: number[],                  // 1-5。[1,2,3,4,5]なら毎週、[1,3]なら隔週、[1,3,5]なら隔週(第1・3・5週)など
-      name, disease, insuranceType, alone, careManager, hospital, timeNote, note, startDate
-      // insuranceType: '医療保険'|'介護保険'|'精神'|'小児'（任意）
+      name, disease, insuranceType, serviceDuration, alone, careManager, hospital, timeNote, note, startDate,
+      companion: {name, disease, insuranceType, timeNote} | null
+      // insuranceType: '医療保険'|'介護保険'|'精神'|'小児'（任意）。serviceDuration: '30'|'60'|'90'（分）
+      // companion はサービス時間30分の同一枠にご夫婦などもう1名を登録した場合のみ
     }
   },
-  eventLog: [{type:'新規'|'終了', date, name, staff, day, slot, careManager, hospital, reason?}, ...],
+  eventLog: [{type:'新規'|'終了', date, name, staff, day, slot, careManager, hospital, reason?, companion?}, ...],
   // reason（終了理由）は type:'終了' のときのみ。'入所'|'看取り'|'卒業' のいずれか
+  // companion（'新規'のときのみ、あればもう1名の氏名）は⑦月次レポートの新規人数を利用者数で数えるために使う
   referralSources: { careManagers: string[], hospitals: string[] }
 }
 ```
@@ -59,14 +62,24 @@ state = {
   「○○認定看護師」「○○専門看護師」「他ライセンス」は自由記述の接頭辞を付けて登録できる。
   画面表示（`roleLabel()`）は資格があればそちらを優先し、なければ`role`を表示する。
   `事務員`は①②の対象外（③の職員名簿にのみ表示）。
+- 時間帯（`slotLabels`）は看護師・セラピストで完全に別の配列。⑧設定でそれぞれ独立して追加・削除・
+  並べ替え・名前変更ができる（`slotLabelsFor(role)` / `slotCount(role)`を参照）。
 - ①②の「空き余地」の集計と自動提案の曜日探索は、土曜・日曜を定休日として自動的には対象にしない
-  （`orderedDays()`参照）。特定の利用者が土日を希望する場合は、③でそのスタッフの土日勤務を
-  個別にオンにしたうえで、通常どおり登録すれば①②の該当セルに名前で表示される。
+  （`orderedDays()`参照）。土日欄はマス目ではなく、その日にその枠のどこかで実際に予約がある
+  利用者名だけを箇条書きで表示する（クリックで通常どおり編集・終了操作が可能）。特定の利用者が
+  土日を希望する場合は、③でそのスタッフの土日勤務を個別にオンにしたうえで通常どおり登録すればよい。
+- ①②の「週2（2枠）／人」「週1（1枠）／人」は、曜日ごとの空き余地の合計（月〜金）から算出する
+  独立した数字（曜日別カードとは別枠で表示）。
+- 「空き枠数の計算調整」（⑧設定の看護師・セラピストごとの差引人数）は、①②の表示だけでなく
+  ④新規登録・提案の候補選定にも反映される。実装は`suggestionPool(role)`で、勤務予定人数が
+  最も少ない（＝一番余裕があるように見える）スタッフから順に差引人数分を候補から除外する方式。
 - 初期データ（新規登録時・「共有データを初期状態に戻す」実行時）は`staff`・`slotLabels`・`staffWorkdays`
   のみ`SEED`定数から復元する。`bookings`（利用者情報）は常に空の状態から始まる。
   設定はそのままに利用者情報だけを消したい場合は、⑧設定の「利用者情報を初期化」を使う（2段階確認あり）。
-- 利用者情報（疾患名・主保険・居宅介護支援事業所など）は、①②のマスに表示されるモーダル内の
-  「編集する」から後で修正できる（`openSlotModal()`のインライン編集フォーム）。
+- 利用者情報（氏名・疾患名・主保険・居宅介護支援事業所・曜日・時間帯・もう1名の情報など）は、
+  ①②のマスに表示されるモーダル内の「編集する」から後で修正できる（`openSlotModal()`の
+  インライン編集フォーム）。曜日・時間帯を変更すると、変更先が空いているかチェックしたうえで
+  予約そのものを移動する。
 - 各画面の「🖨 PDF出力」ボタンはブラウザの印刷機能（`window.print()`）を呼び出す実装。専用ライブラリは
   使わず、印刷時は`@media print`でナビや操作ボタンを非表示にして該当パネルのみを出力する。
 
