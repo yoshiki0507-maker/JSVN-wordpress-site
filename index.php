@@ -1,3 +1,7 @@
+<?php
+declare(strict_types=1);
+require __DIR__ . '/lib/auth.php';
+?>
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -402,7 +406,8 @@
     </section>
 
     <div class="footer-actions">
-      <button class="btn btn-ghost btn-small" id="resetBtn">この端末のデータを初期状態に戻す</button>
+      <a href="logout.php" class="btn btn-ghost btn-small" style="text-decoration:none;margin-right:8px;">ログアウト</a>
+      <button class="btn btn-ghost btn-small" id="resetBtn">共有データを初期状態に戻す（全員に影響します）</button>
     </div>
   </main>
 </div>
@@ -462,13 +467,17 @@ function labelForWeeks(weeks){
 // ---------- 状態の読み込み・初期化・移行 ----------
 async function loadState(){
   try{
-    const raw = localStorage.getItem('appState');
-    if(raw){
-      state = migrateState(JSON.parse(raw));
-      await saveState();
-      return;
+    const res = await fetch('api/state.php', { credentials:'same-origin' });
+    if(res.status === 401){ location.href = 'login.php'; return; }
+    if(res.ok){
+      const json = await res.json();
+      if(json.data){
+        state = migrateState(JSON.parse(json.data));
+        await saveState();
+        return;
+      }
     }
-  }catch(e){ /* not found yet */ }
+  }catch(e){ console.error('読み込みに失敗しました', e); }
   state = freshState();
   await saveState();
 }
@@ -543,9 +552,20 @@ function migrateState(loaded){
 
 async function saveState(){
   try{
-    localStorage.setItem('appState', JSON.stringify(state));
+    const res = await fetch('api/state.php', {
+      method:'POST',
+      credentials:'same-origin',
+      headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({ data: JSON.stringify(state) })
+    });
+    if(res.status === 401){ location.href = 'login.php'; return; }
+    if(!res.ok){
+      console.error('保存に失敗しました', res.status);
+      showToast('保存に失敗しました。通信状況をご確認ください。');
+    }
   }catch(e){
     console.error('保存に失敗しました', e);
+    showToast('保存に失敗しました。通信状況をご確認ください。');
   }
 }
 
@@ -1271,7 +1291,7 @@ document.getElementById('addHospBtn').addEventListener('click', async ()=>{
 
 // ---------- リセット ----------
 document.getElementById('resetBtn').addEventListener('click', async ()=>{
-  if(!confirm('この端末に保存されている登録内容をすべて消し、Excelから読み込んだ最初の状態に戻します。よろしいですか？')) return;
+  if(!confirm('全員で共有しているデータをすべて消し、Excelから読み込んだ最初の状態に戻します。この操作は取り消せません。よろしいですか？')) return;
   state = freshState();
   await saveState();
   showToast('初期状態に戻しました');
