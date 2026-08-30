@@ -356,8 +356,15 @@ require __DIR__ . '/lib/auth.php';
           </select>
         </div>
         <div class="full">
-          <label id="dayChipsLabel">希望曜日（未選択＝指定なし）</label>
+          <label id="dayChipsLabel">希望曜日（未選択＝指定なし。土・日も選択できます）</label>
           <div class="chip-group" id="dayChips"></div>
+        </div>
+        <div class="full" style="background:var(--amber-tint);border:1px solid var(--amber);border-radius:8px;padding:8px 12px;">
+          <label style="display:flex;align-items:center;gap:6px;font-weight:600;margin-bottom:0;">
+            <input type="checkbox" id="f-weekend-exception" style="width:auto;">
+            特例（通常の勤務体系に関わらず、指定した曜日・スタッフに土日訪問として登録する）
+          </label>
+          <p class="page-sub" style="margin:4px 0 0;">土曜・日曜への訪問がどうしても必要な方向けの特例登録です。チェックを入れると、⑧設定で土日勤務がOFFのスタッフも候補に含めて提案します。登録後は①②の土日欄に名前が表示されます。</p>
         </div>
         <div class="full">
           <label>希望時間帯（未選択＝指定なし）</label>
@@ -555,6 +562,7 @@ const SEED = {"days": ["月", "火", "水", "木", "金"], "slotLabels": ["9:00"
 // ---------- 基本データ ----------
 const DAYS = ['月','火','水','木','金','土','日'];
 const WEEKDAYS = ['月','火','水','木','金'];
+function isWeekendDay(d){ return d==='土' || d==='日'; }
 const WEEKS = [1,2,3,4,5];
 const ROLES = ['看護師','セラピスト'];
 const END_REASONS = ['入所','看取り','卒業'];
@@ -1015,22 +1023,21 @@ function renderOverview(role){
     DAYS.forEach(day=>{
       const isWeekend = (day==='土' || day==='日');
       if(isWeekend){
-        if(!worksOn(staff, day)){
+        const dayBookings = [];
+        for(let i=0;i<nSlots;i++){
+          bookingsAt(staff,day,i).forEach(b=>dayBookings.push(Object.assign({slotIdx:i}, b)));
+        }
+        if(!worksOn(staff, day) && !dayBookings.length){
+          // 通常は非勤務だが、「特例」登録により予約が入っている場合は下の枝で一覧表示する
           html += `<td style="color:var(--ink-soft);font-size:11px;">―</td>`;
+        }else if(!dayBookings.length){
+          html += `<td style="color:var(--sage);font-size:11px;">空き</td>`;
         }else{
-          const dayBookings = [];
-          for(let i=0;i<nSlots;i++){
-            bookingsAt(staff,day,i).forEach(b=>dayBookings.push(Object.assign({slotIdx:i}, b)));
-          }
-          if(!dayBookings.length){
-            html += `<td style="color:var(--sage);font-size:11px;">空き</td>`;
-          }else{
-            dayBookings.sort((a,b)=>a.slotIdx-b.slotIdx);
-            const items = dayBookings.map(b=>
-              `<li><button type="button" data-staff="${staff}" data-day="${day}" data-slot="${b.slotIdx}" style="all:unset;cursor:pointer;color:var(--teal-deep);text-decoration:underline;">${slotLabels[b.slotIdx]}〜 ${b.name||'（名前未登録）'}</button></li>`
-            ).join('');
-            html += `<td><ul style="margin:0;padding-left:14px;font-size:11px;">${items}</ul></td>`;
-          }
+          dayBookings.sort((a,b)=>a.slotIdx-b.slotIdx);
+          const items = dayBookings.map(b=>
+            `<li><button type="button" data-staff="${staff}" data-day="${day}" data-slot="${b.slotIdx}" style="all:unset;cursor:pointer;color:var(--teal-deep);text-decoration:underline;">${slotLabels[b.slotIdx]}〜 ${b.name||'（名前未登録）'}</button></li>`
+          ).join('');
+          html += `<td><ul style="margin:0;padding-left:14px;font-size:11px;">${items}</ul></td>`;
         }
       }else{
         const blks = slotLabels.map((label,i)=>{
@@ -1141,17 +1148,20 @@ function suggestionPool(role){
   return names.filter(n=>!reserved.has(n));
 }
 
-function findWeeklySuggestions(freq, preferredDays, preferredSlots, role, includeWeekend){
-  const dayOrder = orderedDays(preferredDays, includeWeekend);
+function findWeeklySuggestions(freq, preferredDays, preferredSlots, role, includeWeekend, weekendException){
+  const dayOrder = orderedDays(preferredDays, includeWeekend || weekendException);
   const slotOrder = orderedSlots(preferredSlots, role);
   const pool = suggestionPool(role);
+  // 「特例」がONのときは、土日に限り勤務体系（⑧設定のON/OFF）を無視して候補に含める
+  const dayAllowed = (staff,d)=> worksOn(staff,d) || (weekendException && isWeekendDay(d));
+  const slotAllowed = (staff,d,i)=> worksOnSlot(staff,d,i) || (weekendException && isWeekendDay(d));
   const results = [];
   let tier1Map = new Map();
   pool.forEach(staff=>{
-    const workdays = dayOrder.filter(d=>worksOn(staff,d));
+    const workdays = dayOrder.filter(d=>dayAllowed(staff,d));
     if(workdays.length < freq) return;
     for(const slotIdx of slotOrder){
-      const freeDays = workdays.filter(d=>worksOnSlot(staff,d,slotIdx) && isFullyFree(staff,d,slotIdx));
+      const freeDays = workdays.filter(d=>slotAllowed(staff,d,slotIdx) && isFullyFree(staff,d,slotIdx));
       if(freeDays.length >= freq){
         tier1Map.set(staff, {tier:1, staff, slotIdx, days: freeDays.slice(0,freq), load: totalLoad(staff)});
         break;
@@ -1164,12 +1174,12 @@ function findWeeklySuggestions(freq, preferredDays, preferredSlots, role, includ
     let tier2Map = new Map();
     pool.forEach(staff=>{
       if(tier1Map.has(staff)) return;
-      const workdays = dayOrder.filter(d=>worksOn(staff,d));
+      const workdays = dayOrder.filter(d=>dayAllowed(staff,d));
       if(workdays.length < freq) return;
       const picks = [];
       workdays.forEach(d=>{
         for(const s of slotOrder){
-          if(worksOnSlot(staff,d,s) && isFullyFree(staff,d,s)){ picks.push({day:d, slot:s}); break; }
+          if(slotAllowed(staff,d,s) && isFullyFree(staff,d,s)){ picks.push({day:d, slot:s}); break; }
         }
       });
       if(picks.length >= freq){
@@ -1184,9 +1194,9 @@ function findWeeklySuggestions(freq, preferredDays, preferredSlots, role, includ
     for(const d of dayOrder){
       if(picks.length >= freq) break;
       for(const staff of pool){
-        if(!worksOn(staff,d)) continue;
+        if(!dayAllowed(staff,d)) continue;
         let found = -1;
-        for(const s of slotOrder){ if(worksOnSlot(staff,d,s) && isFullyFree(staff,d,s)){ found = s; break; } }
+        for(const s of slotOrder){ if(slotAllowed(staff,d,s) && isFullyFree(staff,d,s)){ found = s; break; } }
         if(found>=0){ picks.push({day:d, slot:found, staff}); break; }
       }
     }
@@ -1197,18 +1207,20 @@ function findWeeklySuggestions(freq, preferredDays, preferredSlots, role, includ
   return results.slice(0,3);
 }
 
-function findRotationSuggestions(candWeeks, preferredDays, preferredSlots, role){
-  const dayOrder = orderedDays(preferredDays);
+function findRotationSuggestions(candWeeks, preferredDays, preferredSlots, role, weekendException){
+  const dayOrder = orderedDays(preferredDays, weekendException);
   const slotOrder = orderedSlots(preferredSlots, role);
   const pool = suggestionPool(role).slice().sort((a,b)=>totalLoad(a)-totalLoad(b));
+  const dayAllowed = (staff,d)=> worksOn(staff,d) || (weekendException && isWeekendDay(d));
+  const slotAllowed = (staff,d,i)=> worksOnSlot(staff,d,i) || (weekendException && isWeekendDay(d));
   const found = [];
   const seenStaff = new Set();
   for(const staff of pool){
     if(seenStaff.has(staff)) continue;
     for(const day of dayOrder){
-      if(!worksOn(staff,day)) continue;
+      if(!dayAllowed(staff,day)) continue;
       for(const slotIdx of slotOrder){
-        if(worksOnSlot(staff,day,slotIdx) && isRotationFree(staff,day,slotIdx,candWeeks)){
+        if(slotAllowed(staff,day,slotIdx) && isRotationFree(staff,day,slotIdx,candWeeks)){
           found.push({tier:'rotation', staff, day, slotIdx, load: totalLoad(staff)});
           seenStaff.add(staff);
           break;
@@ -1396,9 +1408,10 @@ document.getElementById('intakeForm').addEventListener('submit', (e)=>{
     note: document.getElementById('f-note').value.trim(),
     freq
   };
+  const weekendException = document.getElementById('f-weekend-exception').checked;
   const sugg = pattern.kind==='weekly'
-    ? findWeeklySuggestions(freq, selectedDays, selectedSlots, role, !!pattern.includeWeekend)
-    : findRotationSuggestions(pattern.weeks, selectedDays, selectedSlots, role);
+    ? findWeeklySuggestions(freq, selectedDays, selectedSlots, role, !!pattern.includeWeekend, weekendException)
+    : findRotationSuggestions(pattern.weeks, selectedDays, selectedSlots, role, weekendException);
   const box = document.getElementById('suggestions');
   if(!sugg.length){
     box.innerHTML = `<div class="empty-msg">条件に合う空き枠が見つかりませんでした。${role}の登録がない、または曜日・時間の希望が合っていない可能性があります。</div>`;
