@@ -79,11 +79,12 @@ require __DIR__ . '/lib/auth.php';
   .ov-main{ flex:0 0 auto; }
   .ov-alert{
     flex:1; min-width:260px; background:var(--surface); border:1px solid var(--line);
-    border-radius:var(--radius); padding:14px;
+    border-radius:var(--radius); padding:14px; box-sizing:border-box;
+    display:flex; flex-direction:column; min-height:110px;
   }
-  .ov-alert-title{ font-size:13px; font-weight:700; color:var(--teal-deep); margin:0 0 4px; }
-  .ov-alert-sub{ font-size:11px; color:var(--ink-soft); margin:0 0 10px; }
-  .ov-alert-list{ list-style:none; margin:0; padding:0; display:flex; flex-wrap:wrap; gap:8px; max-height:300px; overflow-y:auto; }
+  .ov-alert-title{ font-size:13px; font-weight:700; color:var(--teal-deep); margin:0 0 4px; flex:0 0 auto; }
+  .ov-alert-sub{ font-size:11px; color:var(--ink-soft); margin:0 0 10px; flex:0 0 auto; }
+  .ov-alert-list{ list-style:none; margin:0; padding:0; display:flex; flex-wrap:wrap; align-content:flex-start; gap:8px; flex:1; min-height:0; overflow-y:auto; }
   .ov-alert-list li{
     flex:0 0 auto; min-width:130px; font-size:12px; background:var(--sage-tint); border:1px solid var(--sage);
     border-radius:7px; padding:6px 9px; display:flex; justify-content:space-between; align-items:center; gap:8px;
@@ -293,13 +294,13 @@ require __DIR__ . '/lib/auth.php';
         <button type="button" class="btn btn-ghost btn-small print-btn no-print" style="margin-left:auto;">🖨 PDF出力</button>
       </div>
       <div class="ov-body">
-        <div class="ov-main">
+        <div class="ov-main" id="ovMain-看護師">
           <div class="summary-row" id="summaryRow-看護師"></div>
           <p class="page-sub" style="margin:2px 0 6px;font-weight:700;color:var(--teal-deep);">月〜金 合計からの受け入れ可能人数</p>
           <div class="summary-row" id="capacityRow-看護師"></div>
           <p class="page-sub" id="bufferNote-看護師" style="margin:-6px 0 14px;"></p>
         </div>
-        <aside class="ov-alert no-print">
+        <aside class="ov-alert no-print" id="ovAlert-看護師">
           <p class="ov-alert-title">🔔 受け入れ枠アラート</p>
           <p class="ov-alert-sub">受け入れ枠が2件以上空いている曜日・時間帯です</p>
           <ul class="ov-alert-list" id="slotAlertList-看護師"></ul>
@@ -324,13 +325,13 @@ require __DIR__ . '/lib/auth.php';
         <button type="button" class="btn btn-ghost btn-small print-btn no-print" style="margin-left:auto;">🖨 PDF出力</button>
       </div>
       <div class="ov-body">
-        <div class="ov-main">
+        <div class="ov-main" id="ovMain-セラピスト">
           <div class="summary-row" id="summaryRow-セラピスト"></div>
           <p class="page-sub" style="margin:2px 0 6px;font-weight:700;color:var(--teal-deep);">月〜金 合計からの受け入れ可能人数</p>
           <div class="summary-row" id="capacityRow-セラピスト"></div>
           <p class="page-sub" id="bufferNote-セラピスト" style="margin:-6px 0 14px;"></p>
         </div>
-        <aside class="ov-alert no-print">
+        <aside class="ov-alert no-print" id="ovAlert-セラピスト">
           <p class="ov-alert-title">🔔 受け入れ枠アラート</p>
           <p class="ov-alert-sub">受け入れ枠が2件以上空いている曜日・時間帯です</p>
           <ul class="ov-alert-list" id="slotAlertList-セラピスト"></ul>
@@ -1196,6 +1197,15 @@ function renderOverview(role){
   table.querySelectorAll('[data-staff][data-day][data-slot]').forEach(el=>{
     el.addEventListener('click', ()=>openSlotModal(el.dataset.staff, el.dataset.day, Number(el.dataset.slot)));
   });
+  syncOverviewAlertHeight(role);
+}
+function syncOverviewAlertHeight(role){
+  // サマリー・受け入れ可能人数カードの高さに合わせて右側のアラート枠の高さを揃え、
+  // 左右どちらかが極端に短くて下の勤務表との間に余白ができてしまうのを防ぐ
+  const main = document.getElementById('ovMain-'+role);
+  const alertBox = document.getElementById('ovAlert-'+role);
+  if(!main || !alertBox) return;
+  alertBox.style.height = main.offsetHeight + 'px';
 }
 
 // ---------- ③ 新規登録・提案 ----------
