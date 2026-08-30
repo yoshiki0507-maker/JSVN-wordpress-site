@@ -26,18 +26,24 @@ schema.sql           … MySQLのテーブル定義
 DEPLOY.md            … CoreServerへのデプロイ手順
 ```
 
+## 画面構成
+① 空き状況〈看護師〉／② 空き状況〈セラピスト〉／③ スタッフ管理／④ 新規登録・提案／
+⑤ 終了処理／⑥ リスト分析（旧・紹介元分析）／⑦ 月次レポート／⑧ 設定
+
 ## データモデル（index.php内のJS、MySQLの app_state.data カラムにJSON文字列として保存）
 ```
 state = {
-  staff: [{name, role: '看護師'|'セラピスト'|'事務員', jobTitle?: '理学療法士'|'作業療法士'|'言語聴覚士'}, ...],
+  staff: [{name, role: '看護師'|'セラピスト'|'事務員', qualifications: string[]}, ...],
+  // qualifications の例: ['理学療法士'], ['特定行為看護師','皮膚・排泄ケア認定看護師'] など。複数可・自由記述の資格も可
   slotLabels: string[],                 // 時間帯の名称（並び替え可能）
   staffWorkdays: { [staffName]: 曜日配列 },
   staffBuffer: { '看護師': number, 'セラピスト': number }, // ①②の空き枠数計算で差し引くスタッフ人数
   bookings: {
     [bookingId]: {
       staff, day, slotIdx,
-      weeks: number[],                  // 1-4。[1,2,3,4]なら毎週、[1,3]なら隔週など
-      name, disease, alone, careManager, hospital, timeNote, note, startDate
+      weeks: number[],                  // 1-5。[1,2,3,4,5]なら毎週、[1,3]なら隔週、[1,3,5]なら隔週(第1・3・5週)など
+      name, disease, insuranceType, alone, careManager, hospital, timeNote, note, startDate
+      // insuranceType: '医療保険'|'介護保険'|'精神'|'小児'（任意）
     }
   },
   eventLog: [{type:'新規'|'終了', date, name, staff, day, slot, careManager, hospital, reason?}, ...],
@@ -47,11 +53,22 @@ state = {
 ```
 - 1つの(staff, day, slotIdx)に対して複数の`booking`が共存できる（隔週・月次ローテーション対応）。
   週の重複チェックは`isRotationFree()` / `isFullyFree()`を参照。
-- `staff`配列の並び順がそのまま①②の表示順になる（⑦設定の↑↓で自由に並べ替え可能）。
-- `role`が`セラピスト`のスタッフは`jobTitle`（理学療法士・作業療法士・言語聴覚士）を持てる。
-  画面表示は`jobTitle`があればそちらを優先（`roleLabel()`参照）。`事務員`は①②の対象外（職員名簿にのみ表示）。
-- 初期データ（新規登録時・リセット時）は`staff`・`slotLabels`・`staffWorkdays`のみ`SEED`定数から復元する。
-  `bookings`（利用者情報）は常に空の状態から始まる。
+- `staff`配列の並び順がそのまま①②の表示順になる（③スタッフ管理の↑↓で自由に並べ替え可能）。名前も直接書き換え可能
+  （`renameStaffMember()`が`staffWorkdays`・`bookings`・`eventLog`内の旧名称もまとめて置き換える）。
+- スタッフの資格・専門性（`qualifications`）は複数登録可能。理学療法士等のプリセットに加え、
+  「○○認定看護師」「○○専門看護師」「他ライセンス」は自由記述の接頭辞を付けて登録できる。
+  画面表示（`roleLabel()`）は資格があればそちらを優先し、なければ`role`を表示する。
+  `事務員`は①②の対象外（③の職員名簿にのみ表示）。
+- ①②の「空き余地」の集計と自動提案の曜日探索は、土曜・日曜を定休日として自動的には対象にしない
+  （`orderedDays()`参照）。特定の利用者が土日を希望する場合は、③でそのスタッフの土日勤務を
+  個別にオンにしたうえで、通常どおり登録すれば①②の該当セルに名前で表示される。
+- 初期データ（新規登録時・「共有データを初期状態に戻す」実行時）は`staff`・`slotLabels`・`staffWorkdays`
+  のみ`SEED`定数から復元する。`bookings`（利用者情報）は常に空の状態から始まる。
+  設定はそのままに利用者情報だけを消したい場合は、⑧設定の「利用者情報を初期化」を使う（2段階確認あり）。
+- 利用者情報（疾患名・主保険・居宅介護支援事業所など）は、①②のマスに表示されるモーダル内の
+  「編集する」から後で修正できる（`openSlotModal()`のインライン編集フォーム）。
+- 各画面の「🖨 PDF出力」ボタンはブラウザの印刷機能（`window.print()`）を呼び出す実装。専用ライブラリは
+  使わず、印刷時は`@media print`でナビや操作ボタンを非表示にして該当パネルのみを出力する。
 
 ## 既知の制約・今後の検討事項
 1. **同時編集は後勝ち（last-write-wins）**：複数管理者がほぼ同時に保存すると、後から保存した方の

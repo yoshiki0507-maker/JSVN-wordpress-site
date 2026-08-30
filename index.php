@@ -49,6 +49,11 @@ require __DIR__ . '/lib/auth.php';
   .nav button:hover{ background:rgba(255,255,255,.06); color:#fff; }
   .nav button.active{ background:rgba(255,255,255,.1); color:#fff; border-left-color:#8FD4C1; font-weight:700; }
   .nav button:focus-visible{ outline:2px solid #8FD4C1; outline-offset:-2px; }
+  .nav-logout{
+    all:unset; cursor:pointer; margin-top:auto; padding:14px 20px; font-size:12.5px; color:#CFE3DE;
+    border-top:1px solid rgba(255,255,255,.15); font-family:var(--font-ui); box-sizing:border-box; width:100%;
+  }
+  .nav-logout:hover{ background:rgba(255,255,255,.06); color:#fff; }
   main{ flex:1; padding:28px 34px 60px; max-width:1100px; }
   .panel{ display:none; }
   .panel.active{ display:block; animation:fade .25s ease; }
@@ -133,6 +138,17 @@ require __DIR__ . '/lib/auth.php';
   .role-pill.nurse{ background:var(--teal-tint); color:var(--teal-deep); }
   .role-pill.therapist{ background:var(--indigo-tint); color:var(--indigo); }
   .role-pill.office{ background:#EDEDF0; color:#5B6B67; }
+  .qual-chip{
+    display:inline-flex; align-items:center; gap:4px; font-size:10px; font-weight:700; color:var(--sage);
+    background:var(--sage-tint); padding:2px 8px; border-radius:999px; margin-left:6px; margin-top:2px;
+  }
+  .qual-chip button{ all:unset; cursor:pointer; font-weight:700; line-height:1; padding:0 1px; }
+  .qual-chip button:hover{ color:var(--brick); }
+  .qual-add-row{ display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin-top:6px; width:100%; }
+  .qual-add-row select, .qual-add-row input[type=text]{
+    width:auto; max-width:170px; padding:5px 8px; font-size:11.5px; border:1px solid var(--line); border-radius:6px;
+    font-family:var(--font-ui);
+  }
 
   form.intake{ background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:20px 22px; display:grid; grid-template-columns:1fr 1fr; gap:16px 22px; }
   form.intake .full{ grid-column:1/-1; }
@@ -211,6 +227,14 @@ require __DIR__ . '/lib/auth.php';
     main{ padding:18px 16px 50px; }
     form.intake{ grid-template-columns:1fr; }
   }
+  @media print{
+    .no-print, .nav{ display:none !important; }
+    .app{ display:block; }
+    main{ max-width:none; padding:0; }
+    .panel{ display:none !important; }
+    .panel.active{ display:block !important; }
+    body{ background:#fff; }
+  }
 </style>
 </head>
 <body>
@@ -219,11 +243,13 @@ require __DIR__ . '/lib/auth.php';
     <h1>訪問看護<br>空き枠管理</h1>
     <button data-panel="overview-nurse" class="active">① 空き状況〈看護師〉</button>
     <button data-panel="overview-therapist">② 空き状況〈セラピスト〉</button>
-    <button data-panel="intake">③ 新規登録・提案</button>
-    <button data-panel="end">④ 終了処理</button>
-    <button data-panel="referral">⑤ 紹介元分析</button>
-    <button data-panel="report">⑥ 月次レポート</button>
-    <button data-panel="settings">⑦ 設定</button>
+    <button data-panel="staff">③ スタッフ管理</button>
+    <button data-panel="intake">④ 新規登録・提案</button>
+    <button data-panel="end">⑤ 終了処理</button>
+    <button data-panel="referral">⑥ リスト分析</button>
+    <button data-panel="report">⑦ 月次レポート</button>
+    <button data-panel="settings">⑧ 設定</button>
+    <button type="button" class="nav-logout" id="navLogout">ログアウト</button>
   </nav>
   <main>
 
@@ -234,6 +260,7 @@ require __DIR__ . '/lib/auth.php';
           <h2 class="page-title" style="margin:0;">看護師の空き状況</h2>
           <p class="page-sub" style="margin:2px 0 0;">枠の並びは左から <span id="slotHint-看護師"></span> の順です。タップすると詳細が見られます。</p>
         </div>
+        <button type="button" class="btn btn-ghost btn-small print-btn no-print" style="margin-left:auto;">🖨 PDF出力</button>
       </div>
       <div class="summary-row" id="summaryRow-看護師"></div>
       <p class="page-sub" id="bufferNote-看護師" style="margin:-14px 0 14px;"></p>
@@ -253,6 +280,7 @@ require __DIR__ . '/lib/auth.php';
           <h2 class="page-title" style="margin:0;">セラピストの空き状況</h2>
           <p class="page-sub" style="margin:2px 0 0;">枠の並びは左から <span id="slotHint-セラピスト"></span> の順です。タップすると詳細が見られます。</p>
         </div>
+        <button type="button" class="btn btn-ghost btn-small print-btn no-print" style="margin-left:auto;">🖨 PDF出力</button>
       </div>
       <div class="summary-row" id="summaryRow-セラピスト"></div>
       <p class="page-sub" id="bufferNote-セラピスト" style="margin:-14px 0 14px;"></p>
@@ -262,6 +290,21 @@ require __DIR__ . '/lib/auth.php';
         <span><i style="background:#EEEFEC;border:1px solid #D8DAD5"></i>非勤務日</span></div>
       <div style="overflow-x:auto;">
         <table class="grid ov-table" id="overviewTable-セラピスト"></table>
+      </div>
+    </section>
+
+    <section id="panel-staff" class="panel">
+      <h2 class="page-title">スタッフ管理</h2>
+      <p class="page-sub">看護師・セラピスト・事務員の追加や削除ができます。削除は、そのスタッフに現在ご利用中の予定がない場合のみ行えます。↑↓で並び順を自由に変更できます（①②の表示順に反映されます）。名前はそのまま書き換えられます。資格・専門性はスタッフごとに複数登録できます。事務員は名簿に載るだけで、空き状況の対象にはなりません。</p>
+      <div id="staffList"></div>
+      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center;">
+        <input type="text" id="newStaffName" placeholder="スタッフ名" style="max-width:180px;">
+        <select id="newStaffRole" style="max-width:140px;">
+          <option value="看護師">看護師</option>
+          <option value="セラピスト">セラピスト</option>
+          <option value="事務員">事務員</option>
+        </select>
+        <button class="btn btn-ghost btn-small" id="addStaffBtn">＋ スタッフを追加</button>
       </div>
     </section>
 
@@ -285,6 +328,7 @@ require __DIR__ . '/lib/auth.php';
           <select id="f-pattern">
             <option value="weekly">毎週（曜日を指定・複数日選択可）</option>
             <option value="biweekly_13">隔週（第1・3週）</option>
+            <option value="biweekly_135">隔週（第1・3・5週）</option>
             <option value="biweekly_24">隔週（第2・4週）</option>
             <option value="monthly_1">月1回（第1週）</option>
             <option value="monthly_2">月1回（第2週）</option>
@@ -313,6 +357,16 @@ require __DIR__ . '/lib/auth.php';
         <div>
           <label for="f-disease">疾患名</label>
           <input type="text" id="f-disease" placeholder="例：認知症">
+        </div>
+        <div>
+          <label for="f-insurance">主保険</label>
+          <select id="f-insurance">
+            <option value="">選択してください</option>
+            <option value="医療保険">医療保険</option>
+            <option value="介護保険">介護保険</option>
+            <option value="精神">精神</option>
+            <option value="小児">小児</option>
+          </select>
         </div>
         <div>
           <label for="f-alone">独居</label>
@@ -353,7 +407,10 @@ require __DIR__ . '/lib/auth.php';
     </section>
 
     <section id="panel-referral" class="panel">
-      <h2 class="page-title">紹介元分析</h2>
+      <div style="display:flex;align-items:center;gap:14px;">
+        <h2 class="page-title" style="margin:0;">リスト分析</h2>
+        <button type="button" class="btn btn-ghost btn-small print-btn no-print" style="margin-left:auto;">🖨 PDF出力</button>
+      </div>
       <p class="page-sub">「居宅介護支援事業所」「医療機関（訪問看護指示書発行元）」ごとに、現在の実利用者数・全体に占める割合・直近の新規紹介数を集計します。※ここでの「割合」は自社の現在の利用者全体に占めるシェアという意味で計算しています（各事業所が抱える利用者全体の中での割合ではありません）。</p>
       <h3 style="font-size:14px;color:var(--teal-deep);margin:22px 0 8px;">居宅介護支援事業所別</h3>
       <table class="grid" id="cmTable"></table>
@@ -362,7 +419,10 @@ require __DIR__ . '/lib/auth.php';
     </section>
 
     <section id="panel-report" class="panel">
-      <h2 class="page-title">月次レポート</h2>
+      <div style="display:flex;align-items:center;gap:14px;">
+        <h2 class="page-title" style="margin:0;">月次レポート</h2>
+        <button type="button" class="btn btn-ghost btn-small print-btn no-print" style="margin-left:auto;">🖨 PDF出力</button>
+      </div>
       <p class="page-sub">このアプリ上で登録・終了処理をした件数を月ごとに集計しています（Excel側の既存データは対象になりません）。</p>
       <div class="report-grid" id="reportGrid"></div>
       <table class="grid" id="reportTable"></table>
@@ -378,24 +438,6 @@ require __DIR__ . '/lib/auth.php';
       <p class="page-sub" style="margin-bottom:10px;">出勤予定でも、休み明けや夜勤明けなどで実際には稼働できないスタッフがいます。①②の「空き余地」の数字を計算するとき、看護師・セラピストそれぞれ勤務予定人数から何名分を差し引くか設定できます（0なら差し引きなし）。事業所の実情に合わせて調整してください。</p>
       <div class="setting-row"><label style="margin:0;flex:0 0 auto;min-width:220px;">看護師：勤務予定から差し引く人数</label><input type="number" id="bufferNurse" min="0" style="max-width:100px;" value="0"></div>
       <div class="setting-row"><label style="margin:0;flex:0 0 auto;min-width:220px;">セラピスト：勤務予定から差し引く人数</label><input type="number" id="bufferTherapist" min="0" style="max-width:100px;" value="0"></div>
-
-      <h3 style="font-size:14px;color:var(--teal-deep);margin:30px 0 8px;">スタッフ管理</h3>
-      <p class="page-sub" style="margin-bottom:10px;">看護師・セラピスト・事務員の追加や削除ができます。削除は、そのスタッフに現在ご利用中の予定がない場合のみ行えます。↑↓で並び順を自由に変更できます（①②の表示順に反映されます）。セラピストは職種（理学療法士・作業療法士・言語聴覚士）を選べます。事務員は名簿に載るだけで、空き状況の対象にはなりません。</p>
-      <div id="staffList"></div>
-      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center;">
-        <input type="text" id="newStaffName" placeholder="スタッフ名" style="max-width:180px;">
-        <select id="newStaffRole" style="max-width:140px;">
-          <option value="看護師">看護師</option>
-          <option value="セラピスト">セラピスト</option>
-          <option value="事務員">事務員</option>
-        </select>
-        <select id="newStaffJobTitle" style="max-width:160px;display:none;">
-          <option value="理学療法士">理学療法士</option>
-          <option value="作業療法士">作業療法士</option>
-          <option value="言語聴覚士">言語聴覚士</option>
-        </select>
-        <button class="btn btn-ghost btn-small" id="addStaffBtn">＋ スタッフを追加</button>
-      </div>
 
       <h3 style="font-size:14px;color:var(--teal-deep);margin:30px 0 8px;">時間帯（枠）の設定</h3>
       <p class="page-sub" style="margin-bottom:10px;">名前の変更・並べ替え・追加・削除ができます。削除は、その枠に現在ご利用中の予定がない場合のみ行えます。</p>
@@ -427,12 +469,12 @@ require __DIR__ . '/lib/auth.php';
 
       <h3 style="font-size:14px;color:var(--brick);margin:34px 0 8px;">データ管理</h3>
       <p class="page-sub" style="margin-bottom:10px;">この操作は全員が共有しているデータに影響します。取り扱いに注意してください。</p>
-      <button class="btn btn-ghost btn-small" id="resetBtn" style="border-color:var(--brick);color:var(--brick);">共有データを初期状態に戻す（全員に影響します）</button>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn btn-ghost btn-small" id="clearCustomersBtn" style="border-color:var(--brick);color:var(--brick);">利用者情報を初期化（一括消去）</button>
+        <button class="btn btn-ghost btn-small" id="resetBtn" style="border-color:var(--brick);color:var(--brick);">共有データを初期状態に戻す（全員に影響します）</button>
+      </div>
+      <p class="page-sub" style="margin-top:8px;">「利用者情報を初期化」はスタッフ・時間帯枠・設定はそのままに、登録済みの利用者情報だけを消去します。「共有データを初期状態に戻す」はスタッフ構成なども含めてExcel取り込み時点の状態に戻します。</p>
     </section>
-
-    <div class="footer-actions">
-      <a href="logout.php" class="btn btn-ghost btn-small" style="text-decoration:none;">ログアウト</a>
-    </div>
   </main>
 </div>
 <div class="toast" id="toast"></div>
@@ -449,19 +491,28 @@ const SEED = {"days": ["月", "火", "水", "木", "金"], "slotLabels": ["9:00"
 <script>
 // ---------- 基本データ ----------
 const DAYS = ['月','火','水','木','金','土','日'];
-const WEEKS = [1,2,3,4];
+const WEEKDAYS = ['月','火','水','木','金'];
+const WEEKS = [1,2,3,4,5];
 const ROLES = ['看護師','セラピスト'];
 const JOB_TITLES = ['理学療法士','作業療法士','言語聴覚士'];
 const END_REASONS = ['入所','看取り','卒業'];
+const INSURANCE_TYPES = ['医療保険','介護保険','精神','小児'];
+const QUALIFICATION_PRESETS = ['理学療法士','作業療法士','言語聴覚士','特定行為看護師','ケアマネジャー'];
+const QUALIFICATION_TEMPLATES = [
+  { value:'__certified', suffix:'認定看護師', label:'○○認定看護師（自由記述）', placeholder:'例：皮膚・排泄ケア' },
+  { value:'__specialist', suffix:'専門看護師', label:'○○専門看護師（自由記述）', placeholder:'例：がん看護' },
+  { value:'__other', suffix:'', label:'他ライセンス（自由記述）', placeholder:'資格名を入力' },
+];
 
 const PATTERNS = {
-  weekly:      { label:'毎週',            kind:'weekly' },
-  biweekly_13: { label:'隔週（第1・3週）', kind:'rotation', weeks:[1,3] },
-  biweekly_24: { label:'隔週（第2・4週）', kind:'rotation', weeks:[2,4] },
-  monthly_1:   { label:'月1回（第1週）',   kind:'rotation', weeks:[1] },
-  monthly_2:   { label:'月1回（第2週）',   kind:'rotation', weeks:[2] },
-  monthly_3:   { label:'月1回（第3週）',   kind:'rotation', weeks:[3] },
-  monthly_4:   { label:'月1回（第4週）',   kind:'rotation', weeks:[4] },
+  weekly:       { label:'毎週',              kind:'weekly' },
+  biweekly_13:  { label:'隔週（第1・3週）',   kind:'rotation', weeks:[1,3] },
+  biweekly_135: { label:'隔週（第1・3・5週）', kind:'rotation', weeks:[1,3,5] },
+  biweekly_24:  { label:'隔週（第2・4週）',   kind:'rotation', weeks:[2,4] },
+  monthly_1:    { label:'月1回（第1週）',     kind:'rotation', weeks:[1] },
+  monthly_2:    { label:'月1回（第2週）',     kind:'rotation', weeks:[2] },
+  monthly_3:    { label:'月1回（第3週）',     kind:'rotation', weeks:[3] },
+  monthly_4:    { label:'月1回（第4週）',     kind:'rotation', weeks:[4] },
 };
 
 let state = null; // { staff, slotLabels, staffWorkdays, bookings, eventLog, referralSources }
@@ -482,13 +533,15 @@ function staffInfo(name){
 }
 function roleLabel(name){
   const info = staffInfo(name);
-  return info.jobTitle || info.role;
+  const quals = (info.qualifications||[]).filter(Boolean);
+  return quals.length ? quals.join('・') : info.role;
 }
 function labelForWeeks(weeks){
-  const sorted = (weeks||[1,2,3,4]).slice().sort((a,b)=>a-b);
-  if(sorted.length>=4) return '毎週';
+  const sorted = (weeks||WEEKS).slice().sort((a,b)=>a-b);
+  if(sorted.length>=WEEKS.length) return '毎週';
   const key = sorted.join(',');
   if(key==='1,3') return '隔週（第1・3週）';
+  if(key==='1,3,5') return '隔週（第1・3・5週）';
   if(key==='2,4') return '隔週（第2・4週）';
   if(sorted.length===1) return `月1回（第${sorted[0]}週）`;
   return `第${sorted.join('・')}週`;
@@ -541,6 +594,10 @@ function migrateState(loaded){
   if(!loaded.referralSources) loaded.referralSources = { careManagers: [], hospitals: [] };
   if(!loaded.slotLabels) loaded.slotLabels = SEED.slotLabels.slice();
   if(!loaded.staffBuffer) loaded.staffBuffer = { '看護師': 0, 'セラピスト': 0 };
+  loaded.staff.forEach(s=>{
+    if(!s.qualifications){ s.qualifications = s.jobTitle ? [s.jobTitle] : []; }
+    delete s.jobTitle;
+  });
 
   if(loaded.bookings) return loaded;
 
@@ -619,21 +676,26 @@ function totalLoad(staff){
 const RENDERERS = {
   'overview-nurse': ()=>renderOverview('看護師'),
   'overview-therapist': ()=>renderOverview('セラピスト'),
+  staff: renderStaffList,
   intake: ()=>{ populateReferralSelects(); updatePatternUI(); },
   end: renderEndList,
   referral: renderReferralAnalysis,
   report: renderReport,
   settings: renderSettings
 };
-document.querySelectorAll('.nav button').forEach(btn=>{
+document.querySelectorAll('.nav button[data-panel]').forEach(btn=>{
   btn.addEventListener('click', ()=>{
-    document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.nav button[data-panel]').forEach(b=>b.classList.remove('active'));
     document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
     btn.classList.add('active');
     document.getElementById('panel-'+btn.dataset.panel).classList.add('active');
     const fn = RENDERERS[btn.dataset.panel];
     if(fn) fn();
   });
+});
+document.getElementById('navLogout').addEventListener('click', ()=>{ location.href = 'logout.php'; });
+document.querySelectorAll('.print-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>window.print());
 });
 
 function showToast(msg){
@@ -644,7 +706,8 @@ function showToast(msg){
 }
 
 // ---------- モーダル（タップで詳細） ----------
-function closeModal(){ document.getElementById('slotModal').hidden = true; }
+let editingBookingId = null;
+function closeModal(){ document.getElementById('slotModal').hidden = true; editingBookingId = null; }
 document.getElementById('modalClose').addEventListener('click', closeModal);
 document.getElementById('slotModal').addEventListener('click', (e)=>{
   if(e.target.id==='slotModal') closeModal();
@@ -669,6 +732,53 @@ async function endBookingById(id, reason){
   if(document.getElementById('panel-end').classList.contains('active')) renderEndList();
 }
 
+function refSelectOptions(list, current){
+  return `<option value="">未設定</option>` + list.map(n=>`<option value="${n}" ${current===n?'selected':''}>${n}</option>`).join('');
+}
+
+function bookingReadView(b){
+  return `
+        <div class="btag">${patternLabelOf(b)}</div>
+        <div class="bname">${b.name || '（名前未登録）'}</div>
+        <div class="brow">主保険：${b.insuranceType||'―'}</div>
+        <div class="brow">疾患：${b.disease||'―'}／独居：${b.alone||'―'}</div>
+        <div class="brow">居宅：${b.careManager||'―'}</div>
+        <div class="brow">医療機関：${b.hospital||'―'}</div>
+        ${b.timeNote?`<div class="brow">時刻メモ：${b.timeNote}</div>`:''}
+        ${b.note?`<div class="brow">備考：${b.note}</div>`:''}
+        <div class="brow">登録日：${b.startDate||'―'}</div>
+        <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+          <button class="btn btn-ghost btn-small" data-edit="${b.id}">編集する</button>
+          <select class="end-reason-select" data-reason-for="${b.id}" style="padding:6px 8px;border:1px solid var(--line);border-radius:7px;font-size:12px;font-family:var(--font-ui);">
+            <option value="">終了理由を選択</option>
+            ${END_REASONS.map(r=>`<option value="${r}">${r}</option>`).join('')}
+          </select>
+          <button class="btn btn-danger btn-small" data-end="${b.id}">終了する</button>
+        </div>`;
+}
+
+function bookingEditView(b){
+  return `
+        <div class="bname" style="margin-bottom:8px;">利用者情報を編集</div>
+        <label>氏名</label><input type="text" class="edit-field" data-f="name" value="${(b.name||'').replace(/"/g,'&quot;')}">
+        <label>主保険</label><select class="edit-field" data-f="insuranceType">${refSelectOptions(INSURANCE_TYPES, b.insuranceType)}</select>
+        <label>疾患名</label><input type="text" class="edit-field" data-f="disease" value="${(b.disease||'').replace(/"/g,'&quot;')}">
+        <label>独居</label>
+        <select class="edit-field" data-f="alone">
+          <option value="不明" ${b.alone==='不明'?'selected':''}>不明</option>
+          <option value="はい" ${b.alone==='はい'?'selected':''}>はい</option>
+          <option value="いいえ" ${b.alone==='いいえ'?'selected':''}>いいえ</option>
+        </select>
+        <label>居宅介護支援事業所</label><select class="edit-field" data-f="careManager">${refSelectOptions(state.referralSources.careManagers, b.careManager)}</select>
+        <label>医療機関</label><select class="edit-field" data-f="hospital">${refSelectOptions(state.referralSources.hospitals, b.hospital)}</select>
+        <label>実施時刻メモ</label><input type="text" class="edit-field" data-f="timeNote" value="${(b.timeNote||'').replace(/"/g,'&quot;')}">
+        <label>備考</label><textarea class="edit-field" data-f="note" rows="2">${b.note||''}</textarea>
+        <div style="margin-top:8px;display:flex;gap:6px;">
+          <button class="btn btn-primary btn-small" data-save="${b.id}">保存</button>
+          <button class="btn btn-ghost btn-small" data-cancel="${b.id}">キャンセル</button>
+        </div>`;
+}
+
 function openSlotModal(staff, day, slotIdx){
   const modal = document.getElementById('slotModal');
   const content = document.getElementById('modalContent');
@@ -680,23 +790,7 @@ function openSlotModal(staff, day, slotIdx){
     html += `<div class="free-note">この枠は現在すべての週で空いています</div>`;
   }else{
     bks.forEach(b=>{
-      html += `<div class="booking-card">
-        <div class="btag">${patternLabelOf(b)}</div>
-        <div class="bname">${b.name || '（名前未登録）'}</div>
-        <div class="brow">疾患：${b.disease||'―'}／独居：${b.alone||'―'}</div>
-        <div class="brow">居宅：${b.careManager||'―'}</div>
-        <div class="brow">医療機関：${b.hospital||'―'}</div>
-        ${b.timeNote?`<div class="brow">時刻メモ：${b.timeNote}</div>`:''}
-        ${b.note?`<div class="brow">備考：${b.note}</div>`:''}
-        <div class="brow">登録日：${b.startDate||'―'}</div>
-        <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
-          <select class="end-reason-select" data-reason-for="${b.id}" style="padding:6px 8px;border:1px solid var(--line);border-radius:7px;font-size:12px;font-family:var(--font-ui);">
-            <option value="">終了理由を選択</option>
-            ${END_REASONS.map(r=>`<option value="${r}">${r}</option>`).join('')}
-          </select>
-          <button class="btn btn-danger btn-small" data-end="${b.id}">終了する</button>
-        </div>
-      </div>`;
+      html += `<div class="booking-card">${editingBookingId===b.id ? bookingEditView(b) : bookingReadView(b)}</div>`;
     });
     if(freeWeeks.length){
       html += `<div class="free-note">空いている週：第${freeWeeks.join('・第')}週</div>`;
@@ -707,6 +801,25 @@ function openSlotModal(staff, day, slotIdx){
     btn.addEventListener('click', ()=>{
       const sel = content.querySelector(`[data-reason-for="${btn.dataset.end}"]`);
       endBookingById(btn.dataset.end, sel ? sel.value : '');
+    });
+  });
+  content.querySelectorAll('[data-edit]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{ editingBookingId = btn.dataset.edit; openSlotModal(staff, day, slotIdx); });
+  });
+  content.querySelectorAll('[data-cancel]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{ editingBookingId = null; openSlotModal(staff, day, slotIdx); });
+  });
+  content.querySelectorAll('[data-save]').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const id = btn.dataset.save;
+      const card = btn.closest('.booking-card');
+      const updates = {};
+      card.querySelectorAll('.edit-field').forEach(f=>{ updates[f.dataset.f] = (f.value||'').trim(); });
+      Object.assign(state.bookings[id], updates);
+      await saveState();
+      showToast('利用者情報を更新しました');
+      editingBookingId = null;
+      openSlotModal(staff, day, slotIdx);
     });
   });
   modal.hidden = false;
@@ -721,7 +834,7 @@ function renderOverview(role){
   const buffer = (state.staffBuffer && state.staffBuffer[role]) || 0;
   const summaryRow = document.getElementById('summaryRow-'+role);
   summaryRow.innerHTML = '';
-  DAYS.forEach(day=>{
+  WEEKDAYS.forEach(day=>{
     let free = 0, total = 0;
     names.forEach(staff=>{
       if(!worksOn(staff, day)) return;
@@ -732,21 +845,25 @@ function renderOverview(role){
     });
     if(total===0) return;
     const adjustedFree = Math.max(0, free - buffer*slotCount());
+    const cap2 = Math.floor(adjustedFree/2);
     const card = document.createElement('div');
     card.className = 'summary-card';
-    card.innerHTML = `<div class="day">${day}曜</div><div class="num">${adjustedFree}</div><div class="unit">枠 空き余地</div>`;
+    card.innerHTML = `<div class="day">${day}曜</div><div class="num">${adjustedFree}</div><div class="unit">枠 空き余地</div>
+      <div class="unit" style="margin-top:4px;">週2（2枠）／人：${cap2}人</div>
+      <div class="unit">週1（1枠）／人：${adjustedFree}人</div>`;
     summaryRow.appendChild(card);
   });
   const bufferNoteEl = document.getElementById('bufferNote-'+role);
   if(bufferNoteEl){
-    bufferNoteEl.textContent = buffer>0
-      ? `※${role} ${buffer}名分を勤務予定人数から差し引いて計算しています（⑦設定で変更できます）`
-      : '';
+    const parts = [];
+    if(buffer>0) parts.push(`${role} ${buffer}名分を勤務予定人数から差し引いて計算しています（⑧設定で変更できます）`);
+    parts.push('土曜・日曜は定休日のため上の受け入れ可能人数には含めていません（ご希望があれば個別に登録できます）');
+    bufferNoteEl.textContent = '※' + parts.join('／');
   }
 
   const table = document.getElementById('overviewTable-'+role);
   if(!names.length){
-    table.innerHTML = `<tr><th>担当スタッフ</th></tr><tr><td style="color:var(--ink-soft);">${role}がまだ登録されていません。⑦設定の「スタッフ管理」から追加してください。</td></tr>`;
+    table.innerHTML = `<tr><th>担当スタッフ</th></tr><tr><td style="color:var(--ink-soft);">${role}がまだ登録されていません。③スタッフ管理から追加してください。</td></tr>`;
     return;
   }
   let html = '<tr><th>担当スタッフ</th>' + DAYS.map(d=>`<th>${d}</th>`).join('') + '</tr>';
@@ -772,7 +889,7 @@ function renderOverview(role){
   });
 }
 
-// ---------- ③ 新規登録・提案 ----------
+// ---------- ④ 新規登録・提案 ----------
 let selectedDays = [];
 let selectedSlots = [];
 
@@ -832,8 +949,9 @@ function populateReferralSelects(){
 }
 
 function orderedDays(preferred){
-  if(!preferred || !preferred.length) return DAYS.slice();
-  return DAYS.filter(d=>preferred.includes(d)).concat(DAYS.filter(d=>!preferred.includes(d)));
+  // 土日は定休日のため、希望として明示的に選ばれていない限り自動探索の対象外にする
+  if(!preferred || !preferred.length) return WEEKDAYS.slice();
+  return DAYS.filter(d=>preferred.includes(d)).concat(WEEKDAYS.filter(d=>!preferred.includes(d)));
 }
 function orderedSlots(preferred){
   const all = state.slotLabels.map((_,i)=>i);
@@ -967,6 +1085,7 @@ async function confirmSuggestion(s, patient, patternValue){
       staff, day, slotIdx, weeks, patternValue,
       name: patient.name, disease: patient.disease, alone: patient.alone, note: patient.note,
       careManager: patient.careManager, hospital: patient.hospital, timeNote: patient.timeNote,
+      insuranceType: patient.insuranceType,
       startDate: date
     };
     state.eventLog.push({
@@ -997,6 +1116,7 @@ document.getElementById('intakeForm').addEventListener('submit', (e)=>{
   const patient = {
     name: document.getElementById('f-name').value.trim(),
     disease: document.getElementById('f-disease').value.trim(),
+    insuranceType: document.getElementById('f-insurance').value,
     alone: document.getElementById('f-alone').value,
     careManager: document.getElementById('f-cm').value,
     hospital: document.getElementById('f-hosp').value,
@@ -1030,7 +1150,7 @@ document.getElementById('intakeForm').addEventListener('submit', (e)=>{
   });
 });
 
-// ---------- ④ 終了処理 ----------
+// ---------- ⑤ 終了処理 ----------
 function renderEndList(){
   const wrap = document.getElementById('endList');
   const searchInput = document.getElementById('endSearch');
@@ -1071,7 +1191,7 @@ function renderEndList(){
 }
 document.getElementById('endSearch').addEventListener('input', renderEndList);
 
-// ---------- ⑤ 紹介元分析 ----------
+// ---------- ⑥ リスト分析 ----------
 function renderReferralAnalysisTable(tableId, field, label){
   const patients = new Map();
   Object.values(state.bookings).forEach(b=>{
@@ -1113,7 +1233,7 @@ function renderReferralAnalysis(){
   renderReferralAnalysisTable('hospTable', 'hospital', '医療機関');
 }
 
-// ---------- ⑥ 月次レポート ----------
+// ---------- ⑦ 月次レポート ----------
 function renderReport(){
   const byMonth = {};
   state.eventLog.forEach(ev=>{
@@ -1125,7 +1245,7 @@ function renderReport(){
   const grid = document.getElementById('reportGrid');
   const table = document.getElementById('reportTable');
   if(!months.length){
-    grid.innerHTML = '<p class="page-sub">まだ登録・終了の記録がありません。③④の操作をすると、ここに集計されます。</p>';
+    grid.innerHTML = '<p class="page-sub">まだ登録・終了の記録がありません。④⑤の操作をすると、ここに集計されます。</p>';
     table.innerHTML = '';
     return;
   }
@@ -1162,18 +1282,16 @@ function renderReport(){
   }
 }
 
-// ---------- ⑦ 設定 ----------
-async function addStaffMember(name, role, jobTitle){
+// ---------- ③ スタッフ管理 ----------
+async function addStaffMember(name, role){
   if(state.staff.some(s=>s.name===name)){
     alert('同じ名前のスタッフが既に登録されています。');
     return;
   }
-  const entry = {name, role};
-  if(role==='セラピスト' && jobTitle) entry.jobTitle = jobTitle;
-  state.staff.push(entry);
+  state.staff.push({name, role, qualifications: []});
   state.staffWorkdays[name] = [];
   await saveState();
-  renderSettings();
+  renderStaffList();
 }
 async function moveStaff(idx, dir){
   const newIdx = idx+dir;
@@ -1181,7 +1299,7 @@ async function moveStaff(idx, dir){
   const arr = state.staff;
   [arr[idx], arr[newIdx]] = [arr[newIdx], arr[idx]];
   await saveState();
-  renderSettings();
+  renderStaffList();
   renderOverview('看護師'); renderOverview('セラピスト');
 }
 async function removeStaffMember(name){
@@ -1194,10 +1312,48 @@ async function removeStaffMember(name){
   state.staff = state.staff.filter(s=>s.name!==name);
   delete state.staffWorkdays[name];
   await saveState();
-  renderSettings();
+  renderStaffList();
   renderOverview('看護師'); renderOverview('セラピスト');
 }
+async function renameStaffMember(oldName, newName){
+  newName = (newName||'').trim();
+  if(!newName || newName===oldName) return;
+  if(state.staff.some(s=>s.name===newName)){
+    alert('その名前のスタッフは既に登録されています。');
+    renderStaffList();
+    return;
+  }
+  const staffObj = state.staff.find(s=>s.name===oldName);
+  if(!staffObj) return;
+  staffObj.name = newName;
+  state.staffWorkdays[newName] = state.staffWorkdays[oldName] || [];
+  delete state.staffWorkdays[oldName];
+  Object.values(state.bookings).forEach(b=>{ if(b.staff===oldName) b.staff = newName; });
+  state.eventLog.forEach(ev=>{ if(ev.staff===oldName) ev.staff = newName; });
+  await saveState();
+  showToast(`「${oldName}」を「${newName}」に変更しました`);
+  renderStaffList();
+  renderOverview('看護師'); renderOverview('セラピスト');
+}
+async function addQualification(name, qual){
+  qual = (qual||'').trim();
+  if(!qual) return;
+  const staffObj = state.staff.find(s=>s.name===name);
+  if(!staffObj) return;
+  if(!staffObj.qualifications) staffObj.qualifications = [];
+  if(!staffObj.qualifications.includes(qual)) staffObj.qualifications.push(qual);
+  await saveState();
+  renderStaffList();
+}
+async function removeQualification(name, qual){
+  const staffObj = state.staff.find(s=>s.name===name);
+  if(!staffObj || !staffObj.qualifications) return;
+  staffObj.qualifications = staffObj.qualifications.filter(q=>q!==qual);
+  await saveState();
+  renderStaffList();
+}
 
+// ---------- ⑧ 設定 ----------
 async function addSlot(label){
   state.slotLabels.push(label);
   await saveState();
@@ -1233,7 +1389,6 @@ async function moveSlot(idx, dir){
 }
 
 function renderSettings(){
-  renderStaffList();
   document.getElementById('bufferNurse').value = (state.staffBuffer && state.staffBuffer['看護師']) || 0;
   document.getElementById('bufferTherapist').value = (state.staffBuffer && state.staffBuffer['セラピスト']) || 0;
 
@@ -1265,18 +1420,31 @@ function renderSettings(){
 
 function renderStaffList(){
   const wrap = document.getElementById('staffList');
+  if(!wrap) return;
   if(!state.staff.length){ wrap.innerHTML = '<p class="page-sub">スタッフが登録されていません。</p>'; return; }
   wrap.innerHTML = '';
   state.staff.forEach((s, idx)=>{
     const row = document.createElement('div');
     row.className = 'staff-row-item';
+    row.style.flexWrap = 'wrap';
     const pillClass = s.role==='セラピスト' ? 'therapist' : s.role==='事務員' ? 'office' : 'nurse';
-    const labelText = s.jobTitle || s.role;
-    const jobTitleSelectHtml = s.role==='セラピスト'
-      ? `<select class="job-title-select" style="margin-left:8px;padding:4px 6px;border:1px solid var(--line);border-radius:6px;font-size:11.5px;font-family:var(--font-ui);">${JOB_TITLES.map(t=>`<option value="${t}" ${s.jobTitle===t?'selected':''}>${t}</option>`).join('')}</select>`
-      : '';
+    const quals = s.qualifications || [];
+    const qualChipsHtml = quals.map(q=>`<span class="qual-chip">${q}<button type="button" data-remove-qual="${q}">×</button></span>`).join('');
+    const templateOptionsHtml = QUALIFICATION_TEMPLATES.map(t=>`<option value="${t.value}">${t.label}</option>`).join('');
     row.innerHTML = `
-      <span style="display:flex;align-items:center;flex-wrap:wrap;">${s.name}<span class="role-pill ${pillClass}">${labelText}</span>${jobTitleSelectHtml}</span>
+      <span style="display:flex;align-items:center;flex-wrap:wrap;flex:1;min-width:260px;">
+        <input type="text" class="staff-name-input" value="${s.name.replace(/"/g,'&quot;')}" style="max-width:140px;padding:5px 8px;font-size:13px;">
+        <span class="role-pill ${pillClass}">${s.role}</span>${qualChipsHtml}
+        <div class="qual-add-row">
+          <select class="qual-add-select">
+            <option value="">＋資格を追加…</option>
+            ${QUALIFICATION_PRESETS.map(p=>`<option value="${p}">${p}</option>`).join('')}
+            ${templateOptionsHtml}
+          </select>
+          <input type="text" class="qual-add-text" style="display:none;">
+          <button type="button" class="icon-btn" data-act="add-qual">追加</button>
+        </div>
+      </span>
       <span style="display:flex;gap:4px;flex-shrink:0;">
         <button class="icon-btn" data-act="up" ${idx===0?'disabled':''} title="上へ">↑</button>
         <button class="icon-btn" data-act="down" ${idx===state.staff.length-1?'disabled':''} title="下へ">↓</button>
@@ -1286,13 +1454,36 @@ function renderStaffList(){
     row.querySelector('[data-act="up"]').addEventListener('click', ()=>moveStaff(idx,-1));
     row.querySelector('[data-act="down"]').addEventListener('click', ()=>moveStaff(idx,1));
     row.querySelector('[data-act="del"]').addEventListener('click', ()=>removeStaffMember(s.name));
-    const jtSelect = row.querySelector('.job-title-select');
-    if(jtSelect){
-      jtSelect.addEventListener('change', async ()=>{
-        const staffObj = state.staff.find(x=>x.name===s.name);
-        if(staffObj){ staffObj.jobTitle = jtSelect.value; await saveState(); }
-      });
-    }
+    row.querySelector('.staff-name-input').addEventListener('change', (e)=>renameStaffMember(s.name, e.target.value));
+    row.querySelectorAll('[data-remove-qual]').forEach(btn=>{
+      btn.addEventListener('click', ()=>removeQualification(s.name, btn.dataset.removeQual));
+    });
+    const qualSelect = row.querySelector('.qual-add-select');
+    const qualText = row.querySelector('.qual-add-text');
+    qualSelect.addEventListener('change', ()=>{
+      const tmpl = QUALIFICATION_TEMPLATES.find(t=>t.value===qualSelect.value);
+      if(tmpl){
+        qualText.style.display = '';
+        qualText.placeholder = tmpl.placeholder;
+      }else{
+        qualText.style.display = 'none';
+        qualText.value = '';
+      }
+    });
+    row.querySelector('[data-act="add-qual"]').addEventListener('click', ()=>{
+      const tmpl = QUALIFICATION_TEMPLATES.find(t=>t.value===qualSelect.value);
+      let qual;
+      if(tmpl){
+        const prefix = qualText.value.trim();
+        if(!prefix){ alert('資格名を入力してください。'); return; }
+        qual = tmpl.suffix ? prefix + tmpl.suffix : prefix;
+      }else if(qualSelect.value){
+        qual = qualSelect.value;
+      }else{
+        return;
+      }
+      addQualification(s.name, qual);
+    });
     wrap.appendChild(row);
   });
 }
@@ -1343,19 +1534,12 @@ function renderWorkdayTable(role){
   });
 }
 
-document.getElementById('newStaffRole').addEventListener('change', ()=>{
-  const roleSelect = document.getElementById('newStaffRole');
-  const jtSelect = document.getElementById('newStaffJobTitle');
-  jtSelect.style.display = roleSelect.value==='セラピスト' ? '' : 'none';
-});
 document.getElementById('addStaffBtn').addEventListener('click', ()=>{
   const nameInput = document.getElementById('newStaffName');
   const roleSelect = document.getElementById('newStaffRole');
-  const jtSelect = document.getElementById('newStaffJobTitle');
   const name = nameInput.value.trim();
   if(!name) return;
-  const jobTitle = roleSelect.value==='セラピスト' ? jtSelect.value : undefined;
-  addStaffMember(name, roleSelect.value, jobTitle);
+  addStaffMember(name, roleSelect.value);
   nameInput.value = '';
 });
 document.getElementById('bufferNurse').addEventListener('change', async (e)=>{
@@ -1399,6 +1583,15 @@ document.getElementById('addHospBtn').addEventListener('click', async ()=>{
 });
 
 // ---------- リセット ----------
+document.getElementById('clearCustomersBtn').addEventListener('click', async ()=>{
+  if(!confirm('登録済みの利用者情報（予約・終了履歴）をすべて消去します。スタッフ・時間帯枠・設定などはそのまま残ります。よろしいですか？')) return;
+  if(!confirm('本当によろしいですか？　この操作は取り消せません。')) return;
+  state.bookings = {};
+  state.eventLog = [];
+  await saveState();
+  showToast('利用者情報を初期化しました');
+  renderOverview('看護師'); renderOverview('セラピスト');
+});
 document.getElementById('resetBtn').addEventListener('click', async ()=>{
   if(!confirm('全員で共有しているデータをすべて消し、Excelから読み込んだ最初の状態に戻します。この操作は取り消せません。よろしいですか？')) return;
   state = freshState();
