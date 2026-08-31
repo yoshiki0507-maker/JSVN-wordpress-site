@@ -614,6 +614,9 @@ function staffNames(role){
   // s.role==='セラピスト' は、理学療法士・作業療法士・言語聴覚士に分離する前の旧データ用の後方互換
   // （⑧スタッフ管理の職種プルダウンから移行先の具体的な職種を選び直すまで、②③⑨から見えなくならないようにする）
   if(role==='セラピスト') return state.staff.filter(s=>THERAPIST_ROLES.includes(s.role) || s.role==='セラピスト').map(s=>s.name);
+  // 理学療法士・作業療法士・言語聴覚士のいずれかを個別に指定した場合も、まだ具体的な職種に
+  // 移行していない旧「セラピスト」データは（どの職種か確定していないぶん）候補から漏れないよう含める
+  if(THERAPIST_ROLES.includes(role)) return state.staff.filter(s=>s.role===role || s.role==='セラピスト').map(s=>s.name);
   return state.staff.filter(s=>s.role===role).map(s=>s.name);
 }
 function staffInfo(name){
@@ -1297,7 +1300,11 @@ function buildRoleSections(){
           <label>担当スタッフ（未選択＝指定なし。空いているスタッフから自動で提案します）</label>
           <select class="f-preferred-staff" data-role="${role}">
             <option value="">指定なし</option>
-            ${staffNames(role).map(n=>`<option value="${n}">${n}</option>`).join('')}
+            ${staffNames(role).map(n=>{
+              const actualRole = staffInfo(n).role;
+              const suffix = actualRole!==role ? `（${actualRole}・要職種変更）` : '';
+              return `<option value="${n}">${n}${suffix}</option>`;
+            }).join('')}
           </select>
         </div>
         <div style="margin-top:12px;">
