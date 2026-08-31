@@ -357,7 +357,7 @@ require __DIR__ . '/lib/auth.php';
 
     <section id="panel-staff" class="panel">
       <h2 class="page-title">スタッフ管理</h2>
-      <p class="page-sub">看護師・理学療法士・作業療法士・言語聴覚士・事務員の追加や削除ができます。削除は、そのスタッフに現在ご利用中の予定がない場合のみ行えます。↑↓で並び順を自由に変更できます（①②の表示順に反映されます）。名前はそのまま書き換えられます。資格・専門性はスタッフごとに複数登録できます。事務員は名簿に載るだけで、空き状況の対象にはなりません。理学療法士・作業療法士・言語聴覚士は②空き状況〈セラピスト〉画面・時間帯設定・空き枠数の計算調整を共有しますが、新規登録・提案では職種ごとに独立して訪問頻度パターンや希望曜日を指定できます。</p>
+      <p class="page-sub">看護師・理学療法士・作業療法士・言語聴覚士・事務員の追加や削除ができます。削除は、そのスタッフに現在ご利用中の予定がない場合のみ行えます。↑↓で並び順を自由に変更できます（①②の表示順に反映されます）。名前はそのまま書き換えられます。資格・専門性はスタッフごとに複数登録できます。事務員は名簿に載るだけで、空き状況の対象にはなりません。理学療法士・作業療法士・言語聴覚士は②空き状況〈セラピスト〉画面・時間帯設定・空き枠数の計算調整を共有しますが、新規登録・提案では職種ごとに独立して訪問頻度パターンや希望曜日を指定できます。職種は名前の右のプルダウンからいつでも変更できます（例えば旧仕様で「セラピスト」として登録されていた方は、ここで理学療法士・作業療法士・言語聴覚士のいずれかに変更してください）。</p>
       <div id="staffList"></div>
       <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center;">
         <input type="text" id="newStaffName" placeholder="スタッフ名" style="max-width:180px;">
@@ -611,7 +611,9 @@ function slotLabelsFor(role){ return (state.slotLabels && state.slotLabels[roleG
 function slotCount(role){ return slotLabelsFor(role).length; }
 function staffNames(role){
   if(!role) return state.staff.map(s=>s.name);
-  if(role==='セラピスト') return state.staff.filter(s=>THERAPIST_ROLES.includes(s.role)).map(s=>s.name);
+  // s.role==='セラピスト' は、理学療法士・作業療法士・言語聴覚士に分離する前の旧データ用の後方互換
+  // （⑧スタッフ管理の職種プルダウンから移行先の具体的な職種を選び直すまで、②③⑨から見えなくならないようにする）
+  if(role==='セラピスト') return state.staff.filter(s=>THERAPIST_ROLES.includes(s.role) || s.role==='セラピスト').map(s=>s.name);
   return state.staff.filter(s=>s.role===role).map(s=>s.name);
 }
 function staffInfo(name){
@@ -2012,6 +2014,14 @@ async function removeStaffMember(name){
   renderStaffList();
   renderOverview('看護師'); renderOverview('セラピスト');
 }
+async function changeStaffRole(name, newRole){
+  const s = state.staff.find(x=>x.name===name);
+  if(!s || s.role===newRole) return;
+  s.role = newRole;
+  await saveState();
+  renderStaffList();
+  renderOverview('看護師'); renderOverview('セラピスト');
+}
 async function renameStaffMember(oldName, newName){
   newName = (newName||'').trim();
   if(!newName || newName===oldName) return;
@@ -2132,14 +2142,19 @@ function renderStaffList(){
     const row = document.createElement('div');
     row.className = 'staff-row-item';
     row.style.flexWrap = 'wrap';
-    const pillClass = THERAPIST_ROLES.includes(s.role) ? 'therapist' : s.role==='事務員' ? 'office' : 'nurse';
+    const pillClass = (THERAPIST_ROLES.includes(s.role) || s.role==='セラピスト') ? 'therapist' : s.role==='事務員' ? 'office' : 'nurse';
+    const pillColors = { nurse: ['var(--teal-tint)','var(--teal-deep)'], therapist: ['var(--indigo-tint)','var(--indigo)'], office: ['#EDEDF0','#5B6B67'] };
+    const [pillBg, pillFg] = pillColors[pillClass];
+    const knownRoles = CAREGIVER_ROLES.concat(['事務員']);
+    const roleOptionsHtml = knownRoles.map(r=>`<option value="${r}" ${s.role===r?'selected':''}>${r}</option>`).join('')
+      + (knownRoles.includes(s.role) ? '' : `<option value="${s.role}" selected>${s.role}（要選択）</option>`);
     const quals = s.qualifications || [];
     const qualChipsHtml = quals.map(q=>`<span class="qual-chip">${q}<button type="button" data-remove-qual="${q}">×</button></span>`).join('');
     const templateOptionsHtml = QUALIFICATION_TEMPLATES.map(t=>`<option value="${t.value}">${t.label}</option>`).join('');
     row.innerHTML = `
       <span style="display:flex;align-items:center;flex-wrap:wrap;flex:1;min-width:260px;">
         <input type="text" class="staff-name-input" value="${s.name.replace(/"/g,'&quot;')}" style="max-width:140px;padding:5px 8px;font-size:13px;">
-        <span class="role-pill ${pillClass}">${s.role}</span>${qualChipsHtml}
+        <select class="role-change-select" style="font-size:10px;font-weight:700;padding:2px 6px;border-radius:999px;margin-left:8px;border:none;background:${pillBg};color:${pillFg};cursor:pointer;">${roleOptionsHtml}</select>${qualChipsHtml}
         <div class="qual-add-row">
           <select class="qual-add-select">
             <option value="">＋資格を追加…</option>
@@ -2156,6 +2171,7 @@ function renderStaffList(){
         <button class="icon-btn danger" data-act="del">削除</button>
       </span>
     `;
+    row.querySelector('.role-change-select').addEventListener('change', (e)=>changeStaffRole(s.name, e.target.value));
     row.querySelector('[data-act="up"]').addEventListener('click', ()=>moveStaff(idx,-1));
     row.querySelector('[data-act="down"]').addEventListener('click', ()=>moveStaff(idx,1));
     row.querySelector('[data-act="del"]').addEventListener('click', ()=>removeStaffMember(s.name));
