@@ -146,6 +146,8 @@ require __DIR__ . '/lib/auth.php';
   .strip .blk.partial{ background:var(--amber-tint); border-color:var(--amber); color:var(--amber); }
   .strip .blk.partial::after{ content:'◐'; font-size:10px; }
   .strip .blk.off{ background:#EEEFEC; border-color:#D8DAD5; cursor:default; }
+  .strip .blk.hospitalized{ background:#2A2A2A; border-color:#000; color:#fff; }
+  .strip .blk.hospitalized::after{ content:'入'; font-size:9px; font-weight:700; }
   .strip .blk:hover{ transform:scale(1.18); }
   .strip .blk:focus-visible{ outline:2px solid var(--teal); outline-offset:1px; }
   table.ov-table th, table.ov-table td{ padding:6px 6px; }
@@ -275,11 +277,12 @@ require __DIR__ . '/lib/auth.php';
     <button data-panel="overview-nurse" class="active">① 空き状況〈看護師〉</button>
     <button data-panel="overview-therapist">② 空き状況〈セラピスト〉</button>
     <button data-panel="intake">③ 新規登録・提案</button>
-    <button data-panel="end">④ 終了処理</button>
-    <button data-panel="referral">⑤ リスト分析</button>
-    <button data-panel="report">⑥ 月次レポート</button>
-    <button data-panel="staff">⑦ スタッフ管理</button>
-    <button data-panel="settings">⑧ 設定</button>
+    <button data-panel="end">④ 利用者検索</button>
+    <button data-panel="inpatient">⑤ 入院管理表</button>
+    <button data-panel="referral">⑥ リスト分析</button>
+    <button data-panel="report">⑦ 月次レポート</button>
+    <button data-panel="staff">⑧ スタッフ管理</button>
+    <button data-panel="settings">⑨ 設定</button>
     <button type="button" class="nav-logout" id="navLogout">ログアウト</button>
   </nav>
   <main>
@@ -309,6 +312,7 @@ require __DIR__ . '/lib/auth.php';
       <div class="legend" id="legend-看護師"><span><i style="background:var(--sage-tint);border:1px solid var(--sage)"></i>空き</span>
         <span><i style="background:var(--amber-tint);border:1px solid var(--amber)"></i>一部空き（隔週・月次ローテーション）</span>
         <span><i style="background:var(--brick-tint);border:1px solid var(--brick)"></i>使用中（満枠）</span>
+        <span><i style="background:#2A2A2A;border:1px solid #000"></i>入院中</span>
         <span><i style="background:#EEEFEC;border:1px solid #D8DAD5"></i>非勤務日</span></div>
       <div style="overflow-x:auto;">
         <table class="grid ov-table" id="overviewTable-看護師"></table>
@@ -340,6 +344,7 @@ require __DIR__ . '/lib/auth.php';
       <div class="legend" id="legend-セラピスト"><span><i style="background:var(--sage-tint);border:1px solid var(--sage)"></i>空き</span>
         <span><i style="background:var(--amber-tint);border:1px solid var(--amber)"></i>一部空き（隔週・月次ローテーション）</span>
         <span><i style="background:var(--brick-tint);border:1px solid var(--brick)"></i>使用中（満枠）</span>
+        <span><i style="background:#2A2A2A;border:1px solid #000"></i>入院中</span>
         <span><i style="background:#EEEFEC;border:1px solid #D8DAD5"></i>非勤務日</span></div>
       <div style="overflow-x:auto;">
         <table class="grid ov-table" id="overviewTable-セラピスト"></table>
@@ -413,7 +418,7 @@ require __DIR__ . '/lib/auth.php';
             <input type="checkbox" id="f-weekend-exception" style="width:auto;">
             特例（通常の勤務体系に関わらず、指定した曜日・スタッフに土日訪問として登録する）
           </label>
-          <p class="page-sub" style="margin:4px 0 0;">土曜・日曜への訪問がどうしても必要な方向けの特例登録です。チェックを入れると、⑧設定で土日勤務がOFFのスタッフも候補に含めて提案します。登録後は①②の土日欄に名前が表示されます。</p>
+          <p class="page-sub" style="margin:4px 0 0;">土曜・日曜への訪問がどうしても必要な方向けの特例登録です。チェックを入れると、⑨設定で土日勤務がOFFのスタッフも候補に含めて提案します。登録後は①②の土日欄に名前が表示されます。</p>
         </div>
         <div class="full">
           <label>希望時間帯（未選択＝指定なし）</label>
@@ -509,10 +514,17 @@ require __DIR__ . '/lib/auth.php';
     </section>
 
     <section id="panel-end" class="panel">
-      <h2 class="page-title">終了処理</h2>
-      <p class="page-sub">現在「使用中」になっている枠の一覧です。訪問終了・利用終了になったものを解除すると、空き状況に反映されます。</p>
+      <h2 class="page-title">利用者検索</h2>
+      <p class="page-sub">現在ご利用中の利用者様の一覧です。氏名で検索して、内容の確認・曜日や時間帯の変更・入院中の登録・終了処理がこの画面からまとめて行えます。</p>
       <input type="text" id="endSearch" placeholder="利用者名で検索…" style="max-width:280px;margin-bottom:14px;padding:8px 10px;border:1px solid var(--line);border-radius:7px;font-size:13.5px;font-family:var(--font-ui);">
       <div id="endList"></div>
+    </section>
+
+    <section id="panel-inpatient" class="panel">
+      <h2 class="page-title">入院管理表</h2>
+      <p class="page-sub">④利用者検索で「入院中」にチェックを入れた利用者様の一覧です。①②の空き状況では該当の枠が黒色で表示されます。退院された場合はここでチェックを外すと通常表示に戻ります。</p>
+      <input type="text" id="inpatientSearch" placeholder="利用者名で検索…" style="max-width:280px;margin-bottom:14px;padding:8px 10px;border:1px solid var(--line);border-radius:7px;font-size:13.5px;font-family:var(--font-ui);">
+      <div id="inpatientList"></div>
     </section>
 
     <section id="panel-referral" class="panel">
@@ -834,6 +846,7 @@ function isRotationFree(staff, day, slotIdx, candWeeks){
 function slotVisualState(staff, day, slotIdx){
   const bks = bookingsAt(staff,day,slotIdx);
   if(bks.length===0) return 'free';
+  if(bks.some(b=>b.hospitalized)) return 'hospitalized';
   const used = occupiedWeeksAt(staff,day,slotIdx);
   if(WEEKS.every(w=>used.has(w))) return 'busy';
   return 'partial';
@@ -849,6 +862,7 @@ const RENDERERS = {
   staff: renderStaffList,
   intake: ()=>{ populateReferralSelects(); updatePatternUI(); },
   end: renderEndList,
+  inpatient: renderInpatientList,
   referral: renderReferralAnalysis,
   report: renderReport,
   settings: renderSettings
@@ -934,6 +948,7 @@ async function endBookingById(id, reason){
   closeModal();
   renderOverview('看護師'); renderOverview('セラピスト');
   if(document.getElementById('panel-end').classList.contains('active')) renderEndList();
+  if(document.getElementById('panel-inpatient').classList.contains('active')) renderInpatientList();
 }
 
 function refSelectOptions(list, current){
@@ -956,6 +971,9 @@ function bookingReadView(b){
         ${b.timeNote?`<div class="brow">時刻メモ：${b.timeNote}</div>`:''}
         ${b.note?`<div class="brow">備考：${b.note}</div>`:''}
         <div class="brow">登録日：${b.startDate||'―'}</div>
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-soft);cursor:pointer;margin-top:4px;">
+          <input type="checkbox" class="hosp-toggle-input" data-hosp-toggle="${b.id}" ${b.hospitalized?'checked':''}> 入院中（チェックすると①②の枠が黒色表示になります）
+        </label>
         ${pairNote}
         <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
           <button class="btn btn-ghost btn-small" data-edit="${b.id}">編集する</button>
@@ -1029,6 +1047,12 @@ function openSlotModal(staff, day, slotIdx){
   content.querySelectorAll('[data-cancel]').forEach(btn=>{
     btn.addEventListener('click', ()=>{ editingBookingId = null; openSlotModal(staff, day, slotIdx); });
   });
+  content.querySelectorAll('[data-hosp-toggle]').forEach(cb=>{
+    cb.addEventListener('change', async ()=>{
+      await toggleHospitalized(cb.dataset.hospToggle, cb.checked);
+      openSlotModal(staff, day, slotIdx);
+    });
+  });
   content.querySelectorAll('[data-save]').forEach(btn=>{
     btn.addEventListener('click', async ()=>{
       const id = btn.dataset.save;
@@ -1058,6 +1082,7 @@ function openSlotModal(staff, day, slotIdx){
       }
       renderOverview('看護師'); renderOverview('セラピスト');
       if(document.getElementById('panel-end').classList.contains('active')) renderEndList();
+      if(document.getElementById('panel-inpatient').classList.contains('active')) renderInpatientList();
     });
   });
   modal.hidden = false;
@@ -1154,7 +1179,7 @@ function renderOverview(role){
 
   const table = document.getElementById('overviewTable-'+role);
   if(!names.length){
-    table.innerHTML = `<tr><th>担当スタッフ</th></tr><tr><td style="color:var(--ink-soft);">${role}がまだ登録されていません。⑦スタッフ管理から追加してください。</td></tr>`;
+    table.innerHTML = `<tr><th>担当スタッフ</th></tr><tr><td style="color:var(--ink-soft);">${role}がまだ登録されていません。⑧スタッフ管理から追加してください。</td></tr>`;
     syncOverviewAlertHeight(role);
     return;
   }
@@ -1178,7 +1203,7 @@ function renderOverview(role){
         }else{
           dayBookings.sort((a,b)=>a.slotIdx-b.slotIdx);
           const items = dayBookings.map(b=>
-            `<li><button type="button" data-staff="${staff}" data-day="${day}" data-slot="${b.slotIdx}" style="all:unset;cursor:pointer;color:var(--teal-deep);text-decoration:underline;">${slotLabels[b.slotIdx]}〜 ${b.name||'（名前未登録）'}</button></li>`
+            `<li><button type="button" data-staff="${staff}" data-day="${day}" data-slot="${b.slotIdx}" style="all:unset;cursor:pointer;color:${b.hospitalized?'#2A2A2A;font-weight:700;':'var(--teal-deep);'}text-decoration:underline;">${slotLabels[b.slotIdx]}〜 ${b.name||'（名前未登録）'}${b.hospitalized?'（入院中）':''}</button></li>`
           ).join('');
           html += `<td><ul style="margin:0;padding-left:14px;font-size:11px;">${items}</ul></td>`;
         }
@@ -1306,7 +1331,7 @@ function findWeeklySuggestions(freq, preferredDays, preferredSlots, role, includ
   const dayOrder = orderedDays(preferredDays, includeWeekend || weekendException);
   const slotOrder = orderedSlots(preferredSlots, role);
   const pool = suggestionPool(role);
-  // 「特例」がONのときは、土日に限り勤務体系（⑧設定のON/OFF）を無視して候補に含める
+  // 「特例」がONのときは、土日に限り勤務体系（⑨設定のON/OFF）を無視して候補に含める
   const dayAllowed = (staff,d)=> worksOn(staff,d) || (weekendException && isWeekendDay(d));
   const slotAllowed = (staff,d,i)=> worksOnSlot(staff,d,i) || (weekendException && isWeekendDay(d));
   const results = [];
@@ -1517,7 +1542,7 @@ function updateExistingPatientNotice(){
   const existing = findExistingBookingsByName(name);
   if(!name || !existing.length){ hideExistingPatientNotice(); return; }
   notice.style.display = '';
-  notice.innerHTML = `⚠ 「${name}」は現在${existing.length}件の枠をご利用中です。ここで登録すると<strong>サービス内容の追加</strong>（新しい枠の追加）になります。ご利用中の内容を減らす場合は「④ 終了処理」から個別に終了してください。`
+  notice.innerHTML = `⚠ 「${name}」は現在${existing.length}件の枠をご利用中です。ここで登録すると<strong>サービス内容の追加</strong>（新しい枠の追加）になります。ご利用中の内容を減らす場合は「④ 利用者検索」から個別に終了してください。`
     + `<button type="button" class="btn btn-ghost btn-small" id="prefillExistingBtn" style="margin-left:6px;">登録済みの内容を引き継ぐ</button>`;
   document.getElementById('prefillExistingBtn').addEventListener('click', ()=>{
     const b = existing[0];
@@ -1593,7 +1618,52 @@ document.getElementById('intakeForm').addEventListener('submit', (e)=>{
   });
 });
 
-// ---------- ④ 終了処理 ----------
+// ---------- ④ 利用者検索 ----------
+function buildBookingRow(b){
+  const el = document.createElement('div');
+  el.className = 'end-row';
+  const nameTxt = b.name || '（名前未入力）';
+  const roleTxt = roleLabel(b.staff);
+  const bSlotLabel = slotLabelsFor(staffInfo(b.staff).role)[b.slotIdx];
+  let metaTxt = `${roleTxt}／${patternLabelOf(b)}／疾患：${b.disease||'―'}／独居：${b.alone||'―'}／居宅：${b.careManager||'―'}／医療機関：${b.hospital||'―'}／地区：${b.district||'―'}`;
+  if(b.timeNote) metaTxt += `／時刻メモ：${b.timeNote}`;
+  if(b.pairId){
+    const paired = pairedBookingAt(b);
+    if(paired) metaTxt += `／同枠のペア：${paired.name||'（名前未登録）'}`;
+  }
+  el.innerHTML = `
+    <div>
+      <div><strong>${b.day}曜 ${bSlotLabel}〜</strong>　担当：${b.staff}　－　${nameTxt}</div>
+      <div class="meta">${metaTxt}</div>
+    </div>
+    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+      <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--ink-soft);cursor:pointer;">
+        <input type="checkbox" class="hospitalized-check" ${b.hospitalized?'checked':''}> 入院中
+      </label>
+      <button class="btn btn-ghost btn-small edit-booking-btn">編集する</button>
+      <select class="end-reason-select" style="padding:6px 8px;border:1px solid var(--line);border-radius:7px;font-size:12px;font-family:var(--font-ui);">
+        <option value="">終了理由を選択</option>
+        ${END_REASONS.map(r=>`<option value="${r}">${r}</option>`).join('')}
+      </select>
+      <button class="btn btn-danger btn-small end-booking-btn">終了する</button>
+    </div>
+  `;
+  const reasonSel = el.querySelector('.end-reason-select');
+  el.querySelector('.end-booking-btn').addEventListener('click', ()=>endBookingById(b.id, reasonSel.value));
+  el.querySelector('.edit-booking-btn').addEventListener('click', ()=>openSlotModal(b.staff, b.day, b.slotIdx));
+  el.querySelector('.hospitalized-check').addEventListener('change', (e)=>toggleHospitalized(b.id, e.target.checked));
+  return el;
+}
+async function toggleHospitalized(id, checked){
+  const b = state.bookings[id];
+  if(!b) return;
+  b.hospitalized = checked;
+  await saveState();
+  showToast(checked ? '入院中に設定しました（①②の該当枠が黒色表示になります）' : '入院中を解除しました');
+  renderOverview('看護師'); renderOverview('セラピスト');
+  if(document.getElementById('panel-end').classList.contains('active')) renderEndList();
+  if(document.getElementById('panel-inpatient').classList.contains('active')) renderInpatientList();
+}
 function renderEndList(){
   const wrap = document.getElementById('endList');
   const searchInput = document.getElementById('endSearch');
@@ -1603,43 +1673,35 @@ function renderEndList(){
   rows.sort((a,b)=> DAYS.indexOf(a.day)-DAYS.indexOf(b.day) || a.slotIdx-b.slotIdx);
 
   if(!rows.length){
-    wrap.innerHTML = `<p class="page-sub">${kw ? '一致する利用者様が見つかりません。' : '現在、使用中の枠はありません。'}</p>`;
+    wrap.innerHTML = `<p class="page-sub">${kw ? '一致する利用者様が見つかりません。' : '現在、ご利用中の利用者様はいません。'}</p>`;
     return;
   }
   wrap.innerHTML = '';
-  rows.forEach(b=>{
-    const el = document.createElement('div');
-    el.className = 'end-row';
-    const nameTxt = b.name || '（名前未入力）';
-    const roleTxt = roleLabel(b.staff);
-    const bSlotLabel = slotLabelsFor(staffInfo(b.staff).role)[b.slotIdx];
-    let metaTxt = `${roleTxt}／${patternLabelOf(b)}／疾患：${b.disease||'―'}／独居：${b.alone||'―'}／居宅：${b.careManager||'―'}／医療機関：${b.hospital||'―'}／地区：${b.district||'―'}`;
-    if(b.timeNote) metaTxt += `／時刻メモ：${b.timeNote}`;
-    if(b.pairId){
-      const paired = pairedBookingAt(b);
-      if(paired) metaTxt += `／同枠のペア：${paired.name||'（名前未登録）'}`;
-    }
-    el.innerHTML = `
-      <div>
-        <div><strong>${b.day}曜 ${bSlotLabel}〜</strong>　担当：${b.staff}　－　${nameTxt}</div>
-        <div class="meta">${metaTxt}</div>
-      </div>
-      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
-        <select class="end-reason-select" style="padding:6px 8px;border:1px solid var(--line);border-radius:7px;font-size:12px;font-family:var(--font-ui);">
-          <option value="">終了理由を選択</option>
-          ${END_REASONS.map(r=>`<option value="${r}">${r}</option>`).join('')}
-        </select>
-        <button class="btn btn-danger btn-small">終了する</button>
-      </div>
-    `;
-    const reasonSel = el.querySelector('.end-reason-select');
-    el.querySelector('button').addEventListener('click', ()=>endBookingById(b.id, reasonSel.value));
-    wrap.appendChild(el);
-  });
+  rows.forEach(b=> wrap.appendChild(buildBookingRow(b)));
 }
 document.getElementById('endSearch').addEventListener('input', renderEndList);
 
-// ---------- ⑤ リスト分析 ----------
+// ---------- ⑤ 入院管理表 ----------
+function renderInpatientList(){
+  const wrap = document.getElementById('inpatientList');
+  const searchInput = document.getElementById('inpatientSearch');
+  const kw = (searchInput.value||'').trim();
+  let rows = Object.entries(state.bookings)
+    .map(([id,b])=>Object.assign({id}, b))
+    .filter(b=>b.hospitalized);
+  if(kw) rows = rows.filter(b=> (b.name||'').includes(kw));
+  rows.sort((a,b)=> DAYS.indexOf(a.day)-DAYS.indexOf(b.day) || a.slotIdx-b.slotIdx);
+
+  if(!rows.length){
+    wrap.innerHTML = `<p class="page-sub">${kw ? '一致する利用者様が見つかりません。' : '現在、入院中として登録されている利用者様はいません。'}</p>`;
+    return;
+  }
+  wrap.innerHTML = '';
+  rows.forEach(b=> wrap.appendChild(buildBookingRow(b)));
+}
+document.getElementById('inpatientSearch').addEventListener('input', renderInpatientList);
+
+// ---------- ⑥ リスト分析 ----------
 function renderReferralAnalysisTable(tableId, field, label){
   const patients = new Map();
   Object.values(state.bookings).forEach(b=>{
@@ -1687,7 +1749,7 @@ document.getElementById('csvExportReport').addEventListener('click', ()=>{
   exportPanelCsv('panel-report', `月次レポート_${todayStr()}.csv`);
 });
 
-// ---------- ⑥ 月次レポート ----------
+// ---------- ⑦ 月次レポート ----------
 function renderReport(){
   const byMonth = {};
   state.eventLog.forEach(ev=>{
@@ -1747,7 +1809,7 @@ function renderReport(){
   renderReferralAnalysisTable('districtTable', 'district', '地区');
 }
 
-// ---------- ⑦ スタッフ管理 ----------
+// ---------- ⑧ スタッフ管理 ----------
 async function addStaffMember(name, role){
   if(state.staff.some(s=>s.name===name)){
     alert('同じ名前のスタッフが既に登録されています。');
@@ -1818,7 +1880,7 @@ async function removeQualification(name, qual){
   renderStaffList();
 }
 
-// ---------- ⑧ 設定 ----------
+// ---------- ⑨ 設定 ----------
 async function addSlot(role, label){
   state.slotLabels[role].push(label);
   await saveState();
