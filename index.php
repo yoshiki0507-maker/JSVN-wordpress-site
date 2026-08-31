@@ -458,6 +458,9 @@ require __DIR__ . '/lib/auth.php';
         </div>
       </div>
       <p class="page-sub">「居宅介護支援事業所」「医療機関（訪問看護指示書発行元）」ごとに、現在の実利用者数・全体に占める割合・直近の新規紹介数を集計します。※ここでの「割合」は自社の現在の利用者全体に占めるシェアという意味で計算しています（各事業所が抱える利用者全体の中での割合ではありません）。</p>
+      <div class="summary-card" style="max-width:220px;margin:14px 0 22px;">
+        <div class="day">利用者総数</div><div class="num" id="referralTotalPatients">0</div><div class="unit">人（現在ご利用中・氏名で重複を除いた人数）</div>
+      </div>
       <h3 style="font-size:14px;color:var(--teal-deep);margin:22px 0 8px;">居宅介護支援事業所別</h3>
       <table class="grid" id="cmTable"></table>
       <h3 style="font-size:14px;color:var(--teal-deep);margin:26px 0 8px;">医療機関別（訪問看護指示書発行元）</h3>
@@ -1997,7 +2000,14 @@ function renderReferralAnalysisTable(tableId, field, label){
   });
   table.innerHTML = html;
 }
+function countDistinctPatients(){
+  const names = new Set();
+  Object.values(state.bookings).forEach(b=> names.add(b.name || '(名前未登録)'));
+  return names.size;
+}
 function renderReferralAnalysis(){
+  const totalEl = document.getElementById('referralTotalPatients');
+  if(totalEl) totalEl.textContent = countDistinctPatients();
   renderReferralAnalysisTable('cmTable', 'careManager', '居宅介護支援事業所');
   renderReferralAnalysisTable('hospTable', 'hospital', '医療機関');
 }
