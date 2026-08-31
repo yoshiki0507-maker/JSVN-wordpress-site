@@ -899,6 +899,45 @@ async function endBookingById(id, reason){
   if(document.getElementById('panel-inpatient').classList.contains('active')) renderInpatientList();
 }
 
+// ④利用者検索の患者カードで、複数の訪問枠のうち1つだけを削除する（利用者様自体は継続中で、
+// 頻度を減らすだけのケース）。理由の記録は行わず、⑦月次レポートの終了数にも加算しない。
+async function deleteBookingById(id){
+  const b = state.bookings[id];
+  if(!b) return;
+  const bSlotLabel = slotLabelsFor(staffInfo(b.staff).role)[b.slotIdx];
+  if(!confirm(`${b.day}曜 ${bSlotLabel}〜（${b.staff}／${b.name||'名前未登録'}）を削除します。よろしいですか？`)) return;
+  delete state.bookings[id];
+  await saveState();
+  showToast('訪問枠を削除しました');
+  renderOverview('看護師'); renderOverview('セラピスト');
+  if(document.getElementById('panel-end').classList.contains('active')) renderEndList();
+  if(document.getElementById('panel-inpatient').classList.contains('active')) renderInpatientList();
+}
+
+// ④利用者検索の患者カードの「終了理由を選択」＋「終了する」用。その利用者様のすべての訪問枠を
+// まとめて終了させる＝利用者様自体のサービス終了とみなし、必ず⑦月次レポートの終了数に1件加算する。
+async function endAllBookingsForPatient(ids, reason){
+  const bookings = ids.map(id=>state.bookings[id]).filter(Boolean);
+  if(!bookings.length) return;
+  if(!reason){ alert('終了理由を選択してください。'); return; }
+  const first = bookings[0];
+  const name = first.name || '名前未登録';
+  const msg = bookings.length>1
+    ? `${name} 様の訪問すべて（${bookings.length}件）を「${reason}」として終了にします。よろしいですか？`
+    : `${first.day}曜 ${slotLabelsFor(staffInfo(first.staff).role)[first.slotIdx]}〜（${first.staff}／${name}）を「${reason}」として終了にします。よろしいですか？`;
+  if(!confirm(msg)) return;
+  state.eventLog.push({
+    id:newId(), type:'終了', date: todayStr(), name: first.name||'', staff:first.staff, day:first.day, slot:first.slotIdx,
+    careManager: first.careManager||'', hospital: first.hospital||'', reason
+  });
+  ids.forEach(id=>{ delete state.bookings[id]; });
+  await saveState();
+  showToast('終了処理を反映しました');
+  renderOverview('看護師'); renderOverview('セラピスト');
+  if(document.getElementById('panel-end').classList.contains('active')) renderEndList();
+  if(document.getElementById('panel-inpatient').classList.contains('active')) renderInpatientList();
+}
+
 function refSelectOptions(list, current){
   return `<option value="">未設定</option>` + list.map(n=>`<option value="${n}" ${current===n?'selected':''}>${n}</option>`).join('');
 }
@@ -1845,12 +1884,8 @@ function buildPatientCard(bookings){
   const ids = bookings.map(b=>b.id);
   const freqNote = bookings.length>1 ? `　<span style="font-size:11px;color:var(--ink-soft);font-weight:400;">（週${bookings.length}回・${bookings.length}枠）</span>` : '';
   const metaTxt = `疾患：${first.disease||'―'}／独居：${first.alone||'―'}／居宅：${first.careManager||'―'}／医療機関：${first.hospital||'―'}／地区：${first.district||'―'}`;
-  const slotOptionLabel = b=>`${b.day}曜 ${slotLabelsFor(staffInfo(b.staff).role)[b.slotIdx]}〜（${roleLabel(b.staff)}／${b.staff}）`;
-  const targetSelectHtml = bookings.length>1
-    ? `<select class="end-target-select" style="padding:6px 8px;border:1px solid var(--line);border-radius:7px;font-size:12px;font-family:var(--font-ui);">
-        <option value="">終了する枠を選択</option>
-        ${bookings.map(b=>`<option value="${b.id}">${slotOptionLabel(b)}</option>`).join('')}
-      </select>`
+  const endAllNote = bookings.length>1
+    ? `<div style="font-size:11px;color:var(--ink-soft);">すべての訪問（${bookings.length}件）を終了します</div>`
     : '';
   const addVisitBtnHtml = (first.name && first.name.trim())
     ? `<button type="button" class="btn btn-ghost btn-small add-visit-btn">＋ 訪問を追加する</button>`
@@ -1869,8 +1904,8 @@ function buildPatientCard(bookings){
         <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--ink-soft);cursor:pointer;white-space:nowrap;">
           <input type="checkbox" class="hospitalized-check-group" ${allHospitalized?'checked':''}> 入院中（すべての枠に適用）
         </label>
+        ${endAllNote}
         <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end;">
-          ${targetSelectHtml}
           <select class="end-reason-select" style="padding:6px 8px;border:1px solid var(--line);border-radius:7px;font-size:12px;font-family:var(--font-ui);">
             <option value="">終了理由を選択</option>
             ${END_REASONS.map(r=>`<option value="${r}">${r}</option>`).join('')}
@@ -1893,6 +1928,9 @@ function buildPatientCard(bookings){
       const paired = pairedBookingAt(b);
       if(paired) slotMeta += `／同枠のペア：${paired.name||'（名前未登録）'}`;
     }
+    const deleteBtnHtml = bookings.length>1
+      ? `<button class="btn btn-ghost btn-small delete-booking-btn">削除</button>`
+      : '';
     const row = document.createElement('div');
     row.className = 'end-row';
     row.innerHTML = `
@@ -1900,20 +1938,20 @@ function buildPatientCard(bookings){
         <div><strong>${b.day}曜 ${bSlotLabel}〜</strong>　担当：${b.staff}</div>
         <div class="meta">${slotMeta}</div>
       </div>
-      <div>
+      <div style="display:flex;gap:6px;">
         <button class="btn btn-ghost btn-small edit-booking-btn">編集する</button>
+        ${deleteBtnHtml}
       </div>
     `;
     row.querySelector('.edit-booking-btn').addEventListener('click', ()=>openSlotModal(b.staff, b.day, b.slotIdx));
+    const deleteBtn = row.querySelector('.delete-booking-btn');
+    if(deleteBtn) deleteBtn.addEventListener('click', ()=>deleteBookingById(b.id));
     slotsWrap.appendChild(row);
   });
   card.querySelector('.hospitalized-check-group').addEventListener('change', (e)=>toggleHospitalizedGroup(ids, e.target.checked));
-  const targetSel = card.querySelector('.end-target-select');
   const reasonSel = card.querySelector('.end-reason-select');
   card.querySelector('.end-booking-btn').addEventListener('click', ()=>{
-    const targetId = bookings.length>1 ? (targetSel ? targetSel.value : '') : bookings[0].id;
-    if(!targetId){ alert('終了する枠を選択してください。'); return; }
-    endBookingById(targetId, reasonSel.value);
+    endAllBookingsForPatient(ids, reasonSel.value);
   });
   return card;
 }
