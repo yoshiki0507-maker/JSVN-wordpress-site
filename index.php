@@ -374,12 +374,9 @@ require __DIR__ . '/lib/auth.php';
       <h2 class="page-title">新規登録・自動提案</h2>
       <p class="page-sub">条件を入れると、今の空き状況から候補枠を自動で探して提案します（第三者への送信は行わず、この画面内だけで計算しています）。</p>
       <form class="intake" id="intakeForm">
-        <div>
-          <label for="f-role">職種</label>
-          <select id="f-role">
-            <option value="看護師">看護師</option>
-            <option value="セラピスト">セラピスト</option>
-          </select>
+        <div class="full">
+          <label>職種（複数選択可。同じ利用者様に看護師・セラピストを同時に登録できます）</label>
+          <div class="chip-group" id="roleChips"></div>
         </div>
         <div>
           <label for="f-name">利用者様 氏名</label>
@@ -426,7 +423,7 @@ require __DIR__ . '/lib/auth.php';
         </div>
         <div class="full">
           <label>希望時間帯（未選択＝指定なし）</label>
-          <div class="chip-group" id="slotChips"></div>
+          <div id="slotChips" style="display:flex;flex-direction:column;gap:8px;"></div>
         </div>
         <div>
           <label for="f-disease">疾患名</label>
@@ -942,13 +939,23 @@ async function endBookingById(id, reason){
   if(!reason){ alert('終了理由を選択してください。'); return; }
   const bSlotLabel = slotLabelsFor(staffInfo(b.staff).role)[b.slotIdx];
   if(!confirm(`${b.day}曜 ${bSlotLabel}〜（${b.staff}／${b.name||'名前未登録'}）を「${reason}」として終了にします。よろしいですか？`)) return;
-  state.eventLog.push({
-    id:newId(), type:'終了', date: todayStr(), name: b.name||'', staff:b.staff, day:b.day, slot:b.slotIdx,
-    careManager: b.careManager||'', hospital: b.hospital||'', reason
-  });
+  // 同じ利用者様（氏名一致）に他の枠がまだ残っている場合は、利用者様自体の終了ではなく
+  // 介入頻度が減っただけとみなし、⑦月次レポートの「終了」件数には加算しない
+  const key = (b.name && b.name.trim()) ? b.name.trim() : null;
+  const isLastBookingForPatient = key
+    ? !Object.entries(state.bookings).some(([oid,ob])=>oid!==id && (ob.name||'').trim()===key)
+    : true;
+  if(isLastBookingForPatient){
+    state.eventLog.push({
+      id:newId(), type:'終了', date: todayStr(), name: b.name||'', staff:b.staff, day:b.day, slot:b.slotIdx,
+      careManager: b.careManager||'', hospital: b.hospital||'', reason
+    });
+  }
   delete state.bookings[id];
   await saveState();
-  showToast('終了処理を反映しました');
+  showToast(isLastBookingForPatient
+    ? '終了処理を反映しました'
+    : '訪問枠を終了しました（他の枠が継続中のため、月次レポートの終了数には加算していません）');
   closeModal();
   renderOverview('看護師'); renderOverview('セラピスト');
   if(document.getElementById('panel-end').classList.contains('active')) renderEndList();
@@ -1239,11 +1246,31 @@ function syncOverviewAlertHeight(role){
 
 // ---------- ③ 新規登録・提案 ----------
 let selectedDays = [];
-let selectedSlots = [];
+let selectedRoles = ['看護師'];
+let selectedSlotsByRole = { '看護師': [], 'セラピスト': [] };
 
 function buildChips(){
   buildDayChips();
+  buildRoleChips();
   buildSlotChips();
+}
+function buildRoleChips(){
+  const wrap = document.getElementById('roleChips');
+  const roles = ['看護師','セラピスト'];
+  wrap.innerHTML = roles.map(r=>`<span class="chip ${selectedRoles.includes(r)?'on':''}" data-role="${r}">${r}</span>`).join('');
+  wrap.querySelectorAll('.chip').forEach(chip=>{
+    chip.addEventListener('click', ()=>{
+      const r = chip.dataset.role;
+      if(selectedRoles.includes(r)){
+        if(selectedRoles.length===1) return;
+        selectedRoles = selectedRoles.filter(x=>x!==r);
+      }else{
+        selectedRoles.push(r);
+      }
+      buildRoleChips();
+      buildSlotChips();
+    });
+  });
 }
 function buildDayChips(){
   const dayWrap = document.getElementById('dayChips');
@@ -1263,24 +1290,26 @@ function buildDayChips(){
   });
 }
 function buildSlotChips(){
-  const role = document.getElementById('f-role').value;
-  const labels = slotLabelsFor(role);
   const slotWrap = document.getElementById('slotChips');
-  selectedSlots = selectedSlots.filter(i=>i < labels.length);
-  slotWrap.innerHTML = labels.map((s,i)=>`<span class="chip ${selectedSlots.includes(i)?'on':''}" data-slot="${i}">${s}</span>`).join('');
+  const showRoleHeading = selectedRoles.length>1;
+  slotWrap.innerHTML = selectedRoles.map(role=>{
+    const labels = slotLabelsFor(role);
+    selectedSlotsByRole[role] = (selectedSlotsByRole[role]||[]).filter(i=>i < labels.length);
+    const chips = labels.map((s,i)=>`<span class="chip ${selectedSlotsByRole[role].includes(i)?'on':''}" data-role="${role}" data-slot="${i}">${s}</span>`).join('');
+    const heading = showRoleHeading ? `<div style="font-size:11.5px;color:var(--ink-soft);font-weight:700;">${role}</div>` : '';
+    return `<div>${heading}<div class="chip-group">${chips}</div></div>`;
+  }).join('');
   slotWrap.querySelectorAll('.chip').forEach(chip=>{
     chip.addEventListener('click', ()=>{
+      const role = chip.dataset.role;
       const i = Number(chip.dataset.slot);
-      if(selectedSlots.includes(i)){ selectedSlots = selectedSlots.filter(x=>x!==i); }
-      else{ selectedSlots.push(i); }
+      const arr = selectedSlotsByRole[role];
+      if(arr.includes(i)){ selectedSlotsByRole[role] = arr.filter(x=>x!==i); }
+      else{ arr.push(i); }
       buildSlotChips();
     });
   });
 }
-document.getElementById('f-role').addEventListener('change', ()=>{
-  selectedSlots = [];
-  buildSlotChips();
-});
 function updatePatternUI(){
   const val = document.getElementById('f-pattern').value;
   const pattern = PATTERNS[val];
@@ -1460,7 +1489,7 @@ function pairedBookingAt(b){
     .map(([id,o])=>Object.assign({id}, o))[0] || null;
 }
 
-async function confirmSuggestion(s, patient, patternValue){
+async function confirmSuggestion(s, patient, patternValue, role){
   const date = todayStr();
   const pattern = PATTERNS[patternValue];
   const pairId = patient.companion ? newId() : null;
@@ -1503,15 +1532,22 @@ async function confirmSuggestion(s, patient, patternValue){
   else { s.picks.forEach(p=>createBoth(p.staff, p.day, p.slot, WEEKS.slice())); }
   await saveState();
   const companionMsg = patient.companion ? `（${patient.companion.name}様と合わせて2名）` : '';
-  showToast(`${patient.name || '利用者様'} を登録しました${companionMsg}`);
-  document.getElementById('suggestions').innerHTML = '';
-  document.getElementById('intakeForm').reset();
-  document.getElementById('companionOuterWrap').style.display = 'none';
-  document.getElementById('companionFields').style.display = 'none';
-  hideExistingPatientNotice();
-  selectedDays = []; selectedSlots = [];
-  updatePatternUI();
-  buildSlotChips();
+  showToast(`${patient.name || '利用者様'} を${role}として登録しました${companionMsg}`);
+  const box = document.getElementById('suggestions');
+  box.querySelectorAll(`.sugg-card[data-role="${role}"]`).forEach(el=>el.remove());
+  box.querySelectorAll(`[data-role-heading="${role}"]`).forEach(el=>el.remove());
+  if(!box.querySelector('.sugg-card')){
+    // 全ての職種の提案が確定済み（他の職種の提案が残っていない）ときだけフォームをリセットする
+    box.innerHTML = '';
+    document.getElementById('intakeForm').reset();
+    document.getElementById('companionOuterWrap').style.display = 'none';
+    document.getElementById('companionFields').style.display = 'none';
+    hideExistingPatientNotice();
+    selectedDays = []; selectedRoles = ['看護師']; selectedSlotsByRole = { '看護師': [], 'セラピスト': [] };
+    updatePatternUI();
+    buildRoleChips();
+    buildSlotChips();
+  }
   renderOverview('看護師'); renderOverview('セラピスト');
 }
 
@@ -1565,7 +1601,7 @@ document.getElementById('f-name').addEventListener('input', updateExistingPatien
 
 document.getElementById('intakeForm').addEventListener('submit', (e)=>{
   e.preventDefault();
-  const role = document.getElementById('f-role').value;
+  const roles = selectedRoles.slice();
   const patternValue = document.getElementById('f-pattern').value;
   const pattern = PATTERNS[patternValue];
   const freq = Number(document.getElementById('f-freq').value);
@@ -1596,29 +1632,43 @@ document.getElementById('intakeForm').addEventListener('submit', (e)=>{
     freq
   };
   const weekendException = document.getElementById('f-weekend-exception').checked;
-  const sugg = pattern.kind==='weekly'
-    ? findWeeklySuggestions(freq, selectedDays, selectedSlots, role, !!pattern.includeWeekend, weekendException)
-    : findRotationSuggestions(pattern.weeks, selectedDays, selectedSlots, role, weekendException);
   const box = document.getElementById('suggestions');
-  if(!sugg.length){
-    box.innerHTML = `<div class="empty-msg">条件に合う空き枠が見つかりませんでした。${role}の登録がない、または曜日・時間の希望が合っていない可能性があります。</div>`;
-    return;
-  }
   box.innerHTML = '';
-  sugg.forEach(s=>{
-    const info = labelSuggestion(s, selectedDays, role);
-    const card = document.createElement('div');
-    card.className = 'sugg-card' + (s.tier===2?' tier2':s.tier===3?' tier3':'');
-    card.innerHTML = `
-      <div>
-        <div class="sugg-tag">${info.tag}</div>
-        <div class="sugg-text">${info.text}</div>
-        <div class="sugg-sub">${info.sub}</div>
-      </div>
-      <button class="btn btn-primary btn-small">この案で確定</button>
-    `;
-    card.querySelector('button').addEventListener('click', ()=>confirmSuggestion(s, patient, patternValue));
-    box.appendChild(card);
+  const showRoleHeading = roles.length>1;
+  roles.forEach(role=>{
+    const sugg = pattern.kind==='weekly'
+      ? findWeeklySuggestions(freq, selectedDays, selectedSlotsByRole[role]||[], role, !!pattern.includeWeekend, weekendException)
+      : findRotationSuggestions(pattern.weeks, selectedDays, selectedSlotsByRole[role]||[], role, weekendException);
+    if(showRoleHeading){
+      const h = document.createElement('div');
+      h.style.cssText = 'font-weight:700;font-size:14px;margin-top:6px;';
+      h.textContent = role + 'の提案候補';
+      h.dataset.roleHeading = role;
+      box.appendChild(h);
+    }
+    if(!sugg.length){
+      const empty = document.createElement('div');
+      empty.className = 'empty-msg';
+      empty.textContent = `条件に合う空き枠が見つかりませんでした（${role}）。${role}の登録がない、または曜日・時間の希望が合っていない可能性があります。`;
+      box.appendChild(empty);
+      return;
+    }
+    sugg.forEach(s=>{
+      const info = labelSuggestion(s, selectedDays, role);
+      const card = document.createElement('div');
+      card.className = 'sugg-card' + (s.tier===2?' tier2':s.tier===3?' tier3':'');
+      card.dataset.role = role;
+      card.innerHTML = `
+        <div>
+          <div class="sugg-tag">${info.tag}</div>
+          <div class="sugg-text">${info.text}</div>
+          <div class="sugg-sub">${info.sub}</div>
+        </div>
+        <button class="btn btn-primary btn-small">この案で確定</button>
+      `;
+      card.querySelector('button').addEventListener('click', ()=>confirmSuggestion(s, patient, patternValue, role));
+      box.appendChild(card);
+    });
   });
 });
 
@@ -1648,6 +1698,13 @@ function buildPatientCard(bookings){
   const ids = bookings.map(b=>b.id);
   const freqNote = bookings.length>1 ? `　<span style="font-size:11px;color:var(--ink-soft);font-weight:400;">（週${bookings.length}回・${bookings.length}枠）</span>` : '';
   const metaTxt = `疾患：${first.disease||'―'}／独居：${first.alone||'―'}／居宅：${first.careManager||'―'}／医療機関：${first.hospital||'―'}／地区：${first.district||'―'}`;
+  const slotOptionLabel = b=>`${b.day}曜 ${slotLabelsFor(staffInfo(b.staff).role)[b.slotIdx]}〜（${roleLabel(b.staff)}／${b.staff}）`;
+  const targetSelectHtml = bookings.length>1
+    ? `<select class="end-target-select" style="padding:6px 8px;border:1px solid var(--line);border-radius:7px;font-size:12px;font-family:var(--font-ui);">
+        <option value="">終了する枠を選択</option>
+        ${bookings.map(b=>`<option value="${b.id}">${slotOptionLabel(b)}</option>`).join('')}
+      </select>`
+    : '';
 
   const card = document.createElement('div');
   card.className = 'patient-card';
@@ -1657,9 +1714,19 @@ function buildPatientCard(bookings){
         <div class="bname" style="font-size:15px;margin:0;">${nameTxt}${freqNote}</div>
         <div class="meta">${metaTxt}</div>
       </div>
-      <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--ink-soft);cursor:pointer;white-space:nowrap;">
-        <input type="checkbox" class="hospitalized-check-group" ${allHospitalized?'checked':''}> 入院中（すべての枠に適用）
-      </label>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--ink-soft);cursor:pointer;white-space:nowrap;">
+          <input type="checkbox" class="hospitalized-check-group" ${allHospitalized?'checked':''}> 入院中（すべての枠に適用）
+        </label>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end;">
+          ${targetSelectHtml}
+          <select class="end-reason-select" style="padding:6px 8px;border:1px solid var(--line);border-radius:7px;font-size:12px;font-family:var(--font-ui);">
+            <option value="">終了理由を選択</option>
+            ${END_REASONS.map(r=>`<option value="${r}">${r}</option>`).join('')}
+          </select>
+          <button class="btn btn-danger btn-small end-booking-btn">終了する</button>
+        </div>
+      </div>
     </div>
     <div class="patient-slots"></div>
   `;
@@ -1680,21 +1747,21 @@ function buildPatientCard(bookings){
         <div><strong>${b.day}曜 ${bSlotLabel}〜</strong>　担当：${b.staff}</div>
         <div class="meta">${slotMeta}</div>
       </div>
-      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+      <div>
         <button class="btn btn-ghost btn-small edit-booking-btn">編集する</button>
-        <select class="end-reason-select" style="padding:6px 8px;border:1px solid var(--line);border-radius:7px;font-size:12px;font-family:var(--font-ui);">
-          <option value="">終了理由を選択</option>
-          ${END_REASONS.map(r=>`<option value="${r}">${r}</option>`).join('')}
-        </select>
-        <button class="btn btn-danger btn-small end-booking-btn">終了する</button>
       </div>
     `;
-    const reasonSel = row.querySelector('.end-reason-select');
-    row.querySelector('.end-booking-btn').addEventListener('click', ()=>endBookingById(b.id, reasonSel.value));
     row.querySelector('.edit-booking-btn').addEventListener('click', ()=>openSlotModal(b.staff, b.day, b.slotIdx));
     slotsWrap.appendChild(row);
   });
   card.querySelector('.hospitalized-check-group').addEventListener('change', (e)=>toggleHospitalizedGroup(ids, e.target.checked));
+  const targetSel = card.querySelector('.end-target-select');
+  const reasonSel = card.querySelector('.end-reason-select');
+  card.querySelector('.end-booking-btn').addEventListener('click', ()=>{
+    const targetId = bookings.length>1 ? (targetSel ? targetSel.value : '') : bookings[0].id;
+    if(!targetId){ alert('終了する枠を選択してください。'); return; }
+    endBookingById(targetId, reasonSel.value);
+  });
   return card;
 }
 async function toggleHospitalizedGroup(ids, checked){
