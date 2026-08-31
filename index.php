@@ -799,15 +799,15 @@ const RENDERERS = {
   report: renderReport,
   settings: renderSettings
 };
+function switchPanel(name){
+  document.querySelectorAll('.nav button[data-panel]').forEach(b=>b.classList.toggle('active', b.dataset.panel===name));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  const fn = RENDERERS[name];
+  if(fn) fn();
+}
 document.querySelectorAll('.nav button[data-panel]').forEach(btn=>{
-  btn.addEventListener('click', ()=>{
-    document.querySelectorAll('.nav button[data-panel]').forEach(b=>b.classList.remove('active'));
-    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById('panel-'+btn.dataset.panel).classList.add('active');
-    const fn = RENDERERS[btn.dataset.panel];
-    if(fn) fn();
-  });
+  btn.addEventListener('click', ()=>switchPanel(btn.dataset.panel));
 });
 document.getElementById('navLogout').addEventListener('click', ()=>{ location.href = 'logout.php'; });
 document.querySelectorAll('.print-btn').forEach(btn=>{
@@ -1487,27 +1487,53 @@ function findWeeklySuggestions(freq, preferredDays, preferredSlots, role, includ
 function findRotationSuggestions(candWeeks, preferredDays, preferredSlots, role, weekendException){
   const dayOrder = orderedDays(preferredDays, weekendException);
   const slotOrder = orderedSlots(preferredSlots, role);
-  const pool = suggestionPool(role).slice().sort((a,b)=>totalLoad(a)-totalLoad(b));
+  const pool = suggestionPool(role);
   const dayAllowed = (staff,d)=> worksOn(staff,d) || (weekendException && isWeekendDay(d));
   const slotAllowed = (staff,d,i)=> worksOnSlot(staff,d,i) || (weekendException && isWeekendDay(d));
-  const found = [];
-  const seenStaff = new Set();
-  for(const staff of pool){
-    if(seenStaff.has(staff)) continue;
-    for(const day of dayOrder){
-      if(!dayAllowed(staff,day)) continue;
-      for(const slotIdx of slotOrder){
-        if(slotAllowed(staff,day,slotIdx) && isRotationFree(staff,day,slotIdx,candWeeks)){
-          found.push({tier:'rotation', staff, day, slotIdx, load: totalLoad(staff)});
-          seenStaff.add(staff);
-          break;
-        }
+
+  // 第1候補：すでに他の隔週・月次利用者様（例：第1・3週）が入っている枠のうち、週が重ならず
+  // 組み合わせられるもの（例：第2・4週）を優先的に探す。別のスタッフの新しい枠を開けるより、
+  // 既存の枠にそのまま同居させたほうが空き枠を無駄にしない。
+  const matched = [];
+  const matchedStaff = new Set();
+  outerMatched:
+  for(const day of dayOrder){
+    for(const slotIdx of slotOrder){
+      for(const staff of pool){
+        if(matchedStaff.has(staff)) continue;
+        if(!dayAllowed(staff,day) || !slotAllowed(staff,day,slotIdx)) continue;
+        const used = occupiedWeeksAt(staff,day,slotIdx);
+        if(used.size===0) continue; // 完全に空いている枠は次の「新規」パスで扱う
+        if(!candWeeks.every(w=>!used.has(w))) continue; // 週が重なっていて組み合わせられない
+        matched.push({tier:'rotation', matched:true, staff, day, slotIdx, load: totalLoad(staff)});
+        matchedStaff.add(staff);
+        if(matched.length>=3) break outerMatched;
       }
-      if(seenStaff.has(staff)) break;
     }
-    if(found.length>=3) break;
   }
-  return found.slice(0,3);
+
+  // 第2候補：完全に空いている枠を、勤務予定人数が少ない（＝空いて見える）スタッフから探す（従来通り）
+  const fresh = [];
+  if(matched.length<3){
+    const freshPool = pool.slice().sort((a,b)=>totalLoad(a)-totalLoad(b));
+    for(const staff of freshPool){
+      if(matchedStaff.has(staff)) continue;
+      for(const day of dayOrder){
+        if(!dayAllowed(staff,day)) continue;
+        let placed = false;
+        for(const slotIdx of slotOrder){
+          if(slotAllowed(staff,day,slotIdx) && isRotationFree(staff,day,slotIdx,candWeeks)){
+            fresh.push({tier:'rotation', matched:false, staff, day, slotIdx, load: totalLoad(staff)});
+            placed = true;
+            break;
+          }
+        }
+        if(placed) break;
+      }
+      if(matched.length+fresh.length>=3) break;
+    }
+  }
+  return matched.concat(fresh).slice(0,3);
 }
 
 function extraDaysNote(days, preferredDays){
@@ -1525,7 +1551,9 @@ function extraDaysNote(days, preferredDays){
 function labelSuggestion(s, preferredDays, role){
   const slotLabels = slotLabelsFor(role);
   if(s.tier==='rotation'){
-    return { tag:'候補', text: `${s.day}曜　${slotLabels[s.slotIdx]}〜`, sub: `担当：${s.staff}` };
+    const tag = s.matched ? '第一候補（既存の隔週・月次予約と同じ枠に組み合わせ）' : '候補（新しい空き枠）';
+    const sub = s.matched ? `担当：${s.staff}　※同じ枠の他の週の利用者様とは重なりません` : `担当：${s.staff}`;
+    return { tag, text: `${s.day}曜　${slotLabels[s.slotIdx]}〜`, sub };
   }
   if(s.tier===1){
     const daysTxt = s.days.slice().sort((a,b)=>DAYS.indexOf(a)-DAYS.indexOf(b)).join('・');
@@ -1627,6 +1655,22 @@ function hideExistingPatientNotice(){
   notice.style.display = 'none';
   notice.innerHTML = '';
 }
+function prefillFromExistingBooking(b, silent){
+  document.getElementById('f-disease').value = b.disease||'';
+  document.getElementById('f-insurance').value = b.insuranceType||'';
+  document.getElementById('f-alone').value = b.alone||'不明';
+  document.getElementById('f-cm').value = b.careManager||'';
+  document.getElementById('f-hosp').value = b.hospital||'';
+  document.getElementById('f-district').value = b.district||'';
+  // サービス時間は職種ごとの入力なので、既存予約と同じ職種のセクションが表示されていれば引き継ぐ
+  const existingRole = staffInfo(b.staff).role;
+  const durationSel = document.getElementById('roleSections').querySelector(`.f-duration[data-role="${existingRole}"]`);
+  if(durationSel){
+    durationSel.value = b.serviceDuration || durationSel.value;
+    durationSel.dispatchEvent(new Event('change'));
+  }
+  if(!silent) showToast('登録済みの内容を引き継ぎました');
+}
 function updateExistingPatientNotice(){
   const name = document.getElementById('f-name').value.trim();
   const notice = document.getElementById('existingPatientNotice');
@@ -1635,25 +1679,29 @@ function updateExistingPatientNotice(){
   notice.style.display = '';
   notice.innerHTML = `⚠ 「${name}」は現在${existing.length}件の枠をご利用中です。ここで登録すると<strong>サービス内容の追加</strong>（新しい枠の追加）になります。ご利用中の内容を減らす場合は「④ 利用者検索」から個別に終了してください。`
     + `<button type="button" class="btn btn-ghost btn-small" id="prefillExistingBtn" style="margin-left:6px;">登録済みの内容を引き継ぐ</button>`;
-  document.getElementById('prefillExistingBtn').addEventListener('click', ()=>{
-    const b = existing[0];
-    document.getElementById('f-disease').value = b.disease||'';
-    document.getElementById('f-insurance').value = b.insuranceType||'';
-    document.getElementById('f-alone').value = b.alone||'不明';
-    document.getElementById('f-cm').value = b.careManager||'';
-    document.getElementById('f-hosp').value = b.hospital||'';
-    document.getElementById('f-district').value = b.district||'';
-    // サービス時間は職種ごとの入力なので、既存予約と同じ職種のセクションが表示されていれば引き継ぐ
-    const existingRole = staffInfo(b.staff).role;
-    const durationSel = document.getElementById('roleSections').querySelector(`.f-duration[data-role="${existingRole}"]`);
-    if(durationSel){
-      durationSel.value = b.serviceDuration || durationSel.value;
-      durationSel.dispatchEvent(new Event('change'));
-    }
-    showToast('登録済みの内容を引き継ぎました');
-  });
+  document.getElementById('prefillExistingBtn').addEventListener('click', ()=>prefillFromExistingBooking(existing[0]));
 }
 document.getElementById('f-name').addEventListener('input', updateExistingPatientNotice);
+
+// ④利用者検索・⑤入院管理表の患者カードから「＋ 訪問を追加する」で呼ばれる。
+// ③新規登録・提案に切り替え、既存の予約内容（氏名・共通項目・職種）を引き継いだ状態にして、
+// 空き枠検索からそのまま新しい訪問枠を追加登録できるようにする
+function goToIntakeToAddVisit(name){
+  switchPanel('intake');
+  const existing = findExistingBookingsByName(name);
+  const existingRoles = Array.from(new Set(existing.map(b=>staffInfo(b.staff).role))).filter(r=>CAREGIVER_ROLES.includes(r));
+  if(existingRoles.length){
+    selectedRoles = existingRoles;
+    buildRoleChips();
+    buildRoleSections();
+  }
+  const nameInput = document.getElementById('f-name');
+  nameInput.value = name;
+  nameInput.dispatchEvent(new Event('input'));
+  if(existing.length) prefillFromExistingBooking(existing[0], true);
+  document.getElementById('roleSections').scrollIntoView({behavior:'smooth', block:'start'});
+  showToast(`${name} 様の登録済みの内容を引き継ぎました。空き枠を探して追加登録してください`);
+}
 
 document.getElementById('intakeForm').addEventListener('submit', (e)=>{
   e.preventDefault();
@@ -1719,7 +1767,7 @@ document.getElementById('intakeForm').addEventListener('submit', (e)=>{
     sugg.forEach(s=>{
       const info = labelSuggestion(s, days, role);
       const card = document.createElement('div');
-      card.className = 'sugg-card' + (s.tier===2?' tier2':s.tier===3?' tier3':'');
+      card.className = 'sugg-card' + (s.tier===2||s.matched?' tier2':s.tier===3?' tier3':'');
       card.dataset.role = role;
       card.innerHTML = `
         <div>
@@ -1768,6 +1816,9 @@ function buildPatientCard(bookings){
         ${bookings.map(b=>`<option value="${b.id}">${slotOptionLabel(b)}</option>`).join('')}
       </select>`
     : '';
+  const addVisitBtnHtml = (first.name && first.name.trim())
+    ? `<button type="button" class="btn btn-ghost btn-small add-visit-btn">＋ 訪問を追加する</button>`
+    : '';
 
   const card = document.createElement('div');
   card.className = 'patient-card';
@@ -1778,6 +1829,7 @@ function buildPatientCard(bookings){
         <div class="meta">${metaTxt}</div>
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+        ${addVisitBtnHtml}
         <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--ink-soft);cursor:pointer;white-space:nowrap;">
           <input type="checkbox" class="hospitalized-check-group" ${allHospitalized?'checked':''}> 入院中（すべての枠に適用）
         </label>
@@ -1793,6 +1845,8 @@ function buildPatientCard(bookings){
     </div>
     <div class="patient-slots"></div>
   `;
+  const addVisitBtn = card.querySelector('.add-visit-btn');
+  if(addVisitBtn) addVisitBtn.addEventListener('click', ()=>goToIntakeToAddVisit(first.name));
   const slotsWrap = card.querySelector('.patient-slots');
   bookings.forEach(b=>{
     const roleTxt = roleLabel(b.staff);
