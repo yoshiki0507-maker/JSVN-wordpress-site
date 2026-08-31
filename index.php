@@ -357,13 +357,15 @@ require __DIR__ . '/lib/auth.php';
 
     <section id="panel-staff" class="panel">
       <h2 class="page-title">スタッフ管理</h2>
-      <p class="page-sub">看護師・セラピスト・事務員の追加や削除ができます。削除は、そのスタッフに現在ご利用中の予定がない場合のみ行えます。↑↓で並び順を自由に変更できます（①②の表示順に反映されます）。名前はそのまま書き換えられます。資格・専門性はスタッフごとに複数登録できます。事務員は名簿に載るだけで、空き状況の対象にはなりません。</p>
+      <p class="page-sub">看護師・理学療法士・作業療法士・言語聴覚士・事務員の追加や削除ができます。削除は、そのスタッフに現在ご利用中の予定がない場合のみ行えます。↑↓で並び順を自由に変更できます（①②の表示順に反映されます）。名前はそのまま書き換えられます。資格・専門性はスタッフごとに複数登録できます。事務員は名簿に載るだけで、空き状況の対象にはなりません。理学療法士・作業療法士・言語聴覚士は②空き状況〈セラピスト〉画面・時間帯設定・空き枠数の計算調整を共有しますが、新規登録・提案では職種ごとに独立して訪問頻度パターンや希望曜日を指定できます。</p>
       <div id="staffList"></div>
       <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center;">
         <input type="text" id="newStaffName" placeholder="スタッフ名" style="max-width:180px;">
-        <select id="newStaffRole" style="max-width:140px;">
+        <select id="newStaffRole" style="max-width:160px;">
           <option value="看護師">看護師</option>
-          <option value="セラピスト">セラピスト</option>
+          <option value="理学療法士">理学療法士</option>
+          <option value="作業療法士">作業療法士</option>
+          <option value="言語聴覚士">言語聴覚士</option>
           <option value="事務員">事務員</option>
         </select>
         <button class="btn btn-ghost btn-small" id="addStaffBtn">＋ スタッフを追加</button>
@@ -375,7 +377,7 @@ require __DIR__ . '/lib/auth.php';
       <p class="page-sub">条件を入れると、今の空き状況から候補枠を自動で探して提案します（第三者への送信は行わず、この画面内だけで計算しています）。</p>
       <form class="intake" id="intakeForm">
         <div class="full">
-          <label>職種（複数選択可。同じ利用者様に看護師・セラピストを同時に登録できます）</label>
+          <label>職種（複数選択可。同じ利用者様に複数の職種を同時に登録できます）</label>
           <div class="chip-group" id="roleChips"></div>
         </div>
         <div>
@@ -383,48 +385,7 @@ require __DIR__ . '/lib/auth.php';
           <input type="text" id="f-name" placeholder="例：山田太郎">
         </div>
         <div class="full" id="existingPatientNotice" style="display:none;background:var(--amber-tint);border:1px solid var(--amber);border-radius:8px;padding:8px 12px;font-size:12.5px;"></div>
-        <div>
-          <label for="f-pattern">訪問頻度パターン</label>
-          <select id="f-pattern">
-            <option value="weekly">毎週（曜日を指定・複数日選択可）</option>
-            <option value="daily">毎日（月〜金・週5回）</option>
-            <option value="daily7">毎日（月〜日・週7回、土日訪問あり）</option>
-            <option value="biweekly_13">隔週（第1・3週）</option>
-            <option value="biweekly_135">隔週（第1・3・5週）</option>
-            <option value="biweekly_24">隔週（第2・4週）</option>
-            <option value="monthly_1">月1回（第1週）</option>
-            <option value="monthly_2">月1回（第2週）</option>
-            <option value="monthly_3">月1回（第3週）</option>
-            <option value="monthly_4">月1回（第4週）</option>
-          </select>
-        </div>
-        <div id="freqWeeklyWrap">
-          <label for="f-freq">毎週の場合の回数（週）</label>
-          <select id="f-freq">
-            <option value="1">週1回</option>
-            <option value="2" selected>週2回</option>
-            <option value="3">週3回</option>
-            <option value="4">週4回</option>
-            <option value="5">週5回（毎日）</option>
-            <option value="6">週6回</option>
-            <option value="7">週7回（毎日・土日含む）</option>
-          </select>
-        </div>
-        <div class="full">
-          <label id="dayChipsLabel">希望曜日（未選択＝指定なし。土・日も選択できます）</label>
-          <div class="chip-group" id="dayChips"></div>
-        </div>
-        <div class="full" style="background:var(--amber-tint);border:1px solid var(--amber);border-radius:8px;padding:8px 12px;">
-          <label style="display:flex;align-items:center;gap:6px;font-weight:600;margin-bottom:0;">
-            <input type="checkbox" id="f-weekend-exception" style="width:auto;">
-            特例（通常の勤務体系に関わらず、指定した曜日・スタッフに土日訪問として登録する）
-          </label>
-          <p class="page-sub" style="margin:4px 0 0;">土曜・日曜への訪問がどうしても必要な方向けの特例登録です。チェックを入れると、⑨設定で土日勤務がOFFのスタッフも候補に含めて提案します。登録後は①②の土日欄に名前が表示されます。</p>
-        </div>
-        <div class="full">
-          <label>希望時間帯（未選択＝指定なし）</label>
-          <div id="slotChips" style="display:flex;flex-direction:column;gap:8px;"></div>
-        </div>
+        <div class="full" id="roleSections"></div>
         <div>
           <label for="f-disease">疾患名</label>
           <input type="text" id="f-disease" placeholder="例：認知症">
@@ -438,46 +399,6 @@ require __DIR__ . '/lib/auth.php';
             <option value="精神">精神</option>
             <option value="小児">小児</option>
           </select>
-        </div>
-        <div>
-          <label for="f-duration">サービス時間</label>
-          <select id="f-duration">
-            <option value="30">30分</option>
-            <option value="60" selected>60分</option>
-            <option value="90">90分</option>
-          </select>
-        </div>
-        <div class="full" id="companionOuterWrap" style="display:none;">
-          <label style="display:flex;align-items:center;gap:6px;font-weight:600;margin-bottom:0;">
-            <input type="checkbox" id="f-companion-enable" style="width:auto;">
-            同じ枠にもう1名を登録する（ご夫婦など。例：主人11:45〜／妻12:15〜を同じ11:45枠として登録）
-          </label>
-        </div>
-        <div class="full" id="companionFields" style="display:none;">
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px 22px;">
-            <div>
-              <label for="f-comp-name">もう1名の氏名</label>
-              <input type="text" id="f-comp-name" placeholder="例：山田花子">
-            </div>
-            <div>
-              <label for="f-comp-time">もう1名の実施時刻メモ</label>
-              <input type="text" id="f-comp-time" placeholder="例：12:15〜">
-            </div>
-            <div>
-              <label for="f-comp-disease">もう1名の疾患名</label>
-              <input type="text" id="f-comp-disease" placeholder="例：高血圧症">
-            </div>
-            <div>
-              <label for="f-comp-insurance">もう1名の主保険</label>
-              <select id="f-comp-insurance">
-                <option value="">選択してください</option>
-                <option value="医療保険">医療保険</option>
-                <option value="介護保険">介護保険</option>
-                <option value="精神">精神</option>
-                <option value="小児">小児</option>
-              </select>
-            </div>
-          </div>
         </div>
         <div>
           <label for="f-alone">独居</label>
@@ -646,17 +567,23 @@ const DAYS = ['月','火','水','木','金','土','日'];
 const WEEKDAYS = ['月','火','水','木','金'];
 function isWeekendDay(d){ return d==='土' || d==='日'; }
 const WEEKS = [1,2,3,4,5];
-const ROLES = ['看護師','セラピスト'];
+const CAREGIVER_ROLES = ['看護師','理学療法士','作業療法士','言語聴覚士']; // ①②③など空き状況・新規登録の対象となる職種
+const THERAPIST_ROLES = ['理学療法士','作業療法士','言語聴覚士']; // 「セラピスト」という空き状況画面・時間帯・空き枠数の計算調整を共有する職種
+const ROLES = CAREGIVER_ROLES;
+// role（看護師|理学療法士|作業療法士|言語聴覚士|事務員）から、①②の画面・時間帯・staffBufferのキーとして
+// 使う「グループ」（看護師|セラピスト|事務員）を求める。理学療法士・作業療法士・言語聴覚士はいずれも
+// 「セラピスト」グループとして①②空き状況・時間帯設定・空き枠数の計算調整を共有する
+// （画面や時間帯は3職種共通のまま、スタッフ登録・新規登録・訪問頻度パターンは職種ごとに独立させるため）。
+function roleGroup(role){ return THERAPIST_ROLES.includes(role) ? 'セラピスト' : role; }
+function durationOptionsFor(role){ return role==='看護師' ? ['30','60','90'] : ['40','60']; }
 const END_REASONS = ['入所','看取り','卒業'];
 const INSURANCE_TYPES = ['医療保険','介護保険','精神','小児'];
-const QUALIFICATION_PRESETS = ['理学療法士','作業療法士','言語聴覚士','特定行為看護師','ケアマネジャー'];
+const QUALIFICATION_PRESETS = ['特定行為看護師','ケアマネジャー'];
 const QUALIFICATION_TEMPLATES = [
   { value:'__certified', suffix:'認定看護師', label:'○○認定看護師（自由記述）', placeholder:'例：皮膚・排泄ケア' },
   { value:'__specialist', suffix:'専門看護師', label:'○○専門看護師（自由記述）', placeholder:'例：がん看護' },
   { value:'__other', suffix:'', label:'他ライセンス（自由記述）', placeholder:'資格名を入力' },
 ];
-
-const SERVICE_DURATIONS = ['30','60','90'];
 
 const PATTERNS = {
   weekly:       { label:'毎週',              kind:'weekly' },
@@ -680,10 +607,12 @@ function todayStr(){
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 }
 function monthKey(dateStr){ return dateStr.slice(0,7); }
-function slotLabelsFor(role){ return (state.slotLabels && state.slotLabels[role]) || []; }
+function slotLabelsFor(role){ return (state.slotLabels && state.slotLabels[roleGroup(role)]) || []; }
 function slotCount(role){ return slotLabelsFor(role).length; }
 function staffNames(role){
-  return state.staff.filter(s=>!role || s.role===role).map(s=>s.name);
+  if(!role) return state.staff.map(s=>s.name);
+  if(role==='セラピスト') return state.staff.filter(s=>THERAPIST_ROLES.includes(s.role)).map(s=>s.name);
+  return state.staff.filter(s=>s.role===role).map(s=>s.name);
 }
 function staffInfo(name){
   return state.staff.find(s=>s.name===name) || {name, role:'看護師'};
@@ -861,7 +790,7 @@ const RENDERERS = {
   'overview-nurse': ()=>renderOverview('看護師'),
   'overview-therapist': ()=>renderOverview('セラピスト'),
   staff: renderStaffList,
-  intake: ()=>{ populateReferralSelects(); updatePatternUI(); },
+  intake: ()=>{ populateReferralSelects(); selectedRoles.forEach(role=>updatePatternUIFor(role)); },
   end: renderEndList,
   inpatient: renderInpatientList,
   referral: renderReferralAnalysis,
@@ -1007,7 +936,7 @@ function bookingEditView(b){
         <label>主保険</label><select class="edit-field" data-f="insuranceType">${refSelectOptions(INSURANCE_TYPES, b.insuranceType)}</select>
         <label>サービス時間</label>
         <select class="edit-field" data-f="serviceDuration">
-          ${SERVICE_DURATIONS.map(d=>`<option value="${d}" ${b.serviceDuration===d?'selected':''}>${d}分</option>`).join('')}
+          ${durationOptionsFor(role).map(d=>`<option value="${d}" ${b.serviceDuration===d?'selected':''}>${d}分</option>`).join('')}
         </select>
         <label>疾患名</label><input type="text" class="edit-field" data-f="disease" value="${(b.disease||'').replace(/"/g,'&quot;')}">
         <label>独居</label>
@@ -1198,7 +1127,8 @@ function renderOverview(role){
   let html = '<tr><th>担当スタッフ</th>' + DAYS.map(d=>`<th>${d}</th>`).join('') + '</tr>';
   names.forEach(staff=>{
     const avatarClass = role==='セラピスト' ? 'therapist' : 'nurse';
-    html += `<tr><td><div class="staff-cell"><div class="avatar ${avatarClass}">${staff.trim()[0]||'?'}</div><span class="staff-name">${staff}</span></div></td>`;
+    const profTag = role==='セラピスト' ? `<span style="font-size:10px;color:var(--ink-soft);white-space:nowrap;">${staffInfo(staff).role}</span>` : '';
+    html += `<tr><td><div class="staff-cell"><div class="avatar ${avatarClass}">${staff.trim()[0]||'?'}</div><span class="staff-name">${staff}</span>${profTag}</div></td>`;
     DAYS.forEach(day=>{
       const isWeekend = (day==='土' || day==='日');
       if(isWeekend){
@@ -1245,19 +1175,21 @@ function syncOverviewAlertHeight(role){
 }
 
 // ---------- ③ 新規登録・提案 ----------
-let selectedDays = [];
+// 職種ごとに訪問頻度パターン・回数・希望曜日・希望時間帯・サービス時間が異なりうる
+// （例：看護師は月1回、理学療法士は週2回、など）ため、選択した職種の数だけ
+// #roleSections 内にフォーム一式を動的に生成し、選択・入力状態は職種名をキーに保持する。
 let selectedRoles = ['看護師'];
-let selectedSlotsByRole = { '看護師': [], 'セラピスト': [] };
+let selectedDaysByRole = {};
+let selectedSlotsByRole = {};
+CAREGIVER_ROLES.forEach(r=>{ selectedDaysByRole[r] = []; selectedSlotsByRole[r] = []; });
 
 function buildChips(){
-  buildDayChips();
   buildRoleChips();
-  buildSlotChips();
+  buildRoleSections();
 }
 function buildRoleChips(){
   const wrap = document.getElementById('roleChips');
-  const roles = ['看護師','セラピスト'];
-  wrap.innerHTML = roles.map(r=>`<span class="chip ${selectedRoles.includes(r)?'on':''}" data-role="${r}">${r}</span>`).join('');
+  wrap.innerHTML = CAREGIVER_ROLES.map(r=>`<span class="chip ${selectedRoles.includes(r)?'on':''}" data-role="${r}">${r}</span>`).join('');
   wrap.querySelectorAll('.chip').forEach(chip=>{
     chip.addEventListener('click', ()=>{
       const r = chip.dataset.role;
@@ -1268,61 +1200,192 @@ function buildRoleChips(){
         selectedRoles.push(r);
       }
       buildRoleChips();
-      buildSlotChips();
+      buildRoleSections();
     });
   });
 }
-function buildDayChips(){
-  const dayWrap = document.getElementById('dayChips');
-  dayWrap.innerHTML = DAYS.map(d=>`<span class="chip ${selectedDays.includes(d)?'on':''}" data-day="${d}">${d}</span>`).join('');
+function patternSelectHtml(role){
+  return `
+    <select class="f-pattern" data-role="${role}">
+      <optgroup label="毎週">
+        <option value="weekly">曜日を指定（複数日選択可）</option>
+        <option value="daily">毎日（月〜金・週5回固定）</option>
+        <option value="daily7">毎日（月〜日・週7回・土日訪問あり）</option>
+      </optgroup>
+      <optgroup label="隔週">
+        <option value="biweekly_13">第1・3週</option>
+        <option value="biweekly_135">第1・3・5週</option>
+        <option value="biweekly_24">第2・4週</option>
+      </optgroup>
+      <optgroup label="月1回">
+        <option value="monthly_1">第1週</option>
+        <option value="monthly_2">第2週</option>
+        <option value="monthly_3">第3週</option>
+        <option value="monthly_4">第4週</option>
+      </optgroup>
+    </select>`;
+}
+function buildRoleSections(){
+  const wrap = document.getElementById('roleSections');
+  const showHeading = selectedRoles.length>1;
+  wrap.innerHTML = selectedRoles.map(role=>{
+    const heading = showHeading ? `<div style="font-weight:700;font-size:14.5px;margin-bottom:8px;color:var(--teal-deep);">${role}</div>` : '';
+    const companionHtml = role==='看護師' ? `
+        <div class="companion-outer-wrap" data-role="${role}" style="display:none;margin-top:12px;">
+          <label style="display:flex;align-items:center;gap:6px;font-weight:600;margin-bottom:0;">
+            <input type="checkbox" class="f-companion-enable" data-role="${role}" style="width:auto;">
+            同じ枠にもう1名を登録する（ご夫婦など。例：主人11:45〜／妻12:15〜を同じ11:45枠として登録）
+          </label>
+        </div>
+        <div class="companion-fields" data-role="${role}" style="display:none;margin-top:8px;">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px 22px;">
+            <div>
+              <label>もう1名の氏名</label>
+              <input type="text" class="f-comp-name" data-role="${role}" placeholder="例：山田花子">
+            </div>
+            <div>
+              <label>もう1名の実施時刻メモ</label>
+              <input type="text" class="f-comp-time" data-role="${role}" placeholder="例：12:15〜">
+            </div>
+            <div>
+              <label>もう1名の疾患名</label>
+              <input type="text" class="f-comp-disease" data-role="${role}" placeholder="例：高血圧症">
+            </div>
+            <div>
+              <label>もう1名の主保険</label>
+              <select class="f-comp-insurance" data-role="${role}">
+                <option value="">選択してください</option>
+                <option value="医療保険">医療保険</option>
+                <option value="介護保険">介護保険</option>
+                <option value="精神">精神</option>
+                <option value="小児">小児</option>
+              </select>
+            </div>
+          </div>
+        </div>` : '';
+    return `
+      <div class="role-section" data-role-section="${role}" style="border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px 16px;margin-bottom:14px;">
+        ${heading}
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px 22px;">
+          <div>
+            <label>訪問頻度パターン</label>
+            ${patternSelectHtml(role)}
+          </div>
+          <div class="freq-weekly-wrap" data-role="${role}">
+            <label>毎週の場合の回数（週）</label>
+            <select class="f-freq" data-role="${role}">
+              <option value="1">週1回</option>
+              <option value="2" selected>週2回</option>
+              <option value="3">週3回</option>
+              <option value="4">週4回</option>
+              <option value="5">週5回</option>
+              <option value="6">週6回</option>
+              <option value="7">週7回（土日含む）</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-top:12px;">
+          <label class="day-chips-label" data-role="${role}">希望曜日（未選択＝指定なし。土・日も選択できます）</label>
+          <div class="chip-group day-chips" data-role="${role}"></div>
+        </div>
+        <div style="margin-top:12px;background:var(--amber-tint);border:1px solid var(--amber);border-radius:8px;padding:8px 12px;">
+          <label style="display:flex;align-items:center;gap:6px;font-weight:600;margin-bottom:0;">
+            <input type="checkbox" class="f-weekend-exception" data-role="${role}" style="width:auto;">
+            特例（通常の勤務体系に関わらず、指定した曜日・スタッフに土日訪問として登録する）
+          </label>
+          <p class="page-sub" style="margin:4px 0 0;">土曜・日曜への訪問がどうしても必要な方向けの特例登録です。チェックを入れると、⑨設定で土日勤務がOFFのスタッフも候補に含めて提案します。登録後は①②の土日欄に名前が表示されます。</p>
+        </div>
+        <div style="margin-top:12px;">
+          <label>希望時間帯（未選択＝指定なし）</label>
+          <div class="chip-group slot-chips" data-role="${role}"></div>
+        </div>
+        <div style="margin-top:12px;max-width:220px;">
+          <label>サービス時間</label>
+          <select class="f-duration" data-role="${role}">
+            ${durationOptionsFor(role).map(d=>`<option value="${d}" ${d==='60'?'selected':''}>${d}分</option>`).join('')}
+          </select>
+        </div>
+        ${companionHtml}
+      </div>`;
+  }).join('');
+
+  selectedRoles.forEach(role=>{
+    updatePatternUIFor(role);
+    buildSlotChipsFor(role);
+    wrap.querySelector(`.f-pattern[data-role="${role}"]`).addEventListener('change', ()=>updatePatternUIFor(role));
+    if(role==='看護師'){
+      const durationSel = wrap.querySelector(`.f-duration[data-role="${role}"]`);
+      const companionOuter = wrap.querySelector(`.companion-outer-wrap[data-role="${role}"]`);
+      const companionFields = wrap.querySelector(`.companion-fields[data-role="${role}"]`);
+      const companionEnable = wrap.querySelector(`.f-companion-enable[data-role="${role}"]`);
+      const syncCompanionVisibility = ()=>{
+        const isThirty = durationSel.value === '30';
+        companionOuter.style.display = isThirty ? '' : 'none';
+        if(!isThirty){
+          companionEnable.checked = false;
+          companionFields.style.display = 'none';
+        }
+      };
+      durationSel.addEventListener('change', syncCompanionVisibility);
+      syncCompanionVisibility();
+      companionEnable.addEventListener('change', (e)=>{
+        companionFields.style.display = e.target.checked ? '' : 'none';
+      });
+    }
+  });
+}
+function updatePatternUIFor(role){
+  const wrap = document.getElementById('roleSections');
+  const patternSel = wrap.querySelector(`.f-pattern[data-role="${role}"]`);
+  if(!patternSel) return;
+  const pattern = PATTERNS[patternSel.value];
+  const isRotation = pattern.kind === 'rotation';
+  wrap.querySelector(`.freq-weekly-wrap[data-role="${role}"]`).style.display = (isRotation || pattern.fixedFreq) ? 'none' : '';
+  const freqSel = wrap.querySelector(`.f-freq[data-role="${role}"]`);
+  if(pattern.fixedFreq) freqSel.value = String(pattern.fixedFreq);
+  wrap.querySelector(`.day-chips-label[data-role="${role}"]`).textContent = isRotation
+    ? '希望曜日（1日だけ選べます／未選択なら自動探索）'
+    : '希望曜日（未選択＝指定なし）';
+  if(isRotation && selectedDaysByRole[role].length>1) selectedDaysByRole[role] = [selectedDaysByRole[role][0]];
+  buildDayChipsFor(role);
+}
+function buildDayChipsFor(role){
+  const wrap = document.getElementById('roleSections');
+  const dayWrap = wrap.querySelector(`.day-chips[data-role="${role}"]`);
+  if(!dayWrap) return;
+  dayWrap.innerHTML = DAYS.map(d=>`<span class="chip ${selectedDaysByRole[role].includes(d)?'on':''}" data-day="${d}">${d}</span>`).join('');
   dayWrap.querySelectorAll('.chip').forEach(chip=>{
     chip.addEventListener('click', ()=>{
       const d = chip.dataset.day;
-      const isRotation = PATTERNS[document.getElementById('f-pattern').value].kind==='rotation';
+      const patternSel = wrap.querySelector(`.f-pattern[data-role="${role}"]`);
+      const isRotation = PATTERNS[patternSel.value].kind==='rotation';
       if(isRotation){
-        selectedDays = selectedDays.includes(d) ? [] : [d];
+        selectedDaysByRole[role] = selectedDaysByRole[role].includes(d) ? [] : [d];
       }else{
-        if(selectedDays.includes(d)) selectedDays = selectedDays.filter(x=>x!==d);
-        else selectedDays.push(d);
+        if(selectedDaysByRole[role].includes(d)) selectedDaysByRole[role] = selectedDaysByRole[role].filter(x=>x!==d);
+        else selectedDaysByRole[role].push(d);
       }
-      buildDayChips();
+      buildDayChipsFor(role);
     });
   });
 }
-function buildSlotChips(){
-  const slotWrap = document.getElementById('slotChips');
-  const showRoleHeading = selectedRoles.length>1;
-  slotWrap.innerHTML = selectedRoles.map(role=>{
-    const labels = slotLabelsFor(role);
-    selectedSlotsByRole[role] = (selectedSlotsByRole[role]||[]).filter(i=>i < labels.length);
-    const chips = labels.map((s,i)=>`<span class="chip ${selectedSlotsByRole[role].includes(i)?'on':''}" data-role="${role}" data-slot="${i}">${s}</span>`).join('');
-    const heading = showRoleHeading ? `<div style="font-size:11.5px;color:var(--ink-soft);font-weight:700;">${role}</div>` : '';
-    return `<div>${heading}<div class="chip-group">${chips}</div></div>`;
-  }).join('');
+function buildSlotChipsFor(role){
+  const wrap = document.getElementById('roleSections');
+  const slotWrap = wrap.querySelector(`.slot-chips[data-role="${role}"]`);
+  if(!slotWrap) return;
+  const labels = slotLabelsFor(role);
+  selectedSlotsByRole[role] = (selectedSlotsByRole[role]||[]).filter(i=>i < labels.length);
+  slotWrap.innerHTML = labels.map((s,i)=>`<span class="chip ${selectedSlotsByRole[role].includes(i)?'on':''}" data-slot="${i}">${s}</span>`).join('');
   slotWrap.querySelectorAll('.chip').forEach(chip=>{
     chip.addEventListener('click', ()=>{
-      const role = chip.dataset.role;
       const i = Number(chip.dataset.slot);
       const arr = selectedSlotsByRole[role];
       if(arr.includes(i)){ selectedSlotsByRole[role] = arr.filter(x=>x!==i); }
       else{ arr.push(i); }
-      buildSlotChips();
+      buildSlotChipsFor(role);
     });
   });
 }
-function updatePatternUI(){
-  const val = document.getElementById('f-pattern').value;
-  const pattern = PATTERNS[val];
-  const isRotation = pattern.kind === 'rotation';
-  document.getElementById('freqWeeklyWrap').style.display = (isRotation || pattern.fixedFreq) ? 'none' : '';
-  if(pattern.fixedFreq) document.getElementById('f-freq').value = String(pattern.fixedFreq);
-  document.getElementById('dayChipsLabel').textContent = isRotation
-    ? '希望曜日（1日だけ選べます／未選択なら自動探索）'
-    : '希望曜日（未選択＝指定なし）';
-  if(isRotation && selectedDays.length>1) selectedDays = [selectedDays[0]];
-  buildDayChips();
-}
-document.getElementById('f-pattern').addEventListener('change', updatePatternUI);
 
 function populateReferralSelects(){
   const cm = document.getElementById('f-cm');
@@ -1332,7 +1395,7 @@ function populateReferralSelects(){
   cm.innerHTML = opts(state.referralSources.careManagers);
   hosp.innerHTML = opts(state.referralSources.hospitals);
   district.innerHTML = opts(state.districts);
-  buildSlotChips();
+  selectedRoles.forEach(role=>buildSlotChipsFor(role));
 }
 
 function orderedDays(preferred, includeWeekend){
@@ -1353,7 +1416,7 @@ function suggestionPool(role){
   // 「空き枠数の計算調整」で差し引く人数分、勤務予定人数が最も少ない（＝一番空いて見える）
   // スタッフを新規提案の候補から除外し、実際の受け入れ余地を超えて提案しないようにする
   const names = staffNames(role);
-  const buffer = (state.staffBuffer && state.staffBuffer[role]) || 0;
+  const buffer = (state.staffBuffer && state.staffBuffer[roleGroup(role)]) || 0;
   if(buffer<=0) return names;
   const sorted = names.slice().sort((a,b)=>totalLoad(a)-totalLoad(b));
   const reserved = new Set(sorted.slice(0, Math.min(buffer, names.length)));
@@ -1540,28 +1603,14 @@ async function confirmSuggestion(s, patient, patternValue, role){
     // 全ての職種の提案が確定済み（他の職種の提案が残っていない）ときだけフォームをリセットする
     box.innerHTML = '';
     document.getElementById('intakeForm').reset();
-    document.getElementById('companionOuterWrap').style.display = 'none';
-    document.getElementById('companionFields').style.display = 'none';
     hideExistingPatientNotice();
-    selectedDays = []; selectedRoles = ['看護師']; selectedSlotsByRole = { '看護師': [], 'セラピスト': [] };
-    updatePatternUI();
+    selectedRoles = ['看護師'];
+    CAREGIVER_ROLES.forEach(r=>{ selectedDaysByRole[r] = []; selectedSlotsByRole[r] = []; });
     buildRoleChips();
-    buildSlotChips();
+    buildRoleSections();
   }
   renderOverview('看護師'); renderOverview('セラピスト');
 }
-
-document.getElementById('f-duration').addEventListener('change', ()=>{
-  const isThirty = document.getElementById('f-duration').value === '30';
-  document.getElementById('companionOuterWrap').style.display = isThirty ? '' : 'none';
-  if(!isThirty){
-    document.getElementById('f-companion-enable').checked = false;
-    document.getElementById('companionFields').style.display = 'none';
-  }
-});
-document.getElementById('f-companion-enable').addEventListener('change', (e)=>{
-  document.getElementById('companionFields').style.display = e.target.checked ? '' : 'none';
-});
 
 // 既存利用者への「サービス内容の追加」対応：同姓同名の登録中の予約があれば案内し、内容の引き継ぎができるようにする
 function findExistingBookingsByName(name){
@@ -1588,12 +1637,17 @@ function updateExistingPatientNotice(){
     const b = existing[0];
     document.getElementById('f-disease').value = b.disease||'';
     document.getElementById('f-insurance').value = b.insuranceType||'';
-    document.getElementById('f-duration').value = b.serviceDuration||'60';
-    document.getElementById('f-duration').dispatchEvent(new Event('change'));
     document.getElementById('f-alone').value = b.alone||'不明';
     document.getElementById('f-cm').value = b.careManager||'';
     document.getElementById('f-hosp').value = b.hospital||'';
     document.getElementById('f-district').value = b.district||'';
+    // サービス時間は職種ごとの入力なので、既存予約と同じ職種のセクションが表示されていれば引き継ぐ
+    const existingRole = staffInfo(b.staff).role;
+    const durationSel = document.getElementById('roleSections').querySelector(`.f-duration[data-role="${existingRole}"]`);
+    if(durationSel){
+      durationSel.value = b.serviceDuration || durationSel.value;
+      durationSel.dispatchEvent(new Event('change'));
+    }
     showToast('登録済みの内容を引き継ぎました');
   });
 }
@@ -1602,43 +1656,50 @@ document.getElementById('f-name').addEventListener('input', updateExistingPatien
 document.getElementById('intakeForm').addEventListener('submit', (e)=>{
   e.preventDefault();
   const roles = selectedRoles.slice();
-  const patternValue = document.getElementById('f-pattern').value;
-  const pattern = PATTERNS[patternValue];
-  const freq = Number(document.getElementById('f-freq').value);
-  const serviceDuration = document.getElementById('f-duration').value;
-  let companion = null;
-  if(serviceDuration==='30' && document.getElementById('f-companion-enable').checked){
-    const compName = document.getElementById('f-comp-name').value.trim();
-    if(compName){
-      companion = {
-        name: compName,
-        disease: document.getElementById('f-comp-disease').value.trim(),
-        insuranceType: document.getElementById('f-comp-insurance').value,
-        timeNote: document.getElementById('f-comp-time').value.trim()
-      };
-    }
-  }
-  const patient = {
+  const roleSectionsWrap = document.getElementById('roleSections');
+  const sharedFields = {
     name: document.getElementById('f-name').value.trim(),
     disease: document.getElementById('f-disease').value.trim(),
     insuranceType: document.getElementById('f-insurance').value,
-    serviceDuration, companion,
     alone: document.getElementById('f-alone').value,
     careManager: document.getElementById('f-cm').value,
     hospital: document.getElementById('f-hosp').value,
     district: document.getElementById('f-district').value,
     timeNote: document.getElementById('f-timenote').value.trim(),
-    note: document.getElementById('f-note').value.trim(),
-    freq
+    note: document.getElementById('f-note').value.trim()
   };
-  const weekendException = document.getElementById('f-weekend-exception').checked;
   const box = document.getElementById('suggestions');
   box.innerHTML = '';
   const showRoleHeading = roles.length>1;
   roles.forEach(role=>{
+    const patternValue = roleSectionsWrap.querySelector(`.f-pattern[data-role="${role}"]`).value;
+    const pattern = PATTERNS[patternValue];
+    const freq = Number(roleSectionsWrap.querySelector(`.f-freq[data-role="${role}"]`).value);
+    const serviceDuration = roleSectionsWrap.querySelector(`.f-duration[data-role="${role}"]`).value;
+    const weekendException = roleSectionsWrap.querySelector(`.f-weekend-exception[data-role="${role}"]`).checked;
+    const days = selectedDaysByRole[role] || [];
+    const slots = selectedSlotsByRole[role] || [];
+
+    let companion = null;
+    if(role==='看護師' && serviceDuration==='30'){
+      const enableCb = roleSectionsWrap.querySelector(`.f-companion-enable[data-role="${role}"]`);
+      if(enableCb && enableCb.checked){
+        const compName = roleSectionsWrap.querySelector(`.f-comp-name[data-role="${role}"]`).value.trim();
+        if(compName){
+          companion = {
+            name: compName,
+            disease: roleSectionsWrap.querySelector(`.f-comp-disease[data-role="${role}"]`).value.trim(),
+            insuranceType: roleSectionsWrap.querySelector(`.f-comp-insurance[data-role="${role}"]`).value,
+            timeNote: roleSectionsWrap.querySelector(`.f-comp-time[data-role="${role}"]`).value.trim()
+          };
+        }
+      }
+    }
+    const patient = Object.assign({}, sharedFields, { serviceDuration, companion, freq });
+
     const sugg = pattern.kind==='weekly'
-      ? findWeeklySuggestions(freq, selectedDays, selectedSlotsByRole[role]||[], role, !!pattern.includeWeekend, weekendException)
-      : findRotationSuggestions(pattern.weeks, selectedDays, selectedSlotsByRole[role]||[], role, weekendException);
+      ? findWeeklySuggestions(freq, days, slots, role, !!pattern.includeWeekend, weekendException)
+      : findRotationSuggestions(pattern.weeks, days, slots, role, weekendException);
     if(showRoleHeading){
       const h = document.createElement('div');
       h.style.cssText = 'font-weight:700;font-size:14px;margin-top:6px;';
@@ -1654,7 +1715,7 @@ document.getElementById('intakeForm').addEventListener('submit', (e)=>{
       return;
     }
     sugg.forEach(s=>{
-      const info = labelSuggestion(s, selectedDays, role);
+      const info = labelSuggestion(s, days, role);
       const card = document.createElement('div');
       card.className = 'sugg-card' + (s.tier===2?' tier2':s.tier===3?' tier3':'');
       card.dataset.role = role;
@@ -2000,14 +2061,14 @@ async function renameSlot(role, idx, newLabel){
   await saveState();
 }
 async function removeSlot(role, idx){
-  const hasBooking = Object.values(state.bookings).some(b=>b.slotIdx===idx && staffInfo(b.staff).role===role);
+  const hasBooking = Object.values(state.bookings).some(b=>b.slotIdx===idx && roleGroup(staffInfo(b.staff).role)===role);
   if(hasBooking){
     alert('この枠には現在ご利用中の予定があるため削除できません。先に「終了処理」でその予定を終了してから削除してください。');
     return;
   }
   if(!confirm(`「${state.slotLabels[role][idx]}」枠を削除します。よろしいですか？`)) return;
   state.slotLabels[role].splice(idx,1);
-  Object.values(state.bookings).forEach(b=>{ if(staffInfo(b.staff).role===role && b.slotIdx > idx) b.slotIdx -= 1; });
+  Object.values(state.bookings).forEach(b=>{ if(roleGroup(staffInfo(b.staff).role)===role && b.slotIdx > idx) b.slotIdx -= 1; });
   await saveState();
   renderSlotSettings(role);
 }
@@ -2017,7 +2078,7 @@ async function moveSlot(role, idx, dir){
   const labels = state.slotLabels[role];
   [labels[idx], labels[newIdx]] = [labels[newIdx], labels[idx]];
   Object.values(state.bookings).forEach(b=>{
-    if(staffInfo(b.staff).role!==role) return;
+    if(roleGroup(staffInfo(b.staff).role)!==role) return;
     if(b.slotIdx===idx) b.slotIdx=newIdx;
     else if(b.slotIdx===newIdx) b.slotIdx=idx;
   });
@@ -2071,7 +2132,7 @@ function renderStaffList(){
     const row = document.createElement('div');
     row.className = 'staff-row-item';
     row.style.flexWrap = 'wrap';
-    const pillClass = s.role==='セラピスト' ? 'therapist' : s.role==='事務員' ? 'office' : 'nurse';
+    const pillClass = THERAPIST_ROLES.includes(s.role) ? 'therapist' : s.role==='事務員' ? 'office' : 'nurse';
     const quals = s.qualifications || [];
     const qualChipsHtml = quals.map(q=>`<span class="qual-chip">${q}<button type="button" data-remove-qual="${q}">×</button></span>`).join('');
     const templateOptionsHtml = QUALIFICATION_TEMPLATES.map(t=>`<option value="${t.value}">${t.label}</option>`).join('');
@@ -2177,7 +2238,8 @@ function renderWorkdayTable(role){
   const slotLabels = slotLabelsFor(role);
   let html = '<tr><th>スタッフ</th>' + DAYS.map(d=>`<th>${d}</th>`).join('') + '</tr>';
   names.forEach(staff=>{
-    html += `<tr><td class="staff-name">${staff}</td>`;
+    const profTag = role==='セラピスト' ? `<span style="font-size:10px;color:var(--ink-soft);font-weight:400;margin-left:4px;">（${staffInfo(staff).role}）</span>` : '';
+    html += `<tr><td class="staff-name">${staff}${profTag}</td>`;
     DAYS.forEach(day=>{
       const blks = slotLabels.map((label,i)=>{
         const on = worksOnSlot(staff,day,i);
@@ -2285,7 +2347,6 @@ document.getElementById('resetBtn').addEventListener('click', async ()=>{
   await loadState();
   buildChips();
   populateReferralSelects();
-  updatePatternUI();
   renderOverview('看護師');
   renderOverview('セラピスト');
   // サマリーカード列の高さが後から変わる場合（フォント読み込み・ウィンドウ幅の変更など）にも
