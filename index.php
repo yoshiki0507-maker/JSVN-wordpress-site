@@ -215,6 +215,10 @@ require __DIR__ . '/lib/auth.php';
 
   .end-row{ display:flex; justify-content:space-between; align-items:center; background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:11px 16px; margin-bottom:8px; font-size:13px; }
   .end-row .meta{ color:var(--ink-soft); font-size:11.5px; }
+  .patient-card{ background:var(--teal-tint); border:1px solid var(--line); border-radius:var(--radius); padding:14px; margin-bottom:14px; }
+  .patient-card .meta{ color:var(--ink-soft); font-size:11.5px; }
+  .patient-card .patient-slots .end-row{ margin-bottom:6px; }
+  .patient-card .patient-slots .end-row:last-child{ margin-bottom:0; }
 
   .report-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:12px; margin-bottom:26px; }
   .month-card{ background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:14px; }
@@ -1619,50 +1623,90 @@ document.getElementById('intakeForm').addEventListener('submit', (e)=>{
 });
 
 // ---------- ④ 利用者検索 ----------
-function buildBookingRow(b){
-  const el = document.createElement('div');
-  el.className = 'end-row';
-  const nameTxt = b.name || '（名前未入力）';
-  const roleTxt = roleLabel(b.staff);
-  const bSlotLabel = slotLabelsFor(staffInfo(b.staff).role)[b.slotIdx];
-  let metaTxt = `${roleTxt}／${patternLabelOf(b)}／疾患：${b.disease||'―'}／独居：${b.alone||'―'}／居宅：${b.careManager||'―'}／医療機関：${b.hospital||'―'}／地区：${b.district||'―'}`;
-  if(b.timeNote) metaTxt += `／時刻メモ：${b.timeNote}`;
-  if(b.pairId){
-    const paired = pairedBookingAt(b);
-    if(paired) metaTxt += `／同枠のペア：${paired.name||'（名前未登録）'}`;
-  }
-  el.innerHTML = `
-    <div>
-      <div><strong>${b.day}曜 ${bSlotLabel}〜</strong>　担当：${b.staff}　－　${nameTxt}</div>
-      <div class="meta">${metaTxt}</div>
-    </div>
-    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
-      <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--ink-soft);cursor:pointer;">
-        <input type="checkbox" class="hospitalized-check" ${b.hospitalized?'checked':''}> 入院中
-      </label>
-      <button class="btn btn-ghost btn-small edit-booking-btn">編集する</button>
-      <select class="end-reason-select" style="padding:6px 8px;border:1px solid var(--line);border-radius:7px;font-size:12px;font-family:var(--font-ui);">
-        <option value="">終了理由を選択</option>
-        ${END_REASONS.map(r=>`<option value="${r}">${r}</option>`).join('')}
-      </select>
-      <button class="btn btn-danger btn-small end-booking-btn">終了する</button>
-    </div>
-  `;
-  const reasonSel = el.querySelector('.end-reason-select');
-  el.querySelector('.end-booking-btn').addEventListener('click', ()=>endBookingById(b.id, reasonSel.value));
-  el.querySelector('.edit-booking-btn').addEventListener('click', ()=>openSlotModal(b.staff, b.day, b.slotIdx));
-  el.querySelector('.hospitalized-check').addEventListener('change', (e)=>toggleHospitalized(b.id, e.target.checked));
-  return el;
+function groupBookingsByPatient(rows){
+  // 同じ利用者様（氏名で判定）の複数の予約枠を1つにまとめる。氏名未入力はそれぞれ別扱いにする
+  const groups = new Map();
+  rows.forEach(b=>{
+    const key = (b.name && b.name.trim()) ? b.name.trim() : '__anon_'+b.id;
+    if(!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(b);
+  });
+  const entries = Array.from(groups.entries());
+  entries.sort((a,b)=>{
+    const an = a[1][0].name || '', bn = b[1][0].name || '';
+    if(!an && bn) return 1;
+    if(an && !bn) return -1;
+    return an.localeCompare(bn, 'ja');
+  });
+  return entries;
 }
-async function toggleHospitalized(id, checked){
-  const b = state.bookings[id];
-  if(!b) return;
-  b.hospitalized = checked;
+function buildPatientCard(bookings){
+  bookings = bookings.slice().sort((a,b)=> DAYS.indexOf(a.day)-DAYS.indexOf(b.day) || a.slotIdx-b.slotIdx);
+  const first = bookings[0];
+  const nameTxt = first.name || '（名前未入力）';
+  const allHospitalized = bookings.every(b=>b.hospitalized);
+  const ids = bookings.map(b=>b.id);
+  const freqNote = bookings.length>1 ? `　<span style="font-size:11px;color:var(--ink-soft);font-weight:400;">（週${bookings.length}回・${bookings.length}枠）</span>` : '';
+  const metaTxt = `疾患：${first.disease||'―'}／独居：${first.alone||'―'}／居宅：${first.careManager||'―'}／医療機関：${first.hospital||'―'}／地区：${first.district||'―'}`;
+
+  const card = document.createElement('div');
+  card.className = 'patient-card';
+  card.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+      <div>
+        <div class="bname" style="font-size:15px;margin:0;">${nameTxt}${freqNote}</div>
+        <div class="meta">${metaTxt}</div>
+      </div>
+      <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--ink-soft);cursor:pointer;white-space:nowrap;">
+        <input type="checkbox" class="hospitalized-check-group" ${allHospitalized?'checked':''}> 入院中（すべての枠に適用）
+      </label>
+    </div>
+    <div class="patient-slots"></div>
+  `;
+  const slotsWrap = card.querySelector('.patient-slots');
+  bookings.forEach(b=>{
+    const roleTxt = roleLabel(b.staff);
+    const bSlotLabel = slotLabelsFor(staffInfo(b.staff).role)[b.slotIdx];
+    let slotMeta = `${roleTxt}／${patternLabelOf(b)}`;
+    if(b.timeNote) slotMeta += `／時刻メモ：${b.timeNote}`;
+    if(b.pairId){
+      const paired = pairedBookingAt(b);
+      if(paired) slotMeta += `／同枠のペア：${paired.name||'（名前未登録）'}`;
+    }
+    const row = document.createElement('div');
+    row.className = 'end-row';
+    row.innerHTML = `
+      <div>
+        <div><strong>${b.day}曜 ${bSlotLabel}〜</strong>　担当：${b.staff}</div>
+        <div class="meta">${slotMeta}</div>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+        <button class="btn btn-ghost btn-small edit-booking-btn">編集する</button>
+        <select class="end-reason-select" style="padding:6px 8px;border:1px solid var(--line);border-radius:7px;font-size:12px;font-family:var(--font-ui);">
+          <option value="">終了理由を選択</option>
+          ${END_REASONS.map(r=>`<option value="${r}">${r}</option>`).join('')}
+        </select>
+        <button class="btn btn-danger btn-small end-booking-btn">終了する</button>
+      </div>
+    `;
+    const reasonSel = row.querySelector('.end-reason-select');
+    row.querySelector('.end-booking-btn').addEventListener('click', ()=>endBookingById(b.id, reasonSel.value));
+    row.querySelector('.edit-booking-btn').addEventListener('click', ()=>openSlotModal(b.staff, b.day, b.slotIdx));
+    slotsWrap.appendChild(row);
+  });
+  card.querySelector('.hospitalized-check-group').addEventListener('change', (e)=>toggleHospitalizedGroup(ids, e.target.checked));
+  return card;
+}
+async function toggleHospitalizedGroup(ids, checked){
+  ids.forEach(id=>{ if(state.bookings[id]) state.bookings[id].hospitalized = checked; });
   await saveState();
   showToast(checked ? '入院中に設定しました（①②の該当枠が黒色表示になります）' : '入院中を解除しました');
   renderOverview('看護師'); renderOverview('セラピスト');
   if(document.getElementById('panel-end').classList.contains('active')) renderEndList();
   if(document.getElementById('panel-inpatient').classList.contains('active')) renderInpatientList();
+}
+async function toggleHospitalized(id, checked){
+  await toggleHospitalizedGroup([id], checked);
 }
 function renderEndList(){
   const wrap = document.getElementById('endList');
@@ -1670,14 +1714,13 @@ function renderEndList(){
   const kw = (searchInput.value||'').trim();
   let rows = Object.entries(state.bookings).map(([id,b])=>Object.assign({id}, b));
   if(kw) rows = rows.filter(b=> (b.name||'').includes(kw));
-  rows.sort((a,b)=> DAYS.indexOf(a.day)-DAYS.indexOf(b.day) || a.slotIdx-b.slotIdx);
 
   if(!rows.length){
     wrap.innerHTML = `<p class="page-sub">${kw ? '一致する利用者様が見つかりません。' : '現在、ご利用中の利用者様はいません。'}</p>`;
     return;
   }
   wrap.innerHTML = '';
-  rows.forEach(b=> wrap.appendChild(buildBookingRow(b)));
+  groupBookingsByPatient(rows).forEach(([key, bookings])=> wrap.appendChild(buildPatientCard(bookings)));
 }
 document.getElementById('endSearch').addEventListener('input', renderEndList);
 
@@ -1690,14 +1733,13 @@ function renderInpatientList(){
     .map(([id,b])=>Object.assign({id}, b))
     .filter(b=>b.hospitalized);
   if(kw) rows = rows.filter(b=> (b.name||'').includes(kw));
-  rows.sort((a,b)=> DAYS.indexOf(a.day)-DAYS.indexOf(b.day) || a.slotIdx-b.slotIdx);
 
   if(!rows.length){
     wrap.innerHTML = `<p class="page-sub">${kw ? '一致する利用者様が見つかりません。' : '現在、入院中として登録されている利用者様はいません。'}</p>`;
     return;
   }
   wrap.innerHTML = '';
-  rows.forEach(b=> wrap.appendChild(buildBookingRow(b)));
+  groupBookingsByPatient(rows).forEach(([key, bookings])=> wrap.appendChild(buildPatientCard(bookings)));
 }
 document.getElementById('inpatientSearch').addEventListener('input', renderInpatientList);
 
