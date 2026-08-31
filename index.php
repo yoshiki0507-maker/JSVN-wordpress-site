@@ -929,10 +929,16 @@ function bookingReadView(b){
 
 function bookingEditView(b){
   const role = staffInfo(b.staff).role;
+  // 時間帯（slotLabels）はroleGroup単位で共有するため、担当スタッフの変更先はグループ内
+  // （例：理学療法士の予約は理学療法士・作業療法士・言語聴覚士のいずれにも変更できる）に限定する
+  const staffOptionsHtml = staffNames(roleGroup(role)).map(name=>
+    `<option value="${name}" ${b.staff===name?'selected':''}>${name}（${staffInfo(name).role}）</option>`
+  ).join('');
   return `
         <div class="bname" style="margin-bottom:8px;">利用者情報を編集</div>
+        <label>担当スタッフ</label><select class="edit-field" data-f="staff">${staffOptionsHtml}</select>
         <label>曜日</label><select class="edit-field" data-f="day">${DAYS.map(d=>`<option value="${d}" ${b.day===d?'selected':''}>${d}曜</option>`).join('')}</select>
-        <label>時間帯（担当：${b.staff}／${role}の枠）</label>
+        <label>時間帯（${role}の枠）</label>
         <select class="edit-field" data-f="slotIdx">${slotLabelsFor(role).map((label,i)=>`<option value="${i}" ${b.slotIdx===i?'selected':''}>${label}</option>`).join('')}</select>
         <label>氏名</label><input type="text" class="edit-field" data-f="name" value="${(b.name||'').replace(/"/g,'&quot;')}">
         <label>主保険</label><select class="edit-field" data-f="insuranceType">${refSelectOptions(INSURANCE_TYPES, b.insuranceType)}</select>
@@ -1006,11 +1012,12 @@ function openSlotModal(staff, day, slotIdx){
         if(f.dataset.f==='slotIdx') val = Number(val);
         updates[f.dataset.f] = val;
       });
+      const newStaff = updates.staff !== undefined ? updates.staff : orig.staff;
       const newDay = updates.day !== undefined ? updates.day : orig.day;
       const newSlotIdx = updates.slotIdx !== undefined ? updates.slotIdx : orig.slotIdx;
-      const moved = (newDay !== orig.day || newSlotIdx !== orig.slotIdx);
-      if(moved && !isRotationFree(orig.staff, newDay, newSlotIdx, orig.weeks)){
-        alert('その曜日・時間帯には既に予定が入っているため変更できません。');
+      const moved = (newStaff !== orig.staff || newDay !== orig.day || newSlotIdx !== orig.slotIdx);
+      if(moved && !isRotationFree(newStaff, newDay, newSlotIdx, orig.weeks)){
+        alert(newStaff!==orig.staff ? 'その担当スタッフの、その曜日・時間帯には既に予定が入っているため変更できません。' : 'その曜日・時間帯には既に予定が入っているため変更できません。');
         return;
       }
       Object.assign(state.bookings[id], updates);
@@ -1286,6 +1293,13 @@ function buildRoleSections(){
             </select>
           </div>
         </div>
+        <div style="margin-top:12px;max-width:320px;">
+          <label>担当スタッフ（未選択＝指定なし。空いているスタッフから自動で提案します）</label>
+          <select class="f-preferred-staff" data-role="${role}">
+            <option value="">指定なし</option>
+            ${staffNames(role).map(n=>`<option value="${n}">${n}</option>`).join('')}
+          </select>
+        </div>
         <div style="margin-top:12px;">
           <label class="day-chips-label" data-role="${role}">希望曜日（未選択＝指定なし。土・日も選択できます）</label>
           <div class="chip-group day-chips" data-role="${role}"></div>
@@ -1425,10 +1439,12 @@ function suggestionPool(role){
   return names.filter(n=>!reserved.has(n));
 }
 
-function findWeeklySuggestions(freq, preferredDays, preferredSlots, role, includeWeekend, weekendException){
+function findWeeklySuggestions(freq, preferredDays, preferredSlots, role, includeWeekend, weekendException, preferredStaff){
   const dayOrder = orderedDays(preferredDays, includeWeekend || weekendException);
   const slotOrder = orderedSlots(preferredSlots, role);
-  const pool = suggestionPool(role);
+  // 担当スタッフが指定されている場合は、そのスタッフだけを候補にする
+  // （空き枠数の計算調整による除外よりも、明示的な指定を優先する）
+  const pool = preferredStaff ? [preferredStaff] : suggestionPool(role);
   // 「特例」がONのときは、土日に限り勤務体系（⑨設定のON/OFF）を無視して候補に含める
   const dayAllowed = (staff,d)=> worksOn(staff,d) || (weekendException && isWeekendDay(d));
   const slotAllowed = (staff,d,i)=> worksOnSlot(staff,d,i) || (weekendException && isWeekendDay(d));
@@ -1484,10 +1500,10 @@ function findWeeklySuggestions(freq, preferredDays, preferredSlots, role, includ
   return results.slice(0,3);
 }
 
-function findRotationSuggestions(candWeeks, preferredDays, preferredSlots, role, weekendException){
+function findRotationSuggestions(candWeeks, preferredDays, preferredSlots, role, weekendException, preferredStaff){
   const dayOrder = orderedDays(preferredDays, weekendException);
   const slotOrder = orderedSlots(preferredSlots, role);
-  const pool = suggestionPool(role);
+  const pool = preferredStaff ? [preferredStaff] : suggestionPool(role);
   const dayAllowed = (staff,d)=> worksOn(staff,d) || (weekendException && isWeekendDay(d));
   const slotAllowed = (staff,d,i)=> worksOnSlot(staff,d,i) || (weekendException && isWeekendDay(d));
 
@@ -1655,7 +1671,7 @@ function hideExistingPatientNotice(){
   notice.style.display = 'none';
   notice.innerHTML = '';
 }
-function prefillFromExistingBooking(b, silent){
+function prefillFromExistingBooking(b, silent, includeStaff){
   document.getElementById('f-disease').value = b.disease||'';
   document.getElementById('f-insurance').value = b.insuranceType||'';
   document.getElementById('f-alone').value = b.alone||'不明';
@@ -1664,10 +1680,17 @@ function prefillFromExistingBooking(b, silent){
   document.getElementById('f-district').value = b.district||'';
   // サービス時間は職種ごとの入力なので、既存予約と同じ職種のセクションが表示されていれば引き継ぐ
   const existingRole = staffInfo(b.staff).role;
-  const durationSel = document.getElementById('roleSections').querySelector(`.f-duration[data-role="${existingRole}"]`);
+  const roleSectionsWrap = document.getElementById('roleSections');
+  const durationSel = roleSectionsWrap.querySelector(`.f-duration[data-role="${existingRole}"]`);
   if(durationSel){
     durationSel.value = b.serviceDuration || durationSel.value;
     durationSel.dispatchEvent(new Event('change'));
+  }
+  // 担当スタッフは「④から訪問を追加する」ときだけ既存の担当者を引き継ぐ（意図せず候補が
+  // その1名だけに絞られてしまわないよう、通常の「登録済みの内容を引き継ぐ」ボタンでは行わない）
+  if(includeStaff){
+    const staffSel = roleSectionsWrap.querySelector(`.f-preferred-staff[data-role="${existingRole}"]`);
+    if(staffSel && Array.from(staffSel.options).some(o=>o.value===b.staff)) staffSel.value = b.staff;
   }
   if(!silent) showToast('登録済みの内容を引き継ぎました');
 }
@@ -1698,7 +1721,7 @@ function goToIntakeToAddVisit(name){
   const nameInput = document.getElementById('f-name');
   nameInput.value = name;
   nameInput.dispatchEvent(new Event('input'));
-  if(existing.length) prefillFromExistingBooking(existing[0], true);
+  if(existing.length) prefillFromExistingBooking(existing[0], true, true);
   document.getElementById('roleSections').scrollIntoView({behavior:'smooth', block:'start'});
   showToast(`${name} 様の登録済みの内容を引き継ぎました。空き枠を探して追加登録してください`);
 }
@@ -1727,6 +1750,7 @@ document.getElementById('intakeForm').addEventListener('submit', (e)=>{
     const freq = Number(roleSectionsWrap.querySelector(`.f-freq[data-role="${role}"]`).value);
     const serviceDuration = roleSectionsWrap.querySelector(`.f-duration[data-role="${role}"]`).value;
     const weekendException = roleSectionsWrap.querySelector(`.f-weekend-exception[data-role="${role}"]`).checked;
+    const preferredStaff = roleSectionsWrap.querySelector(`.f-preferred-staff[data-role="${role}"]`).value;
     const days = selectedDaysByRole[role] || [];
     const slots = selectedSlotsByRole[role] || [];
 
@@ -1748,8 +1772,8 @@ document.getElementById('intakeForm').addEventListener('submit', (e)=>{
     const patient = Object.assign({}, sharedFields, { serviceDuration, companion, freq });
 
     const sugg = pattern.kind==='weekly'
-      ? findWeeklySuggestions(freq, days, slots, role, !!pattern.includeWeekend, weekendException)
-      : findRotationSuggestions(pattern.weeks, days, slots, role, weekendException);
+      ? findWeeklySuggestions(freq, days, slots, role, !!pattern.includeWeekend, weekendException, preferredStaff)
+      : findRotationSuggestions(pattern.weeks, days, slots, role, weekendException, preferredStaff);
     if(showRoleHeading){
       const h = document.createElement('div');
       h.style.cssText = 'font-weight:700;font-size:14px;margin-top:6px;';
@@ -1760,7 +1784,9 @@ document.getElementById('intakeForm').addEventListener('submit', (e)=>{
     if(!sugg.length){
       const empty = document.createElement('div');
       empty.className = 'empty-msg';
-      empty.textContent = `条件に合う空き枠が見つかりませんでした（${role}）。${role}の登録がない、または曜日・時間の希望が合っていない可能性があります。`;
+      empty.textContent = preferredStaff
+        ? `「${preferredStaff}」さんの条件に合う空き枠が見つかりませんでした。曜日・時間帯の希望が合っていないか、既に埋まっている可能性があります。`
+        : `条件に合う空き枠が見つかりませんでした（${role}）。${role}の登録がない、または曜日・時間の希望が合っていない可能性があります。`;
       box.appendChild(empty);
       return;
     }
