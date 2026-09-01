@@ -1921,27 +1921,28 @@ function buildPatientScheduleHtml(name, bookings){
 <html lang="ja"><head><meta charset="UTF-8">
 <title>週間訪問予定表　${name}様</title>
 <style>
-  @page{ size:A4 portrait; margin:18mm; }
+  @page{ size:A4 portrait; margin:14mm; }
   *{ box-sizing:border-box; }
+  html, body{ height:100%; }
   body{ font-family:"Hiragino Mincho ProN","Yu Mincho","Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",serif; margin:0; padding:10mm; color:#1a1a1a; writing-mode:horizontal-tb; }
-  .title{ font-size:34px; font-weight:700; margin-bottom:10mm; }
-  .patient-row{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6mm; font-family:"Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",sans-serif; }
-  .patient-name{ font-size:24px; font-weight:700; }
-  .patient-name .suffix{ font-size:18px; font-weight:600; margin-left:6px; }
-  .meta-date{ font-size:15px; color:#555; }
-  table.week{ width:100%; border-collapse:collapse; table-layout:fixed; font-family:"Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",sans-serif; }
-  table.week th, table.week td{ border:1.6px solid #333; padding:8px 12px; vertical-align:middle; }
-  table.week th{ font-size:20px; font-weight:700; text-align:center; background:#fff; }
+  .title{ font-size:30px; font-weight:700; margin-bottom:6mm; }
+  .patient-row{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:4mm; font-family:"Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",sans-serif; }
+  .patient-name{ font-size:22px; font-weight:700; }
+  .patient-name .suffix{ font-size:16px; font-weight:600; margin-left:6px; }
+  .meta-date{ font-size:13px; color:#555; }
+  table.week{ width:100%; border-collapse:collapse; table-layout:fixed; font-family:"Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",sans-serif; page-break-inside:avoid; }
+  table.week th, table.week td{ border:1.6px solid #333; padding:5px 12px; vertical-align:middle; }
+  table.week th{ font-size:16px; font-weight:700; text-align:center; background:#fff; padding:4px 12px; }
   table.week col.col-day{ width:18%; }
   table.week col.col-content{ width:82%; }
-  td.day-cell{ font-size:28px; font-weight:700; text-align:center; }
-  td.content-cell{ font-size:24px; text-align:left; }
-  tr{ height:30mm; }
+  td.day-cell{ font-size:26px; font-weight:700; text-align:center; }
+  td.content-cell{ font-size:22px; text-align:left; }
+  tr{ height:24mm; page-break-inside:avoid; }
   .sat{ background:#CFE3F5; }
   .sun{ background:#F7D9C6; }
-  .visit-line{ line-height:1.7; }
-  .visit-line + .visit-line{ margin-top:8px; padding-top:8px; border-top:1px dashed #bbb; }
-  .footer{ margin-top:8mm; font-size:14px; color:#777; text-align:right; font-family:"Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",sans-serif; }
+  .visit-line{ line-height:1.5; }
+  .visit-line + .visit-line{ margin-top:6px; padding-top:6px; border-top:1px dashed #bbb; }
+  .footer{ margin-top:4mm; font-size:12px; color:#777; text-align:right; font-family:"Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",sans-serif; }
   @media print{ body{ padding:0; } }
 </style>
 </head>
