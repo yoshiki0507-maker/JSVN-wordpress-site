@@ -1302,6 +1302,23 @@ function buildRoleSections(){
               <input type="text" class="f-comp-time" data-role="${role}" placeholder="例：12:15〜">
             </div>
             <div>
+              <label>もう1名の訪問頻度（ご本人と異なる場合に選択）</label>
+              <select class="f-comp-pattern" data-role="${role}">
+                <option value="weekly">毎週（ご本人と同じ週に訪問）</option>
+                <optgroup label="隔週">
+                  <option value="biweekly_13">第1・3週</option>
+                  <option value="biweekly_135">第1・3・5週</option>
+                  <option value="biweekly_24">第2・4週</option>
+                </optgroup>
+                <optgroup label="月1回">
+                  <option value="monthly_1">第1週</option>
+                  <option value="monthly_2">第2週</option>
+                  <option value="monthly_3">第3週</option>
+                  <option value="monthly_4">第4週</option>
+                </optgroup>
+              </select>
+            </div>
+            <div>
               <label>もう1名の疾患名</label>
               <input type="text" class="f-comp-disease" data-role="${role}" placeholder="例：高血圧症">
             </div>
@@ -1654,7 +1671,7 @@ async function confirmSuggestion(s, patient, patternValue, role){
   const create = (staff, day, slotIdx, weeks, person, linkId)=>{
     const id = newId();
     state.bookings[id] = {
-      staff, day, slotIdx, weeks, patternValue,
+      staff, day, slotIdx, weeks, patternValue: person.patternValue || patternValue,
       name: person.name, disease: person.disease, alone: person.alone, note: person.note,
       careManager: person.careManager, hospital: person.hospital, timeNote: person.timeNote,
       insuranceType: person.insuranceType, serviceDuration: person.serviceDuration,
@@ -1670,11 +1687,22 @@ async function confirmSuggestion(s, patient, patternValue, role){
   const createBoth = (staff, day, slotIdx, weeks)=>{
     create(staff, day, slotIdx, weeks, patient, pairId);
     if(patient.companion){
-      create(staff, day, slotIdx, weeks, {
+      // もう1名（ご夫婦など）の訪問頻度がご本人と異なる場合（隔週・月1回など）は、
+      // ご本人の訪問週（weeks）の範囲内でもう1名側の週だけに絞り込む。ご本人が毎週訪問なら
+      // そのまま隔週・月1回の週だけになり、ご本人自体が隔週・月次パターンの場合は
+      // その週と重ならない指定は無効な組み合わせなのでご本人と同じ週にフォールバックする。
+      const compPattern = PATTERNS[patient.companion.patternValue];
+      let compWeeks = weeks;
+      if(compPattern && compPattern.kind==='rotation'){
+        const intersected = compPattern.weeks.filter(w=>weeks.includes(w));
+        compWeeks = intersected.length ? intersected : weeks;
+      }
+      create(staff, day, slotIdx, compWeeks, {
         name: patient.companion.name,
         disease: patient.companion.disease,
         insuranceType: patient.companion.insuranceType,
         timeNote: patient.companion.timeNote,
+        patternValue: patient.companion.patternValue,
         serviceDuration: patient.serviceDuration,
         alone: patient.alone,
         careManager: patient.careManager,
@@ -1813,7 +1841,8 @@ document.getElementById('intakeForm').addEventListener('submit', (e)=>{
             name: compName,
             disease: roleSectionsWrap.querySelector(`.f-comp-disease[data-role="${role}"]`).value.trim(),
             insuranceType: roleSectionsWrap.querySelector(`.f-comp-insurance[data-role="${role}"]`).value,
-            timeNote: roleSectionsWrap.querySelector(`.f-comp-time[data-role="${role}"]`).value.trim()
+            timeNote: roleSectionsWrap.querySelector(`.f-comp-time[data-role="${role}"]`).value.trim(),
+            patternValue: roleSectionsWrap.querySelector(`.f-comp-pattern[data-role="${role}"]`).value
           };
         }
       }
