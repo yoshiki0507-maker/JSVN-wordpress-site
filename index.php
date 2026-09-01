@@ -1891,16 +1891,12 @@ function buildPatientScheduleHtml(name, bookings){
     byDay[b.day].push({
       slotIdx: b.slotIdx,
       time: slotLabelsFor(role)[b.slotIdx] || '',
-      staff: b.staff,
       role: roleLabel(b.staff),
       pattern: patternLabelOf(b),
       timeNote: b.timeNote || ''
     });
   });
   Object.keys(byDay).forEach(d=> byDay[d].sort((a,b)=>a.slotIdx-b.slotIdx));
-
-  const logoSrc = (document.querySelector('.nav .brand-logo')||{}).src || '';
-  const orgName = (document.querySelector('.nav .brand-org')||{}).textContent || '';
 
   const theadHtml = SCHEDULE_DAY_ORDER.map(d=>{
     const cls = d==='日' ? 'sun' : d==='土' ? 'sat' : '';
@@ -1913,7 +1909,6 @@ function buildPatientScheduleHtml(name, bookings){
       ? entries.map(e=>`
           <div class="visit-entry">
             <div class="visit-time">${e.time}〜</div>
-            <div class="visit-staff">${e.staff}</div>
             <div class="visit-role">${e.role}</div>
             ${e.pattern && e.pattern!=='毎週' ? `<div class="visit-pattern">${e.pattern}</div>` : ''}
             ${e.timeNote ? `<div class="visit-pattern">${e.timeNote}</div>` : ''}
@@ -1926,43 +1921,33 @@ function buildPatientScheduleHtml(name, bookings){
 <html lang="ja"><head><meta charset="UTF-8">
 <title>週間訪問予定表　${name}様</title>
 <style>
-  @page{ size:A4 landscape; margin:12mm; }
+  @page{ size:A4 portrait; margin:14mm; }
   *{ box-sizing:border-box; }
-  body{ font-family:"Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",sans-serif; margin:0; padding:22px; color:#1a1a1a; }
-  .header{ display:flex; align-items:center; gap:16px; border-bottom:4px solid #1F6F5C; padding-bottom:14px; margin-bottom:18px; }
-  .header img{ width:56px; height:56px; }
-  .header .org{ font-size:16px; font-weight:700; color:#1F6F5C; }
-  .header .title{ font-size:30px; font-weight:900; color:#1a1a1a; margin-top:2px; }
+  body{ font-family:"Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",sans-serif; margin:0; padding:22px; color:#1a1a1a; writing-mode:horizontal-tb; }
+  .title{ font-size:30px; font-weight:900; color:#1a1a1a; border-bottom:4px solid #1F6F5C; padding-bottom:14px; margin-bottom:18px; }
   .patient-row{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:16px; flex-wrap:wrap; gap:8px; }
   .patient-name{ font-size:28px; font-weight:800; }
   .patient-name .suffix{ font-size:18px; font-weight:600; margin-left:6px; }
   .meta-date{ font-size:15px; color:#555; }
   table.week{ width:100%; border-collapse:collapse; table-layout:fixed; }
-  table.week th, table.week td{ border:2px solid #333; padding:8px 6px; vertical-align:top; }
-  table.week th{ font-size:22px; font-weight:800; text-align:center; background:#EAF4F1; color:#1F6F5C; padding:12px 4px; }
+  table.week th, table.week td{ border:2px solid #333; padding:6px 4px; vertical-align:top; }
+  table.week th{ font-size:20px; font-weight:800; text-align:center; background:#EAF4F1; color:#1F6F5C; padding:10px 2px; }
   table.week th.sun{ color:#C0392B; background:#FBEAEA; }
   table.week th.sat{ color:#1D5DA6; background:#EAF2FB; }
-  table.week td{ height:230px; }
+  table.week td{ height:200px; }
   table.week td.sun{ background:#FDF4F4; }
   table.week td.sat{ background:#F4F8FD; }
-  .visit-entry{ border-radius:10px; background:#F4FBF9; border:1px solid #BFE3D9; padding:8px 6px; margin-bottom:8px; text-align:center; }
-  .visit-time{ font-size:23px; font-weight:900; color:#1F6F5C; line-height:1.25; }
-  .visit-staff{ font-size:17px; font-weight:700; margin-top:2px; }
-  .visit-role{ font-size:13px; color:#555; margin-top:1px; }
-  .visit-pattern{ font-size:12px; color:#8A6D00; margin-top:2px; }
-  .no-visit{ color:#bbb; font-size:20px; text-align:center; padding-top:60px; }
+  .visit-entry{ border-radius:10px; background:#F4FBF9; border:1px solid #BFE3D9; padding:6px 4px; margin-bottom:8px; text-align:center; }
+  .visit-time{ font-size:19px; font-weight:900; color:#1F6F5C; line-height:1.25; }
+  .visit-role{ font-size:13px; color:#555; margin-top:2px; }
+  .visit-pattern{ font-size:11px; color:#8A6D00; margin-top:2px; }
+  .no-visit{ color:#bbb; font-size:18px; text-align:center; padding-top:50px; }
   .footer{ margin-top:18px; font-size:12px; color:#777; text-align:right; }
   @media print{ body{ padding:0; } }
 </style>
 </head>
 <body>
-  <div class="header">
-    ${logoSrc ? `<img src="${logoSrc}" alt="">` : ''}
-    <div>
-      <div class="org">${orgName}</div>
-      <div class="title">週間訪問予定表</div>
-    </div>
-  </div>
+  <div class="title">週間訪問予定表</div>
   <div class="patient-row">
     <div class="patient-name">${name}<span class="suffix">様</span></div>
     <div class="meta-date">作成日：${todayStr()}</div>
@@ -1971,7 +1956,7 @@ function buildPatientScheduleHtml(name, bookings){
     <tr>${theadHtml}</tr>
     <tr>${tbodyHtml}</tr>
   </table>
-  <div class="footer">土曜・日曜は通常休診日です。予定の変更については担当スタッフまでお問い合わせください。</div>
+  <div class="footer">土曜・日曜は通常休診日です。予定の変更についてはお問い合わせください。</div>
 </body></html>`;
 }
 function printPatientSchedule(name){
