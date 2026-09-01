@@ -1883,21 +1883,6 @@ function groupBookingsByPatient(rows){
 // 月・火・水・木・金・土・日の並びで、曜日ごとに1行の縦積みレイアウト
 // （ユーザーが提示した手書き用の週間スケジュール表を参考にしたデザイン）。
 const SCHEDULE_DAY_ORDER = ['月','火','水','木','金','土','日'];
-function scheduleWeekDates(){
-  // 今週（月曜始まり）の月/日を曜日ごとに求める
-  const today = new Date();
-  const dow = today.getDay(); // 0=日,1=月,...6=土
-  const diffToMonday = dow===0 ? -6 : 1-dow;
-  const monday = new Date(today);
-  monday.setDate(today.getDate() + diffToMonday);
-  const dates = {};
-  SCHEDULE_DAY_ORDER.forEach((d,i)=>{
-    const dt = new Date(monday);
-    dt.setDate(monday.getDate()+i);
-    dates[d] = `${dt.getMonth()+1}/${dt.getDate()}`;
-  });
-  return dates;
-}
 function buildPatientScheduleHtml(name, bookings){
   const byDay = {};
   SCHEDULE_DAY_ORDER.forEach(d=>{ byDay[d] = []; });
@@ -1912,7 +1897,6 @@ function buildPatientScheduleHtml(name, bookings){
     });
   });
   Object.keys(byDay).forEach(d=> byDay[d].sort((a,b)=>a.slotIdx-b.slotIdx));
-  const weekDates = scheduleWeekDates();
 
   const rowsHtml = SCHEDULE_DAY_ORDER.map(d=>{
     const cls = d==='日' ? 'sun' : d==='土' ? 'sat' : '';
@@ -1929,7 +1913,6 @@ function buildPatientScheduleHtml(name, bookings){
     return `
       <tr>
         <td class="day-cell ${cls}">${d}</td>
-        <td class="date-cell ${cls}">${weekDates[d]}</td>
         <td class="content-cell">${content}</td>
       </tr>`;
   }).join('');
@@ -1941,26 +1924,24 @@ function buildPatientScheduleHtml(name, bookings){
   @page{ size:A4 portrait; margin:18mm; }
   *{ box-sizing:border-box; }
   body{ font-family:"Hiragino Mincho ProN","Yu Mincho","Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",serif; margin:0; padding:10mm; color:#1a1a1a; writing-mode:horizontal-tb; }
-  .title{ font-size:30px; font-weight:700; margin-bottom:10mm; }
+  .title{ font-size:34px; font-weight:700; margin-bottom:10mm; }
   .patient-row{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6mm; font-family:"Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",sans-serif; }
-  .patient-name{ font-size:20px; font-weight:700; }
-  .patient-name .suffix{ font-size:15px; font-weight:600; margin-left:6px; }
-  .meta-date{ font-size:13px; color:#555; }
+  .patient-name{ font-size:24px; font-weight:700; }
+  .patient-name .suffix{ font-size:18px; font-weight:600; margin-left:6px; }
+  .meta-date{ font-size:15px; color:#555; }
   table.week{ width:100%; border-collapse:collapse; table-layout:fixed; font-family:"Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",sans-serif; }
-  table.week th, table.week td{ border:1.6px solid #333; padding:6px 10px; vertical-align:middle; }
-  table.week th{ font-size:16px; font-weight:700; text-align:center; background:#fff; }
-  table.week col.col-day{ width:14%; }
-  table.week col.col-date{ width:14%; }
-  table.week col.col-content{ width:72%; }
-  td.day-cell{ font-size:22px; font-weight:700; text-align:center; }
-  td.date-cell{ font-size:17px; text-align:center; color:#444; }
-  td.content-cell{ font-size:16px; text-align:left; }
+  table.week th, table.week td{ border:1.6px solid #333; padding:8px 12px; vertical-align:middle; }
+  table.week th{ font-size:20px; font-weight:700; text-align:center; background:#fff; }
+  table.week col.col-day{ width:18%; }
+  table.week col.col-content{ width:82%; }
+  td.day-cell{ font-size:28px; font-weight:700; text-align:center; }
+  td.content-cell{ font-size:24px; text-align:left; }
   tr{ height:30mm; }
   .sat{ background:#CFE3F5; }
   .sun{ background:#F7D9C6; }
   .visit-line{ line-height:1.7; }
-  .visit-line + .visit-line{ margin-top:6px; padding-top:6px; border-top:1px dashed #bbb; }
-  .footer{ margin-top:8mm; font-size:12px; color:#777; text-align:right; font-family:"Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",sans-serif; }
+  .visit-line + .visit-line{ margin-top:8px; padding-top:8px; border-top:1px dashed #bbb; }
+  .footer{ margin-top:8mm; font-size:14px; color:#777; text-align:right; font-family:"Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",sans-serif; }
   @media print{ body{ padding:0; } }
 </style>
 </head>
@@ -1971,8 +1952,8 @@ function buildPatientScheduleHtml(name, bookings){
     <div class="meta-date">作成日：${todayStr()}</div>
   </div>
   <table class="week">
-    <colgroup><col class="col-day"><col class="col-date"><col class="col-content"></colgroup>
-    <tr><th>曜日</th><th>日付</th><th>内容</th></tr>
+    <colgroup><col class="col-day"><col class="col-content"></colgroup>
+    <tr><th>曜日</th><th>訪問時間</th></tr>
     ${rowsHtml}
   </table>
   <div class="footer">土曜・日曜は通常休診日です。予定の変更についてはお問い合わせください。</div>
