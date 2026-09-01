@@ -1876,6 +1876,118 @@ function groupBookingsByPatient(rows){
   });
   return entries;
 }
+
+// 利用者様（ご家族）にお渡しする「週間訪問予定表」。専用のPDFライブラリは使わず、
+// 既存の🖨PDF出力ボタンと同じ考え方で、別ウィンドウに1枚の印刷用HTMLを組み立てて
+// window.print()を呼ぶ（ブラウザの「PDFとして保存」で実質PDF化できる）。
+// 日・月・火・水・木・金・土の並び（週の始まりを日曜とする一般的な予定表の並び）で、
+// 文字を大きく・コントラストをはっきりさせ、ご高齢の利用者様・ご家族にも見やすいデザインにしている。
+const SCHEDULE_DAY_ORDER = ['日','月','火','水','木','金','土'];
+function buildPatientScheduleHtml(name, bookings){
+  const byDay = {};
+  SCHEDULE_DAY_ORDER.forEach(d=>{ byDay[d] = []; });
+  bookings.forEach(b=>{
+    const role = staffInfo(b.staff).role;
+    byDay[b.day].push({
+      slotIdx: b.slotIdx,
+      time: slotLabelsFor(role)[b.slotIdx] || '',
+      staff: b.staff,
+      role: roleLabel(b.staff),
+      pattern: patternLabelOf(b),
+      timeNote: b.timeNote || ''
+    });
+  });
+  Object.keys(byDay).forEach(d=> byDay[d].sort((a,b)=>a.slotIdx-b.slotIdx));
+
+  const logoSrc = (document.querySelector('.nav .brand-logo')||{}).src || '';
+  const orgName = (document.querySelector('.nav .brand-org')||{}).textContent || '';
+
+  const theadHtml = SCHEDULE_DAY_ORDER.map(d=>{
+    const cls = d==='日' ? 'sun' : d==='土' ? 'sat' : '';
+    return `<th class="${cls}">${d}</th>`;
+  }).join('');
+  const tbodyHtml = SCHEDULE_DAY_ORDER.map(d=>{
+    const cls = d==='日' ? 'sun' : d==='土' ? 'sat' : '';
+    const entries = byDay[d];
+    const inner = entries.length
+      ? entries.map(e=>`
+          <div class="visit-entry">
+            <div class="visit-time">${e.time}〜</div>
+            <div class="visit-staff">${e.staff}</div>
+            <div class="visit-role">${e.role}</div>
+            ${e.pattern && e.pattern!=='毎週' ? `<div class="visit-pattern">${e.pattern}</div>` : ''}
+            ${e.timeNote ? `<div class="visit-pattern">${e.timeNote}</div>` : ''}
+          </div>`).join('')
+      : `<div class="no-visit">－</div>`;
+    return `<td class="${cls}">${inner}</td>`;
+  }).join('');
+
+  return `<!DOCTYPE html>
+<html lang="ja"><head><meta charset="UTF-8">
+<title>週間訪問予定表　${name}様</title>
+<style>
+  @page{ size:A4 landscape; margin:12mm; }
+  *{ box-sizing:border-box; }
+  body{ font-family:"Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",sans-serif; margin:0; padding:22px; color:#1a1a1a; }
+  .header{ display:flex; align-items:center; gap:16px; border-bottom:4px solid #1F6F5C; padding-bottom:14px; margin-bottom:18px; }
+  .header img{ width:56px; height:56px; }
+  .header .org{ font-size:16px; font-weight:700; color:#1F6F5C; }
+  .header .title{ font-size:30px; font-weight:900; color:#1a1a1a; margin-top:2px; }
+  .patient-row{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:16px; flex-wrap:wrap; gap:8px; }
+  .patient-name{ font-size:28px; font-weight:800; }
+  .patient-name .suffix{ font-size:18px; font-weight:600; margin-left:6px; }
+  .meta-date{ font-size:15px; color:#555; }
+  table.week{ width:100%; border-collapse:collapse; table-layout:fixed; }
+  table.week th, table.week td{ border:2px solid #333; padding:8px 6px; vertical-align:top; }
+  table.week th{ font-size:22px; font-weight:800; text-align:center; background:#EAF4F1; color:#1F6F5C; padding:12px 4px; }
+  table.week th.sun{ color:#C0392B; background:#FBEAEA; }
+  table.week th.sat{ color:#1D5DA6; background:#EAF2FB; }
+  table.week td{ height:230px; }
+  table.week td.sun{ background:#FDF4F4; }
+  table.week td.sat{ background:#F4F8FD; }
+  .visit-entry{ border-radius:10px; background:#F4FBF9; border:1px solid #BFE3D9; padding:8px 6px; margin-bottom:8px; text-align:center; }
+  .visit-time{ font-size:23px; font-weight:900; color:#1F6F5C; line-height:1.25; }
+  .visit-staff{ font-size:17px; font-weight:700; margin-top:2px; }
+  .visit-role{ font-size:13px; color:#555; margin-top:1px; }
+  .visit-pattern{ font-size:12px; color:#8A6D00; margin-top:2px; }
+  .no-visit{ color:#bbb; font-size:20px; text-align:center; padding-top:60px; }
+  .footer{ margin-top:18px; font-size:12px; color:#777; text-align:right; }
+  @media print{ body{ padding:0; } }
+</style>
+</head>
+<body>
+  <div class="header">
+    ${logoSrc ? `<img src="${logoSrc}" alt="">` : ''}
+    <div>
+      <div class="org">${orgName}</div>
+      <div class="title">週間訪問予定表</div>
+    </div>
+  </div>
+  <div class="patient-row">
+    <div class="patient-name">${name}<span class="suffix">様</span></div>
+    <div class="meta-date">作成日：${todayStr()}</div>
+  </div>
+  <table class="week">
+    <tr>${theadHtml}</tr>
+    <tr>${tbodyHtml}</tr>
+  </table>
+  <div class="footer">土曜・日曜は通常休診日です。予定の変更については担当スタッフまでお問い合わせください。</div>
+</body></html>`;
+}
+function printPatientSchedule(name){
+  const bookings = findExistingBookingsByName(name);
+  if(!bookings.length){ alert('現在ご利用中の予約がないため、週間予定表を発行できません。'); return; }
+  const html = buildPatientScheduleHtml(name, bookings);
+  const win = window.open('', '_blank', 'width=1000,height=750');
+  if(!win){ alert('ポップアップがブロックされました。ブラウザの設定でこのサイトのポップアップを許可してください。'); return; }
+  win.document.open();
+  win.document.write(html);
+  win.document.close();
+  // document.write()/close()の時点で'load'は既に発火済みのことがあり、後からのaddEventListener('load',...)
+  // では間に合わない（印刷ダイアログが開かないまま終わる）ため、ここで直接呼ぶ
+  win.focus();
+  win.print();
+}
 function buildPatientCard(bookings){
   bookings = bookings.slice().sort((a,b)=> DAYS.indexOf(a.day)-DAYS.indexOf(b.day) || a.slotIdx-b.slotIdx);
   const first = bookings[0];
@@ -1887,8 +1999,12 @@ function buildPatientCard(bookings){
   const endAllNote = bookings.length>1
     ? `<div style="font-size:11px;color:var(--ink-soft);">すべての訪問（${bookings.length}件）を終了します</div>`
     : '';
-  const addVisitBtnHtml = (first.name && first.name.trim())
+  const hasName = first.name && first.name.trim();
+  const addVisitBtnHtml = hasName
     ? `<button type="button" class="btn btn-ghost btn-small add-visit-btn">＋ 訪問を追加する</button>`
+    : '';
+  const printScheduleBtnHtml = hasName
+    ? `<button type="button" class="btn btn-ghost btn-small print-schedule-btn">📄 週間予定表を発行</button>`
     : '';
 
   const card = document.createElement('div');
@@ -1900,7 +2016,10 @@ function buildPatientCard(bookings){
         <div class="meta">${metaTxt}</div>
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
-        ${addVisitBtnHtml}
+        <div class="no-print" style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+          ${addVisitBtnHtml}
+          ${printScheduleBtnHtml}
+        </div>
         <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--ink-soft);cursor:pointer;white-space:nowrap;">
           <input type="checkbox" class="hospitalized-check-group" ${allHospitalized?'checked':''}> 入院中（すべての枠に適用）
         </label>
@@ -1918,6 +2037,8 @@ function buildPatientCard(bookings){
   `;
   const addVisitBtn = card.querySelector('.add-visit-btn');
   if(addVisitBtn) addVisitBtn.addEventListener('click', ()=>goToIntakeToAddVisit(first.name));
+  const printScheduleBtn = card.querySelector('.print-schedule-btn');
+  if(printScheduleBtn) printScheduleBtn.addEventListener('click', ()=>printPatientSchedule(first.name));
   const slotsWrap = card.querySelector('.patient-slots');
   bookings.forEach(b=>{
     const roleTxt = roleLabel(b.staff);
