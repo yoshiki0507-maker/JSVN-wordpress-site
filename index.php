@@ -1658,38 +1658,86 @@ function suggestionPool(role){
 }
 
 function findWeeklySuggestions(freq, preferredDays, preferredSlots, role, includeWeekend, weekendException, preferredStaff){
-  const dayOrder = orderedDays(preferredDays, includeWeekend || weekendException);
-  const slotOrder = orderedSlots(preferredSlots, role);
+  const fullDayOrder = orderedDays(preferredDays, includeWeekend || weekendException);
+  const fullSlotOrder = orderedSlots(preferredSlots, role);
   // 担当スタッフが指定されている場合は、そのスタッフだけを候補にする
   // （空き枠数の計算調整による除外よりも、明示的な指定を優先する）
   const pool = preferredStaff ? [preferredStaff] : suggestionPool(role);
   // 「特例」がONのときは、土日に限り勤務体系（⑨設定のON/OFF）を無視して候補に含める
   const dayAllowed = (staff,d)=> worksOn(staff,d) || (weekendException && isWeekendDay(d));
   const slotAllowed = (staff,d,i)=> worksOnSlot(staff,d,i) || (weekendException && isWeekendDay(d));
+
+  // 曜日・時間帯は基本的に厳守する。ご希望の曜日数が訪問頻度以上ある場合はその曜日だけに、
+  // ご希望の時間帯が指定されている場合はその時間帯だけに絞り込んだ「厳守探索」を先に行い、
+  // それでも3件に満たない場合だけ、他の曜日・時間帯も含めた「緩和探索」（従来の挙動）で
+  // 不足分を補う。1人のスタッフで希望日数を埋められない時は、同じスタッフに固執して曜日を
+  // ずらすより、担当スタッフを曜日ごとに変える（mix）方を優先して探す。
+  const strictDays = (preferredDays && preferredDays.length>=freq)
+    ? DAYS.filter(d=>preferredDays.includes(d))
+    : null;
+  const strictSlots = (preferredSlots && preferredSlots.length)
+    ? preferredSlots.filter(i=>i<slotCount(role)).sort((a,b)=>a-b)
+    : null;
+
   const results = [];
-  let tier1Map = new Map();
-  pool.forEach(staff=>{
-    const workdays = dayOrder.filter(d=>dayAllowed(staff,d));
-    if(workdays.length < freq) return;
-    for(const slotIdx of slotOrder){
-      const freeDays = workdays.filter(d=>slotAllowed(staff,d,slotIdx) && isFullyFree(staff,d,slotIdx));
-      if(freeDays.length >= freq){
-        tier1Map.set(staff, {tier:1, staff, slotIdx, days: freeDays.slice(0,freq), load: totalLoad(staff)});
+  const seen = new Set();
+  const keyOf = (r)=> r.tier===1
+    ? `1:${r.staff}:${r.slotIdx}:${r.days.slice().sort().join(',')}`
+    : `${r.tier}:${r.picks.map(p=>`${p.staff||r.staff}${p.day}${p.slot}`).sort().join(',')}`;
+  const addUnique = (r)=>{
+    const k = keyOf(r);
+    if(seen.has(k)) return false;
+    seen.add(k);
+    results.push(r);
+    return true;
+  };
+
+  function runPass(days, slots){
+    if(results.length>=3) return;
+    let tier1Map = new Map();
+    pool.forEach(staff=>{
+      const workdays = days.filter(d=>dayAllowed(staff,d));
+      if(workdays.length < freq) return;
+      for(const slotIdx of slots){
+        const freeDays = workdays.filter(d=>slotAllowed(staff,d,slotIdx) && isFullyFree(staff,d,slotIdx));
+        if(freeDays.length >= freq){
+          tier1Map.set(staff, {tier:1, staff, slotIdx, days: freeDays.slice(0,freq), load: totalLoad(staff)});
+          break;
+        }
+      }
+    });
+    const tier1 = Array.from(tier1Map.values()).sort((a,b)=>a.load-b.load);
+    for(const r of tier1){ if(results.length>=3) break; addUnique(r); }
+    if(results.length>=3) return;
+
+    // 第2候補（mix）：ご希望の時間帯は変えず、1人のスタッフでは埋められない場合に、
+    // 曜日ごとに担当スタッフが変わってもよいものとして探す
+    const loadSortedPool = pool.slice().sort((a,b)=>totalLoad(a)-totalLoad(b));
+    for(const slotIdx of slots){
+      const picks = [];
+      for(const d of days){
+        if(picks.length >= freq) break;
+        const staff = loadSortedPool.find(s=>dayAllowed(s,d) && slotAllowed(s,d,slotIdx) && isFullyFree(s,d,slotIdx));
+        if(staff) picks.push({day:d, slot:slotIdx, staff});
+      }
+      if(picks.length >= freq){
+        // 全日程を1人でまかなえてしまう場合は第1候補と重複するため、実際に2名以上に
+        // 分かれる場合だけ「mix」候補として採用する
+        const distinctStaff = new Set(picks.slice(0,freq).map(p=>p.staff));
+        if(distinctStaff.size >= 2) addUnique({tier:'mix', picks: picks.slice(0,freq), load:0});
         break;
       }
     }
-  });
-  let tier1 = Array.from(tier1Map.values()).sort((a,b)=>a.load-b.load);
-  results.push(...tier1.slice(0,3));
-  if(results.length < 3){
+    if(results.length>=3) return;
+
     let tier2Map = new Map();
     pool.forEach(staff=>{
       if(tier1Map.has(staff)) return;
-      const workdays = dayOrder.filter(d=>dayAllowed(staff,d));
+      const workdays = days.filter(d=>dayAllowed(staff,d));
       if(workdays.length < freq) return;
       const picks = [];
       workdays.forEach(d=>{
-        for(const s of slotOrder){
+        for(const s of slots){
           if(slotAllowed(staff,d,s) && isFullyFree(staff,d,s)){ picks.push({day:d, slot:s}); break; }
         }
       });
@@ -1697,22 +1745,32 @@ function findWeeklySuggestions(freq, preferredDays, preferredSlots, role, includ
         tier2Map.set(staff, {tier:2, staff, picks: picks.slice(0,freq), load: totalLoad(staff)});
       }
     });
-    let tier2 = Array.from(tier2Map.values()).sort((a,b)=>a.load-b.load);
-    results.push(...tier2.slice(0, 3-results.length));
+    const tier2 = Array.from(tier2Map.values()).sort((a,b)=>a.load-b.load);
+    for(const r of tier2){ if(results.length>=3) break; addUnique(r); }
   }
+
+  if(strictDays || strictSlots){
+    runPass(strictDays || fullDayOrder, strictSlots || fullSlotOrder);
+  }
+  if(results.length < 3){
+    runPass(fullDayOrder, fullSlotOrder);
+  }
+  // 代替案（複数の担当者に分かれ、曜日ごとの時間帯もバラバラになりうる案）はあくまで最終手段。
+  // 担当スタッフ指定など候補プールが1名しかいない場合はtier1/2/mixと実質同じ内容の案しか
+  // 作れず紛らわしいだけなので、他に候補が1件も無いときだけ表示する
   if(results.length < 1){
     const picks = [];
-    for(const d of dayOrder){
+    for(const d of fullDayOrder){
       if(picks.length >= freq) break;
       for(const staff of pool){
         if(!dayAllowed(staff,d)) continue;
         let found = -1;
-        for(const s of slotOrder){ if(slotAllowed(staff,d,s) && isFullyFree(staff,d,s)){ found = s; break; } }
+        for(const s of fullSlotOrder){ if(slotAllowed(staff,d,s) && isFullyFree(staff,d,s)){ found = s; break; } }
         if(found>=0){ picks.push({day:d, slot:found, staff}); break; }
       }
     }
     if(picks.length >= freq){
-      results.push({tier:3, picks: picks.slice(0,freq), load:0});
+      addUnique({tier:3, picks: picks.slice(0,freq), load:0});
     }
   }
   return results.slice(0,3);
@@ -1798,11 +1856,21 @@ function labelSuggestion(s, preferredDays, role){
       sub: `担当：${s.staff}` + (note?`　${note}`:'')
     };
   }
+  if(s.tier==='mix'){
+    const sorted = s.picks.slice().sort((a,b)=>DAYS.indexOf(a.day)-DAYS.indexOf(b.day));
+    const txt = sorted.map(p=>`${p.day}${slotLabels[p.slot]}〜(${p.staff})`).join('・');
+    const note = extraDaysNote(sorted.map(p=>p.day), preferredDays);
+    return {
+      tag:'第二候補（ご希望の時間帯を優先・担当は曜日ごとに異なります）',
+      text: txt,
+      sub:'同じ時間帯を保ったまま、曜日ごとに担当を分けた案です' + (note?`　${note}`:'')
+    };
+  }
   if(s.tier===2){
     const sorted = s.picks.slice().sort((a,b)=>DAYS.indexOf(a.day)-DAYS.indexOf(b.day));
     const txt = sorted.map(p=>`${p.day}${slotLabels[p.slot]}〜`).join('・');
     const note = extraDaysNote(sorted.map(p=>p.day), preferredDays);
-    return { tag:'第二候補（同じ担当・時間は日によって異なる）', text: txt, sub:`担当：${s.staff}` + (note?`　${note}`:'') };
+    return { tag:'第三候補（同じ担当・時間は日によって異なる）', text: txt, sub:`担当：${s.staff}` + (note?`　${note}`:'') };
   }
   const sorted = s.picks.slice().sort((a,b)=>DAYS.indexOf(a.day)-DAYS.indexOf(b.day));
   const txt = sorted.map(p=>`${p.day}${slotLabels[p.slot]}〜(${p.staff})`).join('・');
@@ -2030,7 +2098,7 @@ document.getElementById('intakeForm').addEventListener('submit', (e)=>{
     sugg.forEach(s=>{
       const info = labelSuggestion(s, days, role);
       const card = document.createElement('div');
-      card.className = 'sugg-card' + (s.tier===2||s.matched?' tier2':s.tier===3?' tier3':'');
+      card.className = 'sugg-card' + (s.tier==='mix'||s.tier===2||s.matched?' tier2':s.tier===3?' tier3':'');
       card.dataset.role = role;
       card.innerHTML = `
         <div>
