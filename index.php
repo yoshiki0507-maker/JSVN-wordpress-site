@@ -77,7 +77,7 @@ require __DIR__ . '/lib/auth.php';
   .summary-card .unit{ font-size:10.5px; color:var(--ink-soft); }
 
   .ov-body{ display:flex; gap:20px; align-items:flex-start; }
-  .ov-main{ flex:0 0 auto; max-width:620px; }
+  .ov-main{ flex:0 0 auto; max-width:760px; }
   .ov-alert{
     flex:1; min-width:260px; background:var(--surface); border:1px solid var(--line);
     border-radius:var(--radius); padding:14px; box-sizing:border-box;
@@ -1148,7 +1148,9 @@ function computeSlotAlerts(role, threshold){
       let free = 0;
       names.forEach(staff=>{
         if(!worksOnSlot(staff,day,i)) return;
-        if(slotVisualState(staff,day,i)!=='busy') free++;
+        // 隔週・月次ローテーションで一部の週だけ空いている枠（partial）や、入院中の予約は
+        // 受け入れ枠アラートには数えない（完全に空いている枠だけを新規受け入れ可能とみなす）
+        if(occupiedWeeksAtForCount(staff,day,i).size===0) free++;
       });
       const adjusted = Math.max(0, free - buffer);
       if(adjusted >= threshold){
