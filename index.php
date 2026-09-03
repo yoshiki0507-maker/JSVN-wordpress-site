@@ -73,6 +73,7 @@ require __DIR__ . '/lib/auth.php';
   }
   .summary-card .day{ font-size:12px; color:var(--ink-soft); }
   .summary-card .num{ font-family:var(--font-mono); font-size:22px; font-weight:700; color:var(--teal-deep); }
+  .summary-card .num .num-sub{ font-size:13px; font-weight:600; color:var(--ink-soft); margin-left:2px; }
   .summary-card .unit{ font-size:10.5px; color:var(--ink-soft); }
 
   .ov-body{ display:flex; gap:20px; align-items:flex-start; }
@@ -817,6 +818,14 @@ function occupiedWeeksAt(staff, day, slotIdx){
   bookingsAt(staff,day,slotIdx).forEach(b=> b.weeks.forEach(w=>weeks.add(w)));
   return weeks;
 }
+// ①②の「空き余地」集計専用。入院中の予約は今すぐ訪問が不要なため、その週は
+// 占有していない（＝空き）ものとして扱う。新規提案・重複チェック（occupiedWeeksAt／
+// isRotationFree）は退院後にすぐ元の枠へ戻れるよう、引き続き入院中も占有扱いのまま変えていない。
+function occupiedWeeksAtForCount(staff, day, slotIdx){
+  const weeks = new Set();
+  bookingsAt(staff,day,slotIdx).forEach(b=>{ if(!b.hospitalized) b.weeks.forEach(w=>weeks.add(w)); });
+  return weeks;
+}
 function isFullyFree(staff, day, slotIdx){
   return bookingsAt(staff,day,slotIdx).length === 0;
 }
@@ -1175,21 +1184,29 @@ function renderOverview(role){
   let weekTotalFree = 0;
   let anyWeekday = false;
   WEEKDAYS.forEach(day=>{
-    let free = 0, total = 0;
+    let fullyFree = 0, partial = 0, total = 0;
     names.forEach(staff=>{
       for(let i=0;i<nSlots;i++){
         if(!worksOnSlot(staff, day, i)) continue;
         total++;
-        if(slotVisualState(staff,day,i)!=='busy') free++;
+        // 入院中の予約は占有扱いにしない（occupiedWeeksAtForCount）ため、入院中のみの枠は
+        // ここでは「空き」（fullyFree）としてカウントされる
+        const used = occupiedWeeksAtForCount(staff, day, i);
+        if(used.size===0) fullyFree++;
+        else if(used.size<WEEKS.length) partial++;
       }
     });
     if(total===0) return;
     anyWeekday = true;
-    const adjustedFree = Math.max(0, free - buffer*nSlots);
+    const adjustedFree = Math.max(0, fullyFree - buffer*nSlots);
+    const adjustedTotal = Math.max(adjustedFree, fullyFree + partial - buffer*nSlots);
     weekTotalFree += adjustedFree;
     const card = document.createElement('div');
     card.className = 'summary-card';
-    card.innerHTML = `<div class="day">${day}曜</div><div class="num">${adjustedFree}</div><div class="unit">枠 空き余地</div>`;
+    // 空き枠のみを主表示し、隔週・月次ローテーションによる一部空き枠を含めた合計は
+    // 差がある場合だけ右横に（　）で表示する
+    const totalNote = adjustedTotal>adjustedFree ? `<span class="num-sub">（${adjustedTotal}）</span>` : '';
+    card.innerHTML = `<div class="day">${day}曜</div><div class="num">${adjustedFree}${totalNote}</div><div class="unit">枠 空き余地</div>`;
     summaryRow.appendChild(card);
   });
   const capRow = document.getElementById('capacityRow-'+role);
