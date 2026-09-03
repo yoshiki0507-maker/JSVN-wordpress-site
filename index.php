@@ -97,6 +97,12 @@ require __DIR__ . '/lib/auth.php';
   table.grid th, table.grid td{ padding:9px 10px; border-bottom:1px solid var(--line); font-size:12.5px; text-align:left; vertical-align:middle;}
   table.grid th{ background:var(--teal-tint); color:var(--teal-deep); font-weight:700; font-size:11.5px; }
   table.grid tr:last-child td{ border-bottom:none; }
+  table.grid tr.analysis-row{ cursor:pointer; }
+  table.grid tr.analysis-row:hover td{ background:var(--teal-tint); }
+  table.grid tr.analysis-row .row-chev{ display:inline-block; width:10px; font-size:10px; color:var(--ink-soft); transition:transform .15s ease; }
+  table.grid tr.analysis-row .row-chev::before{ content:'▸'; }
+  table.grid tr.analysis-row.open .row-chev{ transform:rotate(90deg); }
+  table.grid tr.analysis-detail-row td{ background:#FAFBFA; color:var(--ink-soft); font-size:12px; line-height:1.7; padding:10px 14px 10px 30px; }
   .staff-name{ white-space:nowrap; font-weight:600; }
   .legend{ display:flex; gap:16px; margin:10px 0 20px; font-size:11.5px; color:var(--ink-soft); flex-wrap:wrap;}
   .legend span{ display:inline-flex; align-items:center; gap:5px;}
@@ -961,9 +967,11 @@ function csvEscape(text){
   return text;
 }
 function tableToCsvRows(table){
-  return Array.from(table.querySelectorAll('tr')).map(tr=>
-    Array.from(tr.querySelectorAll('th,td')).map(cell=>csvEscape(cell.textContent)).join(',')
-  );
+  return Array.from(table.querySelectorAll('tr'))
+    .filter(tr=>!tr.classList.contains('analysis-detail-row'))
+    .map(tr=>
+      Array.from(tr.querySelectorAll('th,td')).map(cell=>csvEscape(cell.textContent)).join(',')
+    );
 }
 function exportPanelCsv(panelId, filename){
   const panel = document.getElementById(panelId);
@@ -2464,7 +2472,11 @@ function renderReferralAnalysisTable(tableId, field, label){
   });
   const total = patients.size;
   const byGroup = {};
-  patients.forEach(v=>{ byGroup[v] = (byGroup[v]||0)+1; });
+  const namesByGroup = {};
+  patients.forEach((v, name)=>{
+    byGroup[v] = (byGroup[v]||0)+1;
+    (namesByGroup[v] = namesByGroup[v] || []).push(name);
+  });
 
   const thisMonth = monthKey(todayStr());
   const newThisMonth = {};
@@ -2488,9 +2500,19 @@ function renderReferralAnalysisTable(tableId, field, label){
   let html = `<tr><th>${label}</th><th>現在の利用者数</th><th>割合</th><th>今月の新規</th></tr>`;
   groups.forEach(g=>{
     const pct = total ? ((byGroup[g]/total)*100).toFixed(1) : '0.0';
-    html += `<tr><td>${g}</td><td>${byGroup[g]}人</td><td>${pct}%</td><td>${newThisMonth[g]||0}人</td></tr>`;
+    const namesTxt = namesByGroup[g].slice().sort((a,b)=>a.localeCompare(b,'ja')).join('、');
+    html += `<tr class="analysis-row" data-group="${g}"><td><span class="row-chev"></span>${g}</td><td>${byGroup[g]}人</td><td>${pct}%</td><td>${newThisMonth[g]||0}人</td></tr>`;
+    html += `<tr class="analysis-detail-row" hidden><td colspan="4">${namesTxt}</td></tr>`;
   });
   table.innerHTML = html;
+  table.querySelectorAll('tr.analysis-row').forEach(row=>{
+    row.addEventListener('click', ()=>{
+      const detail = row.nextElementSibling;
+      if(!detail || !detail.classList.contains('analysis-detail-row')) return;
+      detail.hidden = !detail.hidden;
+      row.classList.toggle('open', !detail.hidden);
+    });
+  });
 }
 function countDistinctPatients(){
   const names = new Set();
