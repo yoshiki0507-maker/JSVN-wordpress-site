@@ -304,11 +304,12 @@ require __DIR__ . '/lib/auth.php';
     <button data-panel="overview-therapist">② 空き状況〈セラピスト〉</button>
     <button data-panel="intake">③ 新規登録・提案</button>
     <button data-panel="end">④ 利用者検索</button>
-    <button data-panel="inpatient">⑤ 入院管理表</button>
-    <button data-panel="referral">⑥ リスト分析</button>
-    <button data-panel="report">⑦ 月次レポート</button>
-    <button data-panel="staff">⑧ スタッフ管理</button>
-    <button data-panel="settings">⑨ 設定</button>
+    <button data-panel="suspended">⑤ 一時訪問停止</button>
+    <button data-panel="inpatient">⑥ 入院管理表</button>
+    <button data-panel="referral">⑦ リスト分析</button>
+    <button data-panel="report">⑧ 月次レポート</button>
+    <button data-panel="staff">⑨ スタッフ管理</button>
+    <button data-panel="settings">⑩ 設定</button>
     <button type="button" class="nav-logout" id="navLogout">ログアウト</button>
   </nav>
   <main>
@@ -459,9 +460,70 @@ require __DIR__ . '/lib/auth.php';
 
     <section id="panel-end" class="panel">
       <h2 class="page-title">利用者検索</h2>
-      <p class="page-sub">現在ご利用中の利用者様の一覧です。氏名で検索して、内容の確認・曜日や時間帯の変更・入院中の登録・終了処理がこの画面からまとめて行えます。</p>
+      <p class="page-sub">現在ご利用中の利用者様の一覧です。氏名で検索して、内容の確認・曜日や時間帯の変更・入院中の登録・一時訪問停止・終了処理がこの画面からまとめて行えます。</p>
       <input type="text" id="endSearch" placeholder="利用者名で検索…" style="max-width:280px;margin-bottom:14px;padding:8px 10px;border:1px solid var(--line);border-radius:7px;font-size:13.5px;font-family:var(--font-ui);">
       <div id="endList"></div>
+    </section>
+
+    <section id="panel-suspended" class="panel">
+      <h2 class="page-title">一時訪問停止</h2>
+      <p class="page-sub">訪問を一時的にお休みしている利用者様の一覧です。④利用者検索で「一時訪問停止」にチェックすると、訪問予約（曜日・時間帯・訪問頻度）はすべて解除されて枠が空き、氏名・疾患名などの基本情報だけがここに保持されます。再開する際は「再登録する」から③新規登録・提案に情報を引き継いで、あらためて空き枠を探せます。入院中のまま2ヶ月経過した利用者様も自動でここに移ります。</p>
+
+      <details class="settings-group">
+        <summary>＋ 一時訪問停止の利用者情報を新規登録</summary>
+        <div class="settings-group-body">
+          <form id="suspendedNewForm" class="intake">
+            <div>
+              <label for="sus-name">氏名</label>
+              <input type="text" id="sus-name" required>
+            </div>
+            <div>
+              <label for="sus-disease">疾患名</label>
+              <input type="text" id="sus-disease" placeholder="任意">
+            </div>
+            <div>
+              <label for="sus-insurance">主保険</label>
+              <select id="sus-insurance">
+                <option value="">選択してください</option>
+                <option value="医療保険">医療保険</option>
+                <option value="介護保険">介護保険</option>
+                <option value="精神">精神</option>
+                <option value="小児">小児</option>
+              </select>
+            </div>
+            <div>
+              <label for="sus-alone">独居</label>
+              <select id="sus-alone">
+                <option value="不明">不明</option>
+                <option value="はい">はい</option>
+                <option value="いいえ">いいえ</option>
+              </select>
+            </div>
+            <div>
+              <label for="sus-cm">居宅介護支援事業所</label>
+              <select id="sus-cm"></select>
+            </div>
+            <div>
+              <label for="sus-hosp">医療機関（訪問看護指示書発行元）</label>
+              <select id="sus-hosp"></select>
+            </div>
+            <div>
+              <label for="sus-district">地区</label>
+              <select id="sus-district"></select>
+            </div>
+            <div class="full">
+              <label for="sus-note">備考</label>
+              <textarea id="sus-note" rows="2" placeholder="任意（お休みの経緯など）"></textarea>
+            </div>
+            <div class="full">
+              <button type="submit" class="btn btn-primary">登録する</button>
+            </div>
+          </form>
+        </div>
+      </details>
+
+      <input type="text" id="suspendedSearch" placeholder="利用者名で検索…" style="max-width:280px;margin:14px 0;padding:8px 10px;border:1px solid var(--line);border-radius:7px;font-size:13.5px;font-family:var(--font-ui);">
+      <div id="suspendedList"></div>
     </section>
 
     <section id="panel-inpatient" class="panel">
@@ -701,7 +763,11 @@ async function loadState(){
       const json = await res.json();
       if(json.data){
         state = migrateState(JSON.parse(json.data));
+        const autoSuspended = autoTransitionLongHospitalized();
         await saveState();
+        if(autoSuspended.length){
+          showToast(`入院中2ヶ月経過のため、${autoSuspended.join('・')} 様を「一時訪問停止」に移しました`);
+        }
         return;
       }
     }
@@ -727,7 +793,8 @@ function freshState(){
     eventLog: [],
     referralSources: { careManagers: [], hospitals: [] },
     staffBuffer: { '看護師': 0, 'セラピスト': 0 },
-    districts: []
+    districts: [],
+    suspendedPatients: []
   };
 }
 
@@ -759,9 +826,16 @@ function migrateState(loaded){
   if(!loaded.referralSources) loaded.referralSources = { careManagers: [], hospitals: [] };
   if(!loaded.staffBuffer) loaded.staffBuffer = { '看護師': 0, 'セラピスト': 0 };
   if(!loaded.districts) loaded.districts = [];
+  if(!loaded.suspendedPatients) loaded.suspendedPatients = [];
   loaded.staff.forEach(s=>{
     if(!s.qualifications){ s.qualifications = s.jobTitle ? [s.jobTitle] : []; }
     delete s.jobTitle;
+  });
+  // 入院中のまま何ヶ月経過したかを判定するための開始日。この項目が無い旧データ（この機能追加前から
+  // 入院中になっていた予約）には、今日を起点として設定する（実際の入院開始日は分からないため、
+  // 「今日から2ヶ月」で様子を見る安全側の扱いにしている）
+  Object.values(loaded.bookings || {}).forEach(b=>{
+    if(b.hospitalized && !b.hospitalizedSince) b.hospitalizedSince = todayStr();
   });
 
   if(loaded.bookings) return loaded;
@@ -859,6 +933,7 @@ const RENDERERS = {
   staff: renderStaffList,
   intake: ()=>{ populateReferralSelects(); selectedRoles.forEach(role=>updatePatternUIFor(role)); },
   end: renderEndList,
+  suspended: ()=>{ populateReferralSelects(); renderSuspendedList(); },
   inpatient: renderInpatientList,
   referral: renderReferralAnalysis,
   report: renderReport,
@@ -868,6 +943,7 @@ function switchPanel(name){
   document.querySelectorAll('.nav button[data-panel]').forEach(b=>b.classList.toggle('active', b.dataset.panel===name));
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.getElementById('panel-'+name).classList.add('active');
+  if(name!=='intake') resumingSuspendedId = null;
   const fn = RENDERERS[name];
   if(fn) fn();
 }
@@ -1546,6 +1622,12 @@ function populateReferralSelects(){
   cm.innerHTML = opts(state.referralSources.careManagers);
   hosp.innerHTML = opts(state.referralSources.hospitals);
   district.innerHTML = opts(state.districts);
+  const susCm = document.getElementById('sus-cm');
+  const susHosp = document.getElementById('sus-hosp');
+  const susDistrict = document.getElementById('sus-district');
+  if(susCm) susCm.innerHTML = opts(state.referralSources.careManagers);
+  if(susHosp) susHosp.innerHTML = opts(state.referralSources.hospitals);
+  if(susDistrict) susDistrict.innerHTML = opts(state.districts);
   selectedRoles.forEach(role=>buildSlotChipsFor(role));
 }
 
@@ -1785,6 +1867,13 @@ async function confirmSuggestion(s, patient, patternValue, role){
   else if(s.tier===1){ s.days.forEach(d=>createBoth(s.staff, d, s.slotIdx, WEEKS.slice())); }
   else if(s.tier===2){ s.picks.forEach(p=>createBoth(s.staff, p.day, p.slot, WEEKS.slice())); }
   else { s.picks.forEach(p=>createBoth(p.staff, p.day, p.slot, WEEKS.slice())); }
+  if(resumingSuspendedId){
+    // 「一時訪問停止」からの再登録の場合、実際に空き枠が確定した時点でその記録を消す
+    // （フォームを開いただけ・確定前に離脱した場合は「一時訪問停止」の記録を残しておく）
+    const idx = state.suspendedPatients.findIndex(s2=>s2.id===resumingSuspendedId && s2.name===patient.name);
+    if(idx>=0) state.suspendedPatients.splice(idx,1);
+    resumingSuspendedId = null;
+  }
   await saveState();
   const companionMsg = patient.companion ? `（${patient.companion.name}様と合わせて2名）` : '';
   showToast(`${patient.name || '利用者様'} を${role}として登録しました${companionMsg}`);
@@ -2108,6 +2197,9 @@ function buildPatientCard(bookings){
           <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--ink-soft);cursor:pointer;white-space:nowrap;">
             <input type="checkbox" class="hospitalized-check-group" ${allHospitalized?'checked':''}> 入院中（すべての枠に適用）
           </label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--ink-soft);cursor:pointer;white-space:nowrap;">
+            <input type="checkbox" class="suspend-check-group"> 一時訪問停止（すべての枠を解除して移す）
+          </label>
           ${endAllNote}
           <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end;">
             <select class="end-reason-select" style="padding:6px 8px;border:1px solid var(--line);border-radius:7px;font-size:12px;font-family:var(--font-ui);">
@@ -2156,6 +2248,11 @@ function buildPatientCard(bookings){
     slotsWrap.appendChild(row);
   });
   card.querySelector('.hospitalized-check-group').addEventListener('change', (e)=>toggleHospitalizedGroup(ids, e.target.checked));
+  card.querySelector('.suspend-check-group').addEventListener('change', async (e)=>{
+    if(!e.target.checked) return;
+    const done = await suspendPatientGroup(ids, first);
+    if(!done) e.target.checked = false;
+  });
   const reasonSel = card.querySelector('.end-reason-select');
   card.querySelector('.end-booking-btn').addEventListener('click', ()=>{
     endAllBookingsForPatient(ids, reasonSel.value);
@@ -2163,7 +2260,12 @@ function buildPatientCard(bookings){
   return card;
 }
 async function toggleHospitalizedGroup(ids, checked){
-  ids.forEach(id=>{ if(state.bookings[id]) state.bookings[id].hospitalized = checked; });
+  ids.forEach(id=>{
+    if(!state.bookings[id]) return;
+    state.bookings[id].hospitalized = checked;
+    // hospitalizedSinceは「入院2ヶ月経過で一時訪問停止へ自動移行」の起点日として使う
+    state.bookings[id].hospitalizedSince = checked ? (state.bookings[id].hospitalizedSince || todayStr()) : null;
+  });
   await saveState();
   showToast(checked ? '入院中に設定しました（①②の該当枠が黒色表示になります）' : '入院中を解除しました');
   renderOverview('看護師'); renderOverview('セラピスト');
@@ -2173,6 +2275,158 @@ async function toggleHospitalizedGroup(ids, checked){
 async function toggleHospitalized(id, checked){
   await toggleHospitalizedGroup([id], checked);
 }
+
+// ---------- 一時訪問停止 ----------
+function monthsLater(dateStr, n){
+  const d = new Date(dateStr+'T00:00:00');
+  d.setMonth(d.getMonth()+n);
+  return d;
+}
+function autoTransitionLongHospitalized(){
+  // 入院中の予約がすべて2ヶ月以上続いている利用者様を「一時訪問停止」へ自動的に移す。
+  // ①②の空き状況・自動提案からは外れ、氏名・疾患名などの基本情報だけがsuspendedPatientsに残る。
+  const today = new Date(todayStr()+'T00:00:00');
+  const byName = {};
+  Object.entries(state.bookings).forEach(([id,b])=>{
+    const name = (b.name||'').trim();
+    if(!name) return; // 名前未入力は同一人物の判定ができないため対象外
+    (byName[name] = byName[name]||[]).push(Object.assign({id}, b));
+  });
+  const movedNames = [];
+  Object.entries(byName).forEach(([name, bookings])=>{
+    if(!bookings.every(b=>b.hospitalized && b.hospitalizedSince)) return;
+    const oldestSince = bookings.map(b=>b.hospitalizedSince).sort()[0];
+    if(today < monthsLater(oldestSince, 2)) return;
+    const first = bookings[0];
+    const previousRoles = Array.from(new Set(bookings.map(b=>staffInfo(b.staff).role)));
+    state.suspendedPatients.push({
+      id: newId(), name: first.name, disease: first.disease, insuranceType: first.insuranceType,
+      alone: first.alone, careManager: first.careManager, hospital: first.hospital,
+      district: first.district, note: first.note, previousRoles,
+      suspendedAt: todayStr(), reason: 'hospitalized_auto'
+    });
+    bookings.forEach(b=>{ delete state.bookings[b.id]; });
+    movedNames.push(name);
+  });
+  return movedNames;
+}
+let resumingSuspendedId = null;
+async function suspendPatientGroup(ids, first){
+  const bookings = ids.map(id=>state.bookings[id]).filter(Boolean);
+  if(!bookings.length) return false;
+  const name = first.name || '（名前未入力）';
+  if(!confirm(`${name} 様の訪問予約（${bookings.length}件）をすべて解除し、「一時訪問停止」に移します。空いた枠は他の利用者様への提案対象になります。よろしいですか？`)) return false;
+  const previousRoles = Array.from(new Set(bookings.map(b=>staffInfo(b.staff).role)));
+  state.suspendedPatients.push({
+    id: newId(), name: first.name, disease: first.disease, insuranceType: first.insuranceType,
+    alone: first.alone, careManager: first.careManager, hospital: first.hospital,
+    district: first.district, note: first.note, previousRoles,
+    suspendedAt: todayStr(), reason: 'manual'
+  });
+  ids.forEach(id=>{ delete state.bookings[id]; });
+  await saveState();
+  showToast(`${name} を「一時訪問停止」に移しました`);
+  renderOverview('看護師'); renderOverview('セラピスト');
+  if(document.getElementById('panel-end').classList.contains('active')) renderEndList();
+  if(document.getElementById('panel-inpatient').classList.contains('active')) renderInpatientList();
+  if(document.getElementById('panel-suspended').classList.contains('active')) renderSuspendedList();
+  return true;
+}
+function resumeSuspendedPatient(id){
+  const sp = state.suspendedPatients.find(s=>s.id===id);
+  if(!sp) return;
+  switchPanel('intake');
+  const roles = (sp.previousRoles||[]).filter(r=>CAREGIVER_ROLES.includes(r));
+  selectedRoles = roles.length ? roles : ['看護師'];
+  buildRoleChips();
+  buildRoleSections();
+  const nameInput = document.getElementById('f-name');
+  nameInput.value = sp.name || '';
+  nameInput.dispatchEvent(new Event('input'));
+  document.getElementById('f-disease').value = sp.disease || '';
+  document.getElementById('f-insurance').value = sp.insuranceType || '';
+  document.getElementById('f-alone').value = sp.alone || '不明';
+  document.getElementById('f-cm').value = sp.careManager || '';
+  document.getElementById('f-hosp').value = sp.hospital || '';
+  document.getElementById('f-district').value = sp.district || '';
+  document.getElementById('f-note').value = sp.note || '';
+  resumingSuspendedId = id;
+  document.getElementById('roleSections').scrollIntoView({behavior:'smooth', block:'start'});
+  showToast(`${sp.name || '利用者様'} 様の情報を引き継ぎました。空き枠を探して登録すると「一時訪問停止」から外れます`);
+}
+async function removeSuspendedPatient(id){
+  const sp = state.suspendedPatients.find(s=>s.id===id);
+  if(!sp) return;
+  if(!confirm(`${sp.name||'（名前未入力）'} 様の一時訪問停止の記録を完全に削除します。よろしいですか？`)) return;
+  state.suspendedPatients = state.suspendedPatients.filter(s=>s.id!==id);
+  await saveState();
+  showToast('一時訪問停止の記録を削除しました');
+  renderSuspendedList();
+}
+function buildSuspendedCard(sp){
+  const card = document.createElement('details');
+  card.className = 'patient-card';
+  const metaTxt = `疾患：${sp.disease||'―'}／独居：${sp.alone||'―'}／居宅：${sp.careManager||'―'}／医療機関：${sp.hospital||'―'}／地区：${sp.district||'―'}`;
+  const reasonTxt = sp.reason==='hospitalized_auto' ? '入院中が2ヶ月続いたため自動的に移行' : '手動で一時訪問停止に設定';
+  card.innerHTML = `
+    <summary>
+      <div class="bname" style="font-size:15px;margin:0;">${sp.name || '（名前未入力）'}</div>
+    </summary>
+    <div class="patient-card-body">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;">
+        <div>
+          <div class="meta">${metaTxt}</div>
+          <div class="meta">一時停止日：${sp.suspendedAt||'―'}（${reasonTxt}）</div>
+          ${sp.note ? `<div class="meta">備考：${sp.note}</div>` : ''}
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+          <button type="button" class="btn btn-primary btn-small resume-btn">🔁 再登録する</button>
+          <button type="button" class="btn btn-danger btn-small remove-suspended-btn">削除</button>
+        </div>
+      </div>
+    </div>
+  `;
+  card.querySelector('.resume-btn').addEventListener('click', ()=>resumeSuspendedPatient(sp.id));
+  card.querySelector('.remove-suspended-btn').addEventListener('click', ()=>removeSuspendedPatient(sp.id));
+  return card;
+}
+function renderSuspendedList(){
+  const wrap = document.getElementById('suspendedList');
+  const searchInput = document.getElementById('suspendedSearch');
+  const kw = (searchInput.value||'').trim();
+  let rows = state.suspendedPatients.slice();
+  if(kw) rows = rows.filter(s=>(s.name||'').includes(kw));
+  if(!rows.length){
+    wrap.innerHTML = `<p class="page-sub">${kw ? '一致する利用者様が見つかりません。' : '現在、一時訪問停止中の利用者様はいません。'}</p>`;
+    return;
+  }
+  wrap.innerHTML = '';
+  rows.forEach(sp=> wrap.appendChild(buildSuspendedCard(sp)));
+}
+document.getElementById('suspendedSearch').addEventListener('input', renderSuspendedList);
+document.getElementById('suspendedNewForm').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const name = document.getElementById('sus-name').value.trim();
+  if(!name){ alert('氏名を入力してください。'); return; }
+  state.suspendedPatients.push({
+    id: newId(), name,
+    disease: document.getElementById('sus-disease').value.trim(),
+    insuranceType: document.getElementById('sus-insurance').value,
+    alone: document.getElementById('sus-alone').value,
+    careManager: document.getElementById('sus-cm').value,
+    hospital: document.getElementById('sus-hosp').value,
+    district: document.getElementById('sus-district').value,
+    note: document.getElementById('sus-note').value.trim(),
+    previousRoles: [],
+    suspendedAt: todayStr(),
+    reason: 'manual'
+  });
+  await saveState();
+  e.target.reset();
+  document.getElementById('sus-alone').value = '不明';
+  showToast(`${name} を「一時訪問停止」に登録しました`);
+  renderSuspendedList();
+});
 function renderEndList(){
   const wrap = document.getElementById('endList');
   const searchInput = document.getElementById('endSearch');
