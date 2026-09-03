@@ -245,6 +245,20 @@ require __DIR__ . '/lib/auth.php';
   .icon-btn:hover{ background:var(--teal-tint); color:var(--teal-deep); }
   .icon-btn.danger:hover{ background:var(--brick-tint); color:var(--brick); }
   .master-row{ display:flex; align-items:center; justify-content:space-between; background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:8px 12px; margin-bottom:6px; font-size:13px; }
+  .settings-group{ border:1px solid var(--line); border-radius:10px; margin-bottom:12px; overflow:hidden; }
+  .settings-group > summary{
+    list-style:none; cursor:pointer; padding:13px 16px; font-size:14px; font-weight:700;
+    color:var(--teal-deep); display:flex; align-items:center; justify-content:space-between; gap:10px;
+    background:var(--surface); user-select:none;
+  }
+  .settings-group > summary::-webkit-details-marker{ display:none; }
+  .settings-group > summary::after{ content:'▾'; font-size:11px; color:var(--ink-soft); flex:0 0 auto; transition:transform .15s ease; }
+  .settings-group[open] > summary::after{ transform:rotate(180deg); }
+  .settings-group > summary:hover{ background:var(--teal-tint); }
+  .settings-group[open] > summary{ border-bottom:1px solid var(--line); }
+  .settings-group-body{ padding:14px 16px 18px; }
+  .settings-group.danger-group > summary{ color:var(--brick); }
+  .settings-group.danger-group > summary:hover{ background:var(--brick-tint); }
   @media (max-width:760px){
     .app{ flex-direction:column; }
     .nav{ width:100%; flex-direction:row; overflow-x:auto; padding:10px 6px; }
@@ -493,63 +507,92 @@ require __DIR__ . '/lib/auth.php';
 
     <section id="panel-settings" class="panel">
       <h2 class="page-title">設定</h2>
-      <p class="page-sub">時間帯の枠構成や、居宅介護支援事業所・医療機関のマスタを編集できます。</p>
+      <p class="page-sub">時間帯の枠構成や、居宅介護支援事業所・医療機関のマスタを編集できます。項目名をクリックすると、その項目の内容が下に開きます。</p>
 
-      <h3 style="font-size:14px;color:var(--teal-deep);margin:8px 0 8px;">空き枠数の計算調整</h3>
-      <p class="page-sub" style="margin-bottom:10px;">出勤予定でも、休み明けや夜勤明けなどで実際には稼働できないスタッフがいます。①②の「空き余地」の数字を計算するとき、看護師・セラピストそれぞれ勤務予定人数から何名分を差し引くか設定できます（0なら差し引きなし）。事業所の実情に合わせて調整してください。</p>
-      <div class="setting-row"><label style="margin:0;flex:0 0 auto;min-width:220px;">看護師：勤務予定から差し引く人数</label><input type="number" id="bufferNurse" min="0" style="max-width:100px;" value="0"></div>
-      <div class="setting-row"><label style="margin:0;flex:0 0 auto;min-width:220px;">セラピスト：勤務予定から差し引く人数</label><input type="number" id="bufferTherapist" min="0" style="max-width:100px;" value="0"></div>
+      <details class="settings-group">
+        <summary>空き枠数の計算調整</summary>
+        <div class="settings-group-body">
+          <p class="page-sub" style="margin-bottom:10px;">出勤予定でも、休み明けや夜勤明けなどで実際には稼働できないスタッフがいます。①②の「空き余地」の数字を計算するとき、看護師・セラピストそれぞれ勤務予定人数から何名分を差し引くか設定できます（0なら差し引きなし）。事業所の実情に合わせて調整してください。</p>
+          <div class="setting-row"><label style="margin:0;flex:0 0 auto;min-width:220px;">看護師：勤務予定から差し引く人数</label><input type="number" id="bufferNurse" min="0" style="max-width:100px;" value="0"></div>
+          <div class="setting-row"><label style="margin:0;flex:0 0 auto;min-width:220px;">セラピスト：勤務予定から差し引く人数</label><input type="number" id="bufferTherapist" min="0" style="max-width:100px;" value="0"></div>
+        </div>
+      </details>
 
-      <h3 style="font-size:14px;color:var(--teal-deep);margin:30px 0 8px;">時間帯（枠）の設定</h3>
-      <p class="page-sub" style="margin-bottom:10px;">看護師とセラピストで別々の時間帯を設定できます。名前の変更・並べ替え・追加・削除ができます。削除は、その枠に現在ご利用中の予定がない場合のみ行えます。</p>
-      <h4 style="font-size:12.5px;color:var(--ink-soft);margin:14px 0 6px;font-weight:700;">看護師の時間帯</h4>
-      <div id="slotSettingsList-看護師"></div>
-      <div style="display:flex;gap:8px;margin-top:10px;">
-        <input type="text" id="newSlotLabel-看護師" placeholder="新しい枠の名前（例：16:00〜）" style="max-width:240px;">
-        <button class="btn btn-ghost btn-small" id="addSlotBtn-看護師">＋ 枠を追加</button>
-      </div>
-      <h4 style="font-size:12.5px;color:var(--ink-soft);margin:20px 0 6px;font-weight:700;">セラピストの時間帯</h4>
-      <div id="slotSettingsList-セラピスト"></div>
-      <div style="display:flex;gap:8px;margin-top:10px;">
-        <input type="text" id="newSlotLabel-セラピスト" placeholder="新しい枠の名前（例：16:00〜）" style="max-width:240px;">
-        <button class="btn btn-ghost btn-small" id="addSlotBtn-セラピスト">＋ 枠を追加</button>
-      </div>
+      <details class="settings-group">
+        <summary>時間帯（枠）の設定</summary>
+        <div class="settings-group-body">
+          <p class="page-sub" style="margin-bottom:10px;">看護師とセラピストで別々の時間帯を設定できます。名前の変更・並べ替え・追加・削除ができます。削除は、その枠に現在ご利用中の予定がない場合のみ行えます。</p>
+          <h4 style="font-size:12.5px;color:var(--ink-soft);margin:14px 0 6px;font-weight:700;">看護師の時間帯</h4>
+          <div id="slotSettingsList-看護師"></div>
+          <div style="display:flex;gap:8px;margin-top:10px;">
+            <input type="text" id="newSlotLabel-看護師" placeholder="新しい枠の名前（例：16:00〜）" style="max-width:240px;">
+            <button class="btn btn-ghost btn-small" id="addSlotBtn-看護師">＋ 枠を追加</button>
+          </div>
+          <h4 style="font-size:12.5px;color:var(--ink-soft);margin:20px 0 6px;font-weight:700;">セラピストの時間帯</h4>
+          <div id="slotSettingsList-セラピスト"></div>
+          <div style="display:flex;gap:8px;margin-top:10px;">
+            <input type="text" id="newSlotLabel-セラピスト" placeholder="新しい枠の名前（例：16:00〜）" style="max-width:240px;">
+            <button class="btn btn-ghost btn-small" id="addSlotBtn-セラピスト">＋ 枠を追加</button>
+          </div>
+        </div>
+      </details>
 
-      <h3 style="font-size:14px;color:var(--teal-deep);margin:30px 0 8px;">看護師の勤務体系（曜日・時間帯）</h3>
-      <p class="page-sub" style="margin-bottom:10px;">①の空き状況と同じように、枠（時間帯）ごとにタップしてON/OFFを切り替えられます。お昼で帰るなど、曜日によって勤務する枠が違うスタッフにも対応できます。土曜・日曜も含め、勤務しない枠は空き状況・自動提案の対象になりません。</p>
-      <div style="overflow-x:auto;"><table class="grid" id="workdayTable-看護師"></table></div>
-      <h3 style="font-size:14px;color:var(--teal-deep);margin:24px 0 8px;">セラピストの勤務体系（曜日・時間帯）</h3>
-      <div style="overflow-x:auto;"><table class="grid" id="workdayTable-セラピスト"></table></div>
+      <details class="settings-group">
+        <summary>スタッフの勤務体系（曜日・時間帯）</summary>
+        <div class="settings-group-body">
+          <p class="page-sub" style="margin-bottom:10px;">①の空き状況と同じように、枠（時間帯）ごとにタップしてON/OFFを切り替えられます。お昼で帰るなど、曜日によって勤務する枠が違うスタッフにも対応できます。土曜・日曜も含め、勤務しない枠は空き状況・自動提案の対象になりません。</p>
+          <h4 style="font-size:12.5px;color:var(--ink-soft);margin:14px 0 6px;font-weight:700;">看護師の勤務体系</h4>
+          <div style="overflow-x:auto;"><table class="grid" id="workdayTable-看護師"></table></div>
+          <h4 style="font-size:12.5px;color:var(--ink-soft);margin:20px 0 6px;font-weight:700;">セラピストの勤務体系</h4>
+          <div style="overflow-x:auto;"><table class="grid" id="workdayTable-セラピスト"></table></div>
+        </div>
+      </details>
 
-      <h3 style="font-size:14px;color:var(--teal-deep);margin:30px 0 8px;">居宅介護支援事業所マスタ</h3>
-      <div id="cmList"></div>
-      <div style="display:flex;gap:8px;margin-top:10px;">
-        <input type="text" id="newCmName" placeholder="事業所名を入力">
-        <button class="btn btn-ghost btn-small" id="addCmBtn">＋ 追加</button>
-      </div>
+      <details class="settings-group">
+        <summary>居宅介護支援事業所マスタ</summary>
+        <div class="settings-group-body">
+          <div id="cmList"></div>
+          <div style="display:flex;gap:8px;margin-top:10px;">
+            <input type="text" id="newCmName" placeholder="事業所名を入力">
+            <button class="btn btn-ghost btn-small" id="addCmBtn">＋ 追加</button>
+          </div>
+        </div>
+      </details>
 
-      <h3 style="font-size:14px;color:var(--teal-deep);margin:30px 0 8px;">医療機関マスタ（訪問看護指示書発行元）</h3>
-      <div id="hospList"></div>
-      <div style="display:flex;gap:8px;margin-top:10px;">
-        <input type="text" id="newHospName" placeholder="医療機関名を入力">
-        <button class="btn btn-ghost btn-small" id="addHospBtn">＋ 追加</button>
-      </div>
+      <details class="settings-group">
+        <summary>医療機関マスタ（訪問看護指示書発行元）</summary>
+        <div class="settings-group-body">
+          <div id="hospList"></div>
+          <div style="display:flex;gap:8px;margin-top:10px;">
+            <input type="text" id="newHospName" placeholder="医療機関名を入力">
+            <button class="btn btn-ghost btn-small" id="addHospBtn">＋ 追加</button>
+          </div>
+        </div>
+      </details>
 
-      <h3 style="font-size:14px;color:var(--teal-deep);margin:30px 0 8px;">地区マスタ</h3>
-      <p class="page-sub" style="margin-bottom:10px;">例：さいたま市緑区、川口市　など。登録しておくと③新規登録・提案で地区を選べるようになります。</p>
-      <div id="districtList"></div>
-      <div style="display:flex;gap:8px;margin-top:10px;">
-        <input type="text" id="newDistrictName" placeholder="地区名を入力（例：さいたま市緑区）">
-        <button class="btn btn-ghost btn-small" id="addDistrictBtn">＋ 追加</button>
-      </div>
+      <details class="settings-group">
+        <summary>地区マスタ</summary>
+        <div class="settings-group-body">
+          <p class="page-sub" style="margin-bottom:10px;">例：さいたま市緑区、川口市　など。登録しておくと③新規登録・提案で地区を選べるようになります。</p>
+          <div id="districtList"></div>
+          <div style="display:flex;gap:8px;margin-top:10px;">
+            <input type="text" id="newDistrictName" placeholder="地区名を入力（例：さいたま市緑区）">
+            <button class="btn btn-ghost btn-small" id="addDistrictBtn">＋ 追加</button>
+          </div>
+        </div>
+      </details>
 
-      <h3 style="font-size:14px;color:var(--brick);margin:34px 0 8px;">データ管理</h3>
-      <p class="page-sub" style="margin-bottom:10px;">この操作は全員が共有しているデータに影響します。取り扱いに注意してください。</p>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;">
-        <button class="btn btn-ghost btn-small" id="clearCustomersBtn" style="border-color:var(--brick);color:var(--brick);">利用者情報を初期化（一括消去）</button>
-        <button class="btn btn-ghost btn-small" id="resetBtn" style="border-color:var(--brick);color:var(--brick);">共有データを初期状態に戻す（全員に影響します）</button>
-      </div>
-      <p class="page-sub" style="margin-top:8px;">「利用者情報を初期化」はスタッフ・時間帯枠・設定はそのままに、登録済みの利用者情報だけを消去します。「共有データを初期状態に戻す」はスタッフ構成なども含めてExcel取り込み時点の状態に戻します。</p>
+      <details class="settings-group danger-group">
+        <summary>データ管理</summary>
+        <div class="settings-group-body">
+          <p class="page-sub" style="margin-bottom:10px;">この操作は全員が共有しているデータに影響します。取り扱いに注意してください。</p>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <button class="btn btn-ghost btn-small" id="clearCustomersBtn" style="border-color:var(--brick);color:var(--brick);">利用者情報を初期化（一括消去）</button>
+            <button class="btn btn-ghost btn-small" id="resetBtn" style="border-color:var(--brick);color:var(--brick);">共有データを初期状態に戻す（全員に影響します）</button>
+          </div>
+          <p class="page-sub" style="margin-top:8px;">「利用者情報を初期化」はスタッフ・時間帯枠・設定はそのままに、登録済みの利用者情報だけを消去します。「共有データを初期状態に戻す」はスタッフ構成なども含めてExcel取り込み時点の状態に戻します。</p>
+        </div>
+      </details>
     </section>
   </main>
 </div>
