@@ -899,14 +899,6 @@ function occupiedWeeksAt(staff, day, slotIdx){
   bookingsAt(staff,day,slotIdx).forEach(b=> b.weeks.forEach(w=>weeks.add(w)));
   return weeks;
 }
-// ①②の「空き余地」集計専用。入院中の予約は今すぐ訪問が不要なため、その週は
-// 占有していない（＝空き）ものとして扱う。新規提案・重複チェック（occupiedWeeksAt／
-// isRotationFree）は退院後にすぐ元の枠へ戻れるよう、引き続き入院中も占有扱いのまま変えていない。
-function occupiedWeeksAtForCount(staff, day, slotIdx){
-  const weeks = new Set();
-  bookingsAt(staff,day,slotIdx).forEach(b=>{ if(!b.hospitalized) b.weeks.forEach(w=>weeks.add(w)); });
-  return weeks;
-}
 function isFullyFree(staff, day, slotIdx){
   return bookingsAt(staff,day,slotIdx).length === 0;
 }
@@ -1232,8 +1224,8 @@ function computeSlotAlerts(role, threshold){
       names.forEach(staff=>{
         if(!worksOnSlot(staff,day,i)) return;
         // 隔週・月次ローテーションで一部の週だけ空いている枠（partial）や、入院中の予約は
-        // 受け入れ枠アラートには数えない（完全に空いている枠だけを新規受け入れ可能とみなす）
-        if(occupiedWeeksAtForCount(staff,day,i).size===0) free++;
+        // 受け入れ枠アラートには数えない（完全に空いている「空き」枠だけを新規受け入れ可能とみなす）
+        if(slotVisualState(staff,day,i)==='free') free++;
       });
       const adjusted = Math.max(0, free - buffer);
       if(adjusted >= threshold){
@@ -1274,11 +1266,12 @@ function renderOverview(role){
       for(let i=0;i<nSlots;i++){
         if(!worksOnSlot(staff, day, i)) continue;
         total++;
-        // 入院中の予約は占有扱いにしない（occupiedWeeksAtForCount）ため、入院中のみの枠は
-        // ここでは「空き」（fullyFree）としてカウントされる
-        const used = occupiedWeeksAtForCount(staff, day, i);
-        if(used.size===0) fullyFree++;
-        else if(used.size<WEEKS.length) partial++;
+        // 「空き」（fullyFree、完全に空いている枠）と「一部空き」（partial、隔週・月次
+        // ローテーションで一部の週だけ空いている枠）だけを数える。入院中（hospitalized）・
+        // 使用中（満枠、busy）はどちらにも数えない（空き枠として計算しない）
+        const st = slotVisualState(staff, day, i);
+        if(st==='free') fullyFree++;
+        else if(st==='partial') partial++;
       }
     });
     if(total===0) return;
