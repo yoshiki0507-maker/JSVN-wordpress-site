@@ -216,7 +216,14 @@ require __DIR__ . '/lib/auth.php';
 
   .end-row{ display:flex; justify-content:space-between; align-items:center; background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:11px 16px; margin-bottom:8px; font-size:13px; }
   .end-row .meta{ color:var(--ink-soft); font-size:11.5px; }
-  .patient-card{ background:var(--teal-tint); border:1px solid var(--line); border-radius:var(--radius); padding:14px; margin-bottom:14px; }
+  .patient-card{ background:var(--teal-tint); border:1px solid var(--line); border-radius:var(--radius); margin-bottom:10px; overflow:hidden; }
+  .patient-card > summary{ list-style:none; cursor:pointer; padding:13px 16px; display:flex; align-items:center; justify-content:space-between; gap:10px; user-select:none; }
+  .patient-card > summary::-webkit-details-marker{ display:none; }
+  .patient-card > summary::after{ content:'▾'; font-size:11px; color:var(--ink-soft); flex:0 0 auto; transition:transform .15s ease; }
+  .patient-card[open] > summary::after{ transform:rotate(180deg); }
+  .patient-card > summary:hover{ filter:brightness(0.97); }
+  .patient-card[open] > summary{ border-bottom:1px solid var(--line); }
+  .patient-card-body{ padding:14px; }
   .patient-card .meta{ color:var(--ink-soft); font-size:11.5px; }
   .patient-card .patient-slots .end-row{ margin-bottom:6px; }
   .patient-card .patient-slots .end-row:last-child{ margin-bottom:0; }
@@ -2084,33 +2091,35 @@ function buildPatientCard(bookings){
     ? `<button type="button" class="btn btn-ghost btn-small print-schedule-btn">📄 週間予定表を発行</button>`
     : '';
 
-  const card = document.createElement('div');
+  const card = document.createElement('details');
   card.className = 'patient-card';
   card.innerHTML = `
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
-      <div>
-        <div class="bname" style="font-size:15px;margin:0;">${nameTxt}${freqNote}</div>
+    <summary>
+      <div class="bname" style="font-size:15px;margin:0;">${nameTxt}${freqNote}</div>
+    </summary>
+    <div class="patient-card-body">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
         <div class="meta">${metaTxt}</div>
-      </div>
-      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
-        <div class="no-print" style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
-          ${addVisitBtnHtml}
-          ${printScheduleBtnHtml}
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+          <div class="no-print" style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+            ${addVisitBtnHtml}
+            ${printScheduleBtnHtml}
+          </div>
+          <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--ink-soft);cursor:pointer;white-space:nowrap;">
+            <input type="checkbox" class="hospitalized-check-group" ${allHospitalized?'checked':''}> 入院中（すべての枠に適用）
+          </label>
+          ${endAllNote}
+          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end;">
+            <select class="end-reason-select" style="padding:6px 8px;border:1px solid var(--line);border-radius:7px;font-size:12px;font-family:var(--font-ui);">
+              <option value="">終了理由を選択</option>
+              ${END_REASONS.map(r=>`<option value="${r}">${r}</option>`).join('')}
+            </select>
+            <button class="btn btn-danger btn-small end-booking-btn">終了する</button>
+          </div>
         </div>
-        <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--ink-soft);cursor:pointer;white-space:nowrap;">
-          <input type="checkbox" class="hospitalized-check-group" ${allHospitalized?'checked':''}> 入院中（すべての枠に適用）
-        </label>
-        ${endAllNote}
-        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end;">
-          <select class="end-reason-select" style="padding:6px 8px;border:1px solid var(--line);border-radius:7px;font-size:12px;font-family:var(--font-ui);">
-            <option value="">終了理由を選択</option>
-            ${END_REASONS.map(r=>`<option value="${r}">${r}</option>`).join('')}
-          </select>
-          <button class="btn btn-danger btn-small end-booking-btn">終了する</button>
-        </div>
       </div>
+      <div class="patient-slots"></div>
     </div>
-    <div class="patient-slots"></div>
   `;
   const addVisitBtn = card.querySelector('.add-visit-btn');
   if(addVisitBtn) addVisitBtn.addEventListener('click', ()=>goToIntakeToAddVisit(first.name));
