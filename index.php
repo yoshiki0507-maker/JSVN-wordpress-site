@@ -1397,6 +1397,40 @@ function buildIrregularRow(r){
   row.querySelector('.irregular-edit-btn').addEventListener('click', ()=>openIrregularModal(r.id));
   return row;
 }
+// ④利用者検索の一覧にも、通常の予約枠を持つ利用者様と同じ「patient-card」の見た目で
+// 不定期枠の利用者様を表示する（曜日・時間帯を持たないため専用の簡易カードだが、編集は
+// ①②の不定期枠一覧と同じopenIrregularModal()を共有する）
+function buildIrregularSearchCard(r){
+  const nameTxt = r.name || '（名前未入力）';
+  const metaTxt = `疾患：${r.disease||'―'}／独居：${r.alone||'―'}／居宅：${r.careManager||'―'}／医療機関：${r.hospital||'―'}／地区：${r.district||'―'}`;
+  let slotMeta = `${roleLabel(r.staff)}／不定期枠`;
+  if(r.timeNote) slotMeta += `／時刻メモ：${r.timeNote}`;
+  const card = document.createElement('details');
+  card.className = 'patient-card';
+  card.innerHTML = `
+    <summary>
+      <div class="bname" style="font-size:15px;margin:0;">${nameTxt}　<span style="font-size:11px;color:var(--ink-soft);font-weight:400;">（不定期枠）</span></div>
+    </summary>
+    <div class="patient-card-body">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+        <div class="meta">${metaTxt}</div>
+      </div>
+      <div class="patient-slots">
+        <div class="end-row">
+          <div>
+            <div><strong>不定期枠</strong>　担当：${r.staff}</div>
+            <div class="meta">${slotMeta}</div>
+          </div>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-ghost btn-small irregular-edit-btn">編集する</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  card.querySelector('.irregular-edit-btn').addEventListener('click', ()=>openIrregularModal(r.id));
+  return card;
+}
 function renderIrregularList(role){
   const wrap = document.getElementById('irregularList-'+role);
   if(!wrap) return;
@@ -1448,6 +1482,7 @@ function openIrregularModal(id){
     showToast('不定期枠の情報を更新しました');
     closeModal();
     renderOverview('看護師'); renderOverview('セラピスト');
+    if(document.getElementById('panel-end').classList.contains('active')) renderEndList();
   });
   content.querySelector('[data-irr-end]').addEventListener('click', async ()=>{
     const reason = content.querySelector('#irr-end-reason').value;
@@ -1462,6 +1497,7 @@ function openIrregularModal(id){
     showToast('終了処理を反映しました');
     closeModal();
     renderOverview('看護師'); renderOverview('セラピスト');
+    if(document.getElementById('panel-end').classList.contains('active')) renderEndList();
   });
   document.getElementById('slotModal').hidden = false;
 }
@@ -2101,6 +2137,7 @@ async function registerIrregularPatient(role, patient, staff){
   });
   await saveState();
   showToast(`${patient.name || '利用者様'} を${role}の不定期枠として登録しました（担当：${staff}）`);
+  if(document.getElementById('panel-end').classList.contains('active')) renderEndList();
 }
 
 // 既存利用者への「サービス内容の追加」対応：同姓同名の登録中の予約があれば案内し、内容の引き継ぎができるようにする
@@ -2812,13 +2849,19 @@ function renderEndList(){
   const kw = (searchInput.value||'').trim();
   let rows = Object.entries(state.bookings).map(([id,b])=>Object.assign({id}, b));
   if(kw) rows = rows.filter(b=> (b.name||'').includes(kw));
+  // 曜日・時間帯を固定しない不定期枠の利用者様も、通常の予約枠を持つ利用者様と同様に
+  // ④利用者検索で検索・編集できるようにする（従来は①②の不定期枠一覧からしか見えなかった）
+  let irregularRows = state.irregularBookings.slice();
+  if(kw) irregularRows = irregularRows.filter(b=> (b.name||'').includes(kw));
 
-  if(!rows.length){
+  if(!rows.length && !irregularRows.length){
     wrap.innerHTML = `<p class="page-sub">${kw ? '一致する利用者様が見つかりません。' : '現在、ご利用中の利用者様はいません。'}</p>`;
     return;
   }
   wrap.innerHTML = '';
   groupBookingsByPatient(rows).forEach(([key, bookings])=> wrap.appendChild(buildPatientCard(bookings)));
+  irregularRows.slice().sort((a,b)=>(a.name||'').localeCompare(b.name||'','ja'))
+    .forEach(r=> wrap.appendChild(buildIrregularSearchCard(r)));
 }
 document.getElementById('endSearch').addEventListener('input', renderEndList);
 
@@ -2845,6 +2888,12 @@ document.getElementById('inpatientSearch').addEventListener('input', renderInpat
 function renderReferralAnalysisTable(tableId, field, label){
   const patients = new Map();
   Object.values(state.bookings).forEach(b=>{
+    const key = b.name || '(名前未登録)';
+    if(!patients.has(key)) patients.set(key, b[field] || '未設定');
+  });
+  // 不定期枠（曜日を固定しない利用者様）もstate.bookingsの利用者様と同じく「利用者情報」として扱い、
+  // 現在の利用者数・内訳（疾患名／主保険／独居／地区／紹介元）の集計に含める
+  state.irregularBookings.forEach(b=>{
     const key = b.name || '(名前未登録)';
     if(!patients.has(key)) patients.set(key, b[field] || '未設定');
   });
@@ -2895,6 +2944,7 @@ function renderReferralAnalysisTable(tableId, field, label){
 function countDistinctPatients(){
   const names = new Set();
   Object.values(state.bookings).forEach(b=> names.add(b.name || '(名前未登録)'));
+  state.irregularBookings.forEach(b=> names.add(b.name || '(名前未登録)'));
   return names.size;
 }
 function renderReferralAnalysis(){

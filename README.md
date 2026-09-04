@@ -322,7 +322,15 @@ role では区別できなかったのを解消した）が、②空き状況の
   担当スタッフを含む全項目の編集と、終了理由を選んでの終了（`state.irregularBookings`からの削除）が
   行える。新規登録・終了はどちらも`eventLog`に記録するため（`day:'不定期', slot:null`という
   プレースホルダー値で記録するだけで、実際の集計ロジックはeventLogの`day`/`slot`を参照しないため
-  影響はない）、⑧月次レポートの新規・終了件数にも通常の予約と同様に反映される。
+  影響はない）、⑧月次レポートの新規・終了件数にも通常の予約と同様に反映される。不定期枠の利用者様は
+  `state.bookings`ではなく`state.irregularBookings`に記録されるため、月次レポートの新規・終了件数
+  以外の「利用者情報」を集計する箇所（`countDistinctPatients()`＝⑦の利用者総数、
+  `renderReferralAnalysisTable()`＝⑦の居宅介護支援事業所別・医療機関別、⑧の疾患名・主保険・独居・
+  地区の内訳、④利用者検索の一覧・検索）でも、`state.bookings`と同じ扱いで含める必要がある。
+  `countDistinctPatients()`と`renderReferralAnalysisTable()`は`state.irregularBookings`も
+  マージして集計し、④利用者検索の`renderEndList()`も`state.irregularBookings`を検索対象に含めて
+  `buildIrregularSearchCard()`（曜日・時間帯を持たない専用の簡易カード。編集ボタンは①②の不定期枠
+  一覧と同じ`openIrregularModal()`を共有）で表示する。
 - ⑦リスト分析・⑧月次レポートには「📥 CSV出力」ボタンもあり、そのパネル内に表示されているすべての
   表（`table.grid`）を、見出し（h3）ごとにまとめて1つのCSVファイルとしてダウンロードできる
   （`exportPanelCsv(panelId, filename)`。Excelで文字化けしないようUTF-8 BOM付きで出力）。
