@@ -2392,34 +2392,43 @@ function buildPatientScheduleHtml(name, bookings){
 }
 // ①②「🖨 PDF出力」：曜日×時間帯の色つきマス目（.blk）は画面上の一覧性重視のレイアウトで、
 // 印刷してもマスの色だけでは利用者名が読めない。そのため印刷時は別ウィンドウに、
-// スタッフ×曜日で利用者名をテキストとして読める一覧表を組み立てて印刷する
-// （週間予定表PDFと同じ、window.open+document.write+window.print()のパターン）。
+// 曜日ごと×時間帯で利用者名をテキストとして読める一覧表を組み立てて印刷する
+// （週間予定表PDFと同じ、window.open+document.write+window.print()のパターン。ユーザーが
+// 提示した「利用者様スケジュール管理表」＝曜日で区切り、時間帯を列に並べる形式を参考にした）。
 // A4縦1枚に月〜金5日分を収めるのは現実的でないため、月〜水で1ページ・木〜金＋不定期枠で
-// 1ページの計2ページに分けている（page-break-afterで強制改ページ）。
-function rosterCellContent(staff, day, role){
-  const nSlots = slotCount(role);
+// 1ページの計2ページに分けている（page-break-afterで強制改ページ）。行数を抑えて2ページに
+// 収まりやすくするため、その日1件も訪問が無いスタッフの行はまるごと省略する。
+function rosterDaySectionHtml(role, day, names){
   const slotLabels = slotLabelsFor(role);
-  const items = [];
-  for(let i=0;i<nSlots;i++){
-    bookingsAt(staff, day, i).forEach(b=>{
-      const noteBits = [];
-      const patLabel = patternLabelOf(b);
-      if(patLabel && patLabel!=='毎週') noteBits.push(patLabel);
-      if(b.hospitalized) noteBits.push('入院中');
-      const note = noteBits.length ? `（${noteBits.join('／')}）` : '';
-      items.push(`<div class="roster-visit">${slotLabels[i]}〜 ${b.name||'（名前未登録）'}${note}</div>`);
-    });
+  const nSlots = slotLabels.length;
+  const staffWithVisits = names.filter(staff=>{
+    for(let i=0;i<nSlots;i++){ if(bookingsAt(staff, day, i).length) return true; }
+    return false;
+  });
+  if(!staffWithVisits.length){
+    return `<div class="roster-day-block"><div class="roster-day-title">${day}曜</div><p class="roster-empty">この日の訪問予定はありません。</p></div>`;
   }
-  return items.join('') || '';
-}
-function rosterTableHtml(role, days, names){
-  const headCells = days.map(d=>`<th>${d}</th>`).join('');
-  const rows = names.map(staff=>{
-    const profTag = role==='セラピスト' ? `<div class="roster-prof">${staffInfo(staff).role}</div>` : '';
-    const cells = days.map(d=>`<td>${rosterCellContent(staff, d, role)}</td>`).join('');
-    return `<tr><td class="roster-staff">${staff}${profTag}</td>${cells}</tr>`;
+  const headCells = slotLabels.map(l=>`<th>${l}〜</th>`).join('');
+  const rows = staffWithVisits.map(staff=>{
+    const profTag = role==='セラピスト' ? `<span class="roster-prof">${staffInfo(staff).role}</span>` : '';
+    const cells = [];
+    for(let i=0;i<nSlots;i++){
+      const items = bookingsAt(staff, day, i).map(b=>{
+        const noteBits = [];
+        const patLabel = patternLabelOf(b);
+        if(patLabel && patLabel!=='毎週') noteBits.push(patLabel);
+        if(b.hospitalized) noteBits.push('入院中');
+        const note = noteBits.length ? `（${noteBits.join('／')}）` : '';
+        return `<div class="roster-visit">${b.name||'（名前未登録）'}${note}</div>`;
+      }).join('');
+      cells.push(`<td>${items}</td>`);
+    }
+    return `<tr><td class="roster-staff">${staff}${profTag}</td>${cells.join('')}</tr>`;
   }).join('');
-  return `<table class="roster-table"><tr><th>担当スタッフ</th>${headCells}</tr>${rows}</table>`;
+  return `<div class="roster-day-block">
+    <div class="roster-day-title">${day}曜</div>
+    <table class="roster-table"><tr><th>担当スタッフ</th>${headCells}</tr>${rows}</table>
+  </div>`;
 }
 function rosterIrregularHtml(role){
   const rows = irregularBookingsFor(role);
@@ -2432,29 +2441,31 @@ function rosterIrregularHtml(role){
 function buildOverviewRosterHtml(role){
   const names = staffNames(role);
   const titleRole = role==='セラピスト' ? 'セラピスト' : '看護師';
-  const page1 = rosterTableHtml(role, ['月','火','水'], names);
-  const page2 = rosterTableHtml(role, ['木','金'], names);
+  const page1 = ['月','火','水'].map(d=>rosterDaySectionHtml(role, d, names)).join('');
+  const page2 = ['木','金'].map(d=>rosterDaySectionHtml(role, d, names)).join('');
   const irregular = rosterIrregularHtml(role);
   return `<!DOCTYPE html>
 <html lang="ja"><head><meta charset="UTF-8">
 <title>${titleRole}週間予定一覧　${todayStr()}</title>
 <style>
-  @page{ size:A4 portrait; margin:12mm; }
+  @page{ size:A4 portrait; margin:10mm; }
   *{ box-sizing:border-box; }
   body{ font-family:"Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",sans-serif; margin:0; color:#1a1a1a; }
   .roster-page{ page-break-after:always; }
   .roster-page:last-child{ page-break-after:auto; }
-  .roster-title{ font-size:18px; font-weight:700; margin-bottom:4px; }
-  .roster-date{ font-size:11px; color:#666; margin-bottom:10px; }
+  .roster-title{ font-size:16px; font-weight:700; margin-bottom:3px; }
+  .roster-date{ font-size:10px; color:#666; margin-bottom:8px; }
+  .roster-day-block{ margin-bottom:6px; page-break-inside:avoid; }
+  .roster-day-title{ font-size:11.5px; font-weight:700; background:#EFF4F2; color:#1D4B44; padding:2px 6px; margin-bottom:2px; }
   table.roster-table{ width:100%; border-collapse:collapse; table-layout:fixed; }
-  table.roster-table th, table.roster-table td{ border:1px solid #999; padding:4px 6px; font-size:10.5px; vertical-align:top; text-align:left; }
-  table.roster-table th{ background:#EFF4F2; font-weight:700; text-align:center; }
-  td.roster-staff{ font-weight:700; white-space:nowrap; width:15%; }
-  .roster-prof{ font-weight:400; font-size:9px; color:#666; }
-  .roster-visit{ line-height:1.4; }
-  .roster-visit + .roster-visit{ margin-top:3px; padding-top:3px; border-top:1px dashed #ccc; }
-  h3.roster-sub{ font-size:13px; margin:16px 0 6px; color:#1D4B44; }
-  .roster-empty{ font-size:11px; color:#666; }
+  table.roster-table th, table.roster-table td{ border:1px solid #999; padding:2px 4px; font-size:9px; vertical-align:top; text-align:left; }
+  table.roster-table th{ background:#F5F7F5; font-weight:700; text-align:center; }
+  td.roster-staff{ font-weight:700; white-space:nowrap; width:13%; }
+  .roster-prof{ font-weight:400; font-size:7.5px; color:#666; }
+  .roster-visit{ line-height:1.3; }
+  .roster-visit + .roster-visit{ margin-top:2px; padding-top:2px; border-top:1px dashed #ccc; }
+  h3.roster-sub{ font-size:12px; margin:10px 0 4px; color:#1D4B44; }
+  .roster-empty{ font-size:10px; color:#666; margin:2px 0 8px; }
   @media print{ body{ padding:0; } }
 </style>
 </head>
@@ -2480,6 +2491,21 @@ function printOverviewRoster(role){
   win.document.open();
   win.document.write(html);
   win.document.close();
+  // スタッフ数・訪問件数が多い事業所では、固定フォントサイズのままだと1ページに収まらない
+  // ことがある。各.roster-page（月〜水／木〜金＋不定期枠）の実際の高さをA4縦の印字可能領域
+  // （@pageのmargin 10mm×2を差し引いた約277mm＝96CSS px/inch換算で約1046px）と比較し、
+  // はみ出す場合だけCSS zoomで縮小してA4 1枚に収める（zoomはtransformと違い印刷時の
+  // ページ分割計算にも反映されるChromium系ブラウザでの実測に基づく）。文字が読めなく
+  // ならないよう縮小率は0.6を下限にしている（それでも収まらない場合はそのまま複数ページに続く）。
+  const USABLE_HEIGHT_PX = 1046;
+  const ZOOM_FLOOR = 0.6;
+  win.document.querySelectorAll('.roster-page').forEach(pageEl=>{
+    pageEl.style.zoom = '1';
+    const h = pageEl.scrollHeight;
+    if(h > USABLE_HEIGHT_PX){
+      pageEl.style.zoom = String(Math.max(ZOOM_FLOOR, USABLE_HEIGHT_PX / h));
+    }
+  });
   win.focus();
   win.print();
 }

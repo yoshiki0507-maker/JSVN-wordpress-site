@@ -282,14 +282,21 @@ role では区別できなかったのを解消した）が、②空き状況の
   ただし①②の「🖨 PDF出力」（`.overview-print-btn`、`data-role`属性でどちらの画面かを判別）だけは例外で、
   画面上の`.blk`マス目（色だけで空き状況を示す表示）をそのまま印刷しても利用者名が読めないため、
   週間予定表PDF（`printPatientSchedule()`）と同じ`window.open()`＋`document.write()`＋`window.print()`の
-  パターンで、担当スタッフ×曜日で利用者名をテキストとして読める一覧表（`printOverviewRoster(role)`／
-  `buildOverviewRosterHtml(role)`）を別ウィンドウに組み立てて印刷する。月〜金の5日分をA4縦1枚に収める
-  のは現実的ではないため、月〜水（1ページ目）・木〜金＋不定期枠（2ページ目）の計2ページに分け
-  （`.roster-page`に`page-break-after:always`）、各セルには`rosterCellContent()`がその担当スタッフ・
-  その曜日の全時間帯の予約を「時刻〜 利用者名（隔週・月次パターンや入院中なら括弧書きで併記）」の
-  形でテキスト表示する（`.blk`と同じ`bookingsAt()`を使うがマス目ではなく文字で出す点だけが異なる）。
-  スタッフ人数や予約件数が多いと、ブラウザの自動改ページにより3ページ目以降に続くことがある
-  （2ページに収まらなければならない、という制約は設けていない）。
+  パターンで、曜日ごとに区切り・時間帯を列に並べた一覧表（`printOverviewRoster(role)`／
+  `buildOverviewRosterHtml(role)`）を別ウィンドウに組み立てて印刷する。利用者様から提供いただいた
+  実際の管理表（曜日で区切り、時間帯を列に並べる形式）を参考にしたレイアウト。月〜金の5日分をA4縦1枚に
+  収めるのは現実的ではないため、月〜水（1ページ目）・木〜金＋不定期枠（2ページ目）の計2ページに分け
+  （`.roster-page`に`page-break-after:always`）、`rosterDaySectionHtml(role, day, names)`が曜日ごとに
+  「担当スタッフ×時間帯」の表を1つ作る（その日1件も訪問がないスタッフの行はまるごと省略し、行数を
+  抑える）。各セルは`bookingsAt()`で取得した予約を「利用者名（隔週・月次パターンや入院中なら括弧書きで
+  併記）」の形でテキスト表示する。フォント・余白をかなり詰めても、スタッフ人数や予約件数が多い事業所
+  では1ページに収まりきらないことがあるため、`printOverviewRoster()`は各`.roster-page`を実際に描画した
+  後で`scrollHeight`をA4縦の印字可能領域（`@page`のmargin 10mm×2を引いた約277mm、CSS px換算で
+  `USABLE_HEIGHT_PX = 1046`）と比較し、はみ出す場合だけCSSの`zoom`プロパティで比率を縮小して1ページに
+  収める（`transform:scale()`ではなく`zoom`を使うのは、印刷時のページ分割計算にも反映されるため。
+  文字が読めなくならないよう縮小率の下限は0.6）。これにより、全スタッフが平日毎日6コマすべて予約で
+  埋まっているような極端なケースでもPDFが2ページに収まることをPlaywrightで生成した実PDFのページ数で
+  確認済み（`smoketest_roster_heavy.js`）。
 - ①②の空き状況テーブルの下には「不定期枠」欄（`#irregularList-看護師`／`#irregularList-セラピスト`）
   があり、曜日を固定せず担当スタッフだけを指定して訪問している利用者様を一覧表示する
   （`irregularBookingsFor(role)`で`state.irregularBookings`を職種ごとにフィルタし、
