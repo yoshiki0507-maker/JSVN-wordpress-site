@@ -259,6 +259,23 @@ require __DIR__ . '/lib/auth.php';
   .icon-btn:hover{ background:var(--teal-tint); color:var(--teal-deep); }
   .icon-btn.danger:hover{ background:var(--brick-tint); color:var(--brick); }
   .master-row{ display:flex; align-items:center; justify-content:space-between; background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:8px 12px; margin-bottom:6px; font-size:13px; }
+  .bcp-subhead{ font-size:14px; color:var(--teal-deep); margin:22px 0 8px; }
+  .bcp-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:14px; margin-top:8px; }
+  .bcp-clinic-block{ border:1px solid var(--line); border-radius:10px; padding:12px 14px; page-break-inside:avoid; }
+  .bcp-clinic-title{ font-weight:700; color:var(--teal-deep); font-size:13.5px; margin:0 0 8px; padding-bottom:6px; border-bottom:1px solid var(--line); }
+  .bcp-patient-list{ list-style:none; margin:0; padding:0; font-size:13px; line-height:1.9; }
+  .bcp-patient-list li{ padding:2px 0; border-bottom:1px dashed var(--line); }
+  .bcp-empty-note{ font-size:12.5px; color:var(--ink-soft); margin:0; }
+  .bcp-tree, .bcp-tree ul{ list-style:none; margin:0; padding:0 0 0 20px; }
+  .bcp-tree{ padding-left:0; }
+  .bcp-tree li{ padding:4px 0; font-size:13px; }
+  .bcp-tree li:not(.bcp-root)::before{ content:'└ '; color:var(--ink-soft); }
+  .bcp-name{ font-weight:700; }
+  .bcp-role-tag{ font-size:10.5px; color:var(--ink-soft); margin-left:4px; }
+  .bcp-phone{ font-family:var(--font-mono); color:var(--teal-deep); margin-left:8px; font-size:12px; }
+  .bcp-staff-row{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; padding:7px 0; border-bottom:1px solid var(--line); font-size:13px; }
+  .bcp-staff-row .name{ min-width:110px; font-weight:700; }
+  .bcp-staff-row select, .bcp-staff-row input[type=text]{ padding:5px 8px; font-size:12.5px; border:1px solid var(--line); border-radius:6px; font-family:var(--font-ui); }
   .settings-group{ border:1px solid var(--line); border-radius:10px; margin-bottom:12px; overflow:hidden; }
   .settings-group > summary{
     list-style:none; cursor:pointer; padding:13px 16px; font-size:14px; font-weight:700;
@@ -315,7 +332,8 @@ require __DIR__ . '/lib/auth.php';
     <button data-panel="referral">⑦ リスト分析</button>
     <button data-panel="report">⑧ 月次レポート</button>
     <button data-panel="staff">⑨ スタッフ管理</button>
-    <button data-panel="settings">⑩ 設定</button>
+    <button data-panel="bcp">⑩ BCP（業務継続計画）</button>
+    <button data-panel="settings">⑪ 設定</button>
     <button type="button" class="nav-logout" id="navLogout">ログアウト</button>
   </nav>
   <main>
@@ -587,6 +605,35 @@ require __DIR__ . '/lib/auth.php';
       <div style="overflow-x:auto;"><table class="grid" id="districtTable"></table></div>
     </section>
 
+    <section id="panel-bcp" class="panel">
+      <div style="display:flex;align-items:center;gap:14px;">
+        <h2 class="page-title" style="margin:0;">BCP（業務継続計画）</h2>
+        <div class="no-print" style="margin-left:auto;">
+          <button type="button" class="btn btn-ghost btn-small print-btn">🖨 PDF出力</button>
+        </div>
+      </div>
+      <p class="page-sub">災害時などに事業を継続するための緊急連絡網です。看護師・セラピストの全職員と、現在ご利用中の全利用者様（不定期枠を含む）を対象に、クリニック（医療機関）別に整理します。</p>
+
+      <details class="settings-group no-print" open>
+        <summary>緊急連絡網の設定（対象クリニック・職員の割り当て）</summary>
+        <div class="settings-group-body">
+          <h3 class="bcp-subhead" style="margin-top:0;">対象クリニック（医療機関マスタから最大4件を選択）</h3>
+          <div id="bcpClinicSettings"></div>
+
+          <h3 class="bcp-subhead">職員の割り当て</h3>
+          <p class="page-sub" style="margin:4px 0 10px;">各職員のクリニックと緊急連絡先の電話番号を設定してください。「連絡順」で誰が誰に連絡するかを決めます。「（リーダー・連絡網の起点）」のままにすると、その職員がクリニック内の連絡網の一番上（起点）になります。</p>
+          <div id="bcpStaffAssign"></div>
+        </div>
+      </details>
+
+      <h3 class="bcp-subhead">緊急連絡網〈利用者様〉（クリニック別）</h3>
+      <p class="page-sub">氏名のみを表示します。</p>
+      <div id="bcpPatientGroups" class="bcp-grid"></div>
+
+      <h3 class="bcp-subhead">緊急連絡網〈職員〉（クリニック別・連絡網）</h3>
+      <div id="bcpStaffTree" class="bcp-grid"></div>
+    </section>
+
     <section id="panel-settings" class="panel">
       <h2 class="page-title">設定</h2>
       <p class="page-sub">時間帯の枠構成や、居宅介護支援事業所・医療機関のマスタを編集できます。項目名をクリックすると、その項目の内容が下に開きます。</p>
@@ -807,7 +854,8 @@ function freshState(){
     staffBuffer: { '看護師': 0, 'セラピスト': 0 },
     districts: [],
     suspendedPatients: [],
-    irregularBookings: []
+    irregularBookings: [],
+    bcp: { clinics: [], staffPhones: {}, staffClinic: {}, staffParent: {} }
   };
 }
 
@@ -841,6 +889,11 @@ function migrateState(loaded){
   if(!loaded.districts) loaded.districts = [];
   if(!loaded.suspendedPatients) loaded.suspendedPatients = [];
   if(!loaded.irregularBookings) loaded.irregularBookings = [];
+  if(!loaded.bcp) loaded.bcp = { clinics: [], staffPhones: {}, staffClinic: {}, staffParent: {} };
+  if(!loaded.bcp.clinics) loaded.bcp.clinics = [];
+  if(!loaded.bcp.staffPhones) loaded.bcp.staffPhones = {};
+  if(!loaded.bcp.staffClinic) loaded.bcp.staffClinic = {};
+  if(!loaded.bcp.staffParent) loaded.bcp.staffParent = {};
   loaded.staff.forEach(s=>{
     if(!s.qualifications){ s.qualifications = s.jobTitle ? [s.jobTitle] : []; }
     delete s.jobTitle;
@@ -943,6 +996,7 @@ const RENDERERS = {
   inpatient: renderInpatientList,
   referral: renderReferralAnalysis,
   report: renderReport,
+  bcp: renderBcp,
   settings: renderSettings
 };
 function switchPanel(name){
@@ -3061,6 +3115,10 @@ async function removeStaffMember(name){
   if(!confirm(`「${name}」を削除します。よろしいですか？`)) return;
   state.staff = state.staff.filter(s=>s.name!==name);
   delete state.staffWorkSlots[name];
+  delete state.bcp.staffClinic[name];
+  delete state.bcp.staffPhones[name];
+  delete state.bcp.staffParent[name];
+  Object.keys(state.bcp.staffParent).forEach(n=>{ if(state.bcp.staffParent[n]===name) state.bcp.staffParent[n] = ''; });
   await saveState();
   renderStaffList();
   renderOverview('看護師'); renderOverview('セラピスト');
@@ -3088,6 +3146,11 @@ async function renameStaffMember(oldName, newName){
   delete state.staffWorkSlots[oldName];
   Object.values(state.bookings).forEach(b=>{ if(b.staff===oldName) b.staff = newName; });
   state.eventLog.forEach(ev=>{ if(ev.staff===oldName) ev.staff = newName; });
+  // ⑩BCPの緊急連絡網（クリニック・電話番号・連絡順の割り当て）も名前変更に追従させる
+  if(state.bcp.staffClinic[oldName]!==undefined){ state.bcp.staffClinic[newName] = state.bcp.staffClinic[oldName]; delete state.bcp.staffClinic[oldName]; }
+  if(state.bcp.staffPhones[oldName]!==undefined){ state.bcp.staffPhones[newName] = state.bcp.staffPhones[oldName]; delete state.bcp.staffPhones[oldName]; }
+  if(state.bcp.staffParent[oldName]!==undefined){ state.bcp.staffParent[newName] = state.bcp.staffParent[oldName]; delete state.bcp.staffParent[oldName]; }
+  Object.keys(state.bcp.staffParent).forEach(n=>{ if(state.bcp.staffParent[n]===oldName) state.bcp.staffParent[n] = newName; });
   await saveState();
   showToast(`「${oldName}」を「${newName}」に変更しました`);
   renderStaffList();
@@ -3109,6 +3172,206 @@ async function removeQualification(name, qual){
   staffObj.qualifications = staffObj.qualifications.filter(q=>q!==qual);
   await saveState();
   renderStaffList();
+}
+
+// ---------- ⑩ BCP（業務継続計画）----------
+// 「クリニック」は独立したマスタを新設せず、既存の「医療機関」マスタ（state.referralSources.hospitals、
+// 利用者様の登録時に選ぶ訪問看護指示書発行元）から最大4件を選んで流用する（state.bcp.clinics）。
+// 利用者様側は、選んだクリニックと一致する利用者様のhospital値でグルーピングするだけで済むが、
+// 職員側には「医療機関」に相当する項目がそもそも無いため、職員ごとにクリニックを新たに割り当てる
+// （state.bcp.staffClinic）。緊急連絡網（電話連絡網）は「親子式」：職員ごとに「誰から連絡を受けるか」
+// にあたる連絡順の上位者（state.bcp.staffParent）を、同じクリニック内の他の職員から選ぶ。上位者が
+// 未設定の職員はそのクリニックの連絡網の起点（リーダー）として扱う。
+function bcpEligibleStaff(){
+  // 「看護師・セラピストの全職員を対象」という指定のとおり、事務員は対象外にする
+  return state.staff.filter(s=>CAREGIVER_ROLES.includes(s.role));
+}
+function bcpDescendants(name){
+  // 循環（AがBの上位者、BがAの上位者、のような矛盾した連絡網）を作らせないため、
+  // ある職員の「下位者（連絡を受け取る側）」を再帰的に集める。上位者の選択肢から
+  // この集合を除外することで、循環を未然に防ぐ
+  const kids = bcpEligibleStaff().filter(s=>state.bcp.staffParent[s.name]===name).map(s=>s.name);
+  const result = new Set(kids);
+  kids.forEach(k=>{ bcpDescendants(k).forEach(d=>result.add(d)); });
+  return result;
+}
+function renderBcpClinicSettings(){
+  const wrap = document.getElementById('bcpClinicSettings');
+  if(!wrap) return;
+  const hospitals = state.referralSources.hospitals;
+  if(!hospitals.length){
+    wrap.innerHTML = `<p class="page-sub" style="margin:0;">⑪設定の「医療機関」マスタが未登録です。先にそちらへクリニック名を登録してください。</p>`;
+    return;
+  }
+  const checksHtml = hospitals.map(h=>{
+    const checked = state.bcp.clinics.includes(h);
+    const disabled = !checked && state.bcp.clinics.length>=4;
+    return `<label style="display:inline-flex;align-items:center;gap:5px;margin:0 14px 8px 0;font-size:13px;">
+      <input type="checkbox" class="bcp-clinic-check" value="${h.replace(/"/g,'&quot;')}" ${checked?'checked':''} ${disabled?'disabled':''}> ${h}
+    </label>`;
+  }).join('');
+  wrap.innerHTML = checksHtml + `<p class="page-sub" style="margin:8px 0 0;">${state.bcp.clinics.length}/4件選択中です。</p>`;
+  wrap.querySelectorAll('.bcp-clinic-check').forEach(cb=>{
+    cb.addEventListener('change', async ()=>{
+      if(cb.checked){
+        if(state.bcp.clinics.length>=4){ cb.checked = false; return; }
+        state.bcp.clinics.push(cb.value);
+      }else{
+        state.bcp.clinics = state.bcp.clinics.filter(c=>c!==cb.value);
+        // 選択を外したクリニックを割り当てていた職員は「未設定」に戻す
+        Object.keys(state.bcp.staffClinic).forEach(n=>{
+          if(state.bcp.staffClinic[n]===cb.value) state.bcp.staffClinic[n] = '';
+        });
+      }
+      await saveState();
+      renderBcp();
+    });
+  });
+}
+function renderBcpStaffAssign(){
+  const wrap = document.getElementById('bcpStaffAssign');
+  if(!wrap) return;
+  const staff = bcpEligibleStaff();
+  if(!staff.length){
+    wrap.innerHTML = `<p class="page-sub" style="margin:0;">⑨スタッフ管理で看護師・セラピストを登録してください。</p>`;
+    return;
+  }
+  if(!state.bcp.clinics.length){
+    wrap.innerHTML = `<p class="page-sub" style="margin:0;">先に上の「対象クリニック」を選択してください。</p>`;
+    return;
+  }
+  wrap.innerHTML = '';
+  staff.forEach(s=>{
+    const name = s.name;
+    const clinic = state.bcp.staffClinic[name] || '';
+    const phone = state.bcp.staffPhones[name] || '';
+    const parent = state.bcp.staffParent[name] || '';
+    const clinicOptionsHtml = `<option value="">未設定</option>` +
+      state.bcp.clinics.map(c=>`<option value="${c}" ${clinic===c?'selected':''}>${c}</option>`).join('');
+    const descendants = bcpDescendants(name);
+    const parentCandidates = clinic
+      ? staff.filter(x=>x.name!==name && state.bcp.staffClinic[x.name]===clinic && !descendants.has(x.name))
+      : [];
+    const parentOptionsHtml = `<option value="">（リーダー・連絡網の起点）</option>` +
+      parentCandidates.map(x=>`<option value="${x.name}" ${parent===x.name?'selected':''}>${x.name}</option>`).join('');
+    const row = document.createElement('div');
+    row.className = 'bcp-staff-row';
+    row.innerHTML = `
+      <span class="name">${name}</span>
+      <span class="bcp-role-tag">${roleLabel(name)}</span>
+      <input type="text" class="bcp-phone-input" placeholder="緊急連絡先電話番号" value="${phone.replace(/"/g,'&quot;')}" style="max-width:150px;">
+      <select class="bcp-clinic-select">${clinicOptionsHtml}</select>
+      <select class="bcp-parent-select" ${clinic?'':'disabled'} title="連絡順（誰から連絡を受けるか）">${parentOptionsHtml}</select>
+    `;
+    row.querySelector('.bcp-phone-input').addEventListener('change', async (e)=>{
+      state.bcp.staffPhones[name] = e.target.value.trim();
+      await saveState();
+      renderBcpStaffTree();
+    });
+    row.querySelector('.bcp-clinic-select').addEventListener('change', async (e)=>{
+      state.bcp.staffClinic[name] = e.target.value;
+      // クリニックを変更すると旧クリニック内での連絡順の位置づけは意味を失うためリセットする
+      state.bcp.staffParent[name] = '';
+      await saveState();
+      renderBcp();
+    });
+    row.querySelector('.bcp-parent-select').addEventListener('change', async (e)=>{
+      state.bcp.staffParent[name] = e.target.value;
+      await saveState();
+      renderBcp();
+    });
+    wrap.appendChild(row);
+  });
+}
+function bcpPatientsByClinic(){
+  const byClinic = {};
+  state.bcp.clinics.forEach(c=>{ byClinic[c] = new Set(); });
+  const unassigned = new Set();
+  const add = (hospital, name)=>{
+    const n = (name && name.trim()) || '（名前未登録）';
+    if(state.bcp.clinics.includes(hospital)) byClinic[hospital].add(n);
+    else unassigned.add(n);
+  };
+  // 通常の予約枠を持つ利用者様に加え、不定期枠の利用者様も同じ「利用者情報」として対象にする
+  Object.values(state.bookings).forEach(b=> add(b.hospital, b.name));
+  state.irregularBookings.forEach(r=> add(r.hospital, r.name));
+  const sorted = set => Array.from(set).sort((a,b)=>a.localeCompare(b,'ja'));
+  const result = {};
+  state.bcp.clinics.forEach(c=>{ result[c] = sorted(byClinic[c]); });
+  result._unassigned = sorted(unassigned);
+  return result;
+}
+function renderBcpPatients(){
+  const wrap = document.getElementById('bcpPatientGroups');
+  if(!wrap) return;
+  if(!state.bcp.clinics.length){
+    wrap.innerHTML = `<p class="page-sub" style="margin:0;">上の「対象クリニック」を設定すると、ここに利用者様がクリニック別に表示されます。</p>`;
+    return;
+  }
+  const grouped = bcpPatientsByClinic();
+  let html = state.bcp.clinics.map(c=>{
+    const names = grouped[c];
+    const list = names.length
+      ? `<ul class="bcp-patient-list">${names.map(n=>`<li>${n}</li>`).join('')}</ul>`
+      : `<p class="bcp-empty-note">該当する利用者様はいません。</p>`;
+    return `<div class="bcp-clinic-block"><div class="bcp-clinic-title">${c}（${names.length}人）</div>${list}</div>`;
+  }).join('');
+  if(grouped._unassigned.length){
+    html += `<div class="bcp-clinic-block"><div class="bcp-clinic-title">クリニック未設定（${grouped._unassigned.length}人）</div>
+      <ul class="bcp-patient-list">${grouped._unassigned.map(n=>`<li>${n}</li>`).join('')}</ul></div>`;
+  }
+  wrap.innerHTML = html;
+}
+function bcpBuildTreeHtml(staffInClinic){
+  const names = staffInClinic.map(s=>s.name);
+  const childrenOf = {};
+  names.forEach(n=>{ childrenOf[n] = []; });
+  const roots = [];
+  names.forEach(n=>{
+    const p = state.bcp.staffParent[n];
+    if(p && childrenOf.hasOwnProperty(p)) childrenOf[p].push(n);
+    else roots.push(n);
+  });
+  const renderNode = (name, visited, isRoot)=>{
+    if(visited.has(name)) return ''; // 想定外のデータ不整合による無限ループを防ぐ保険
+    visited.add(name);
+    const phone = state.bcp.staffPhones[name];
+    const phoneHtml = phone ? `<span class="bcp-phone">${phone}</span>` : '';
+    const kids = childrenOf[name] || [];
+    const kidsHtml = kids.length ? `<ul>${kids.map(k=>renderNode(k, visited, false)).join('')}</ul>` : '';
+    return `<li class="${isRoot?'bcp-root':''}"><span class="bcp-name">${name}</span><span class="bcp-role-tag">${roleLabel(name)}</span>${phoneHtml}${kidsHtml}</li>`;
+  };
+  if(!roots.length) return `<p class="bcp-empty-note">該当する職員はいません。</p>`;
+  const visited = new Set();
+  return `<ul class="bcp-tree">${roots.map(r=>renderNode(r, visited, true)).join('')}</ul>`;
+}
+function renderBcpStaffTree(){
+  const wrap = document.getElementById('bcpStaffTree');
+  if(!wrap) return;
+  if(!state.bcp.clinics.length){
+    wrap.innerHTML = `<p class="page-sub" style="margin:0;">上の「対象クリニック」を設定すると、ここに職員の緊急連絡網がクリニック別に表示されます。</p>`;
+    return;
+  }
+  const staff = bcpEligibleStaff();
+  let html = state.bcp.clinics.map(c=>{
+    const list = staff.filter(s=>state.bcp.staffClinic[s.name]===c);
+    return `<div class="bcp-clinic-block"><div class="bcp-clinic-title">${c}（${list.length}人）</div>${bcpBuildTreeHtml(list)}</div>`;
+  }).join('');
+  const unassigned = staff.filter(s=>!state.bcp.staffClinic[s.name]);
+  if(unassigned.length){
+    html += `<div class="bcp-clinic-block"><div class="bcp-clinic-title">クリニック未設定（${unassigned.length}人）</div>
+      <ul class="bcp-patient-list">${unassigned.map(s=>{
+        const phone = state.bcp.staffPhones[s.name];
+        return `<li>${s.name}（${roleLabel(s.name)}）${phone?'　'+phone:''}</li>`;
+      }).join('')}</ul></div>`;
+  }
+  wrap.innerHTML = html;
+}
+function renderBcp(){
+  renderBcpClinicSettings();
+  renderBcpStaffAssign();
+  renderBcpPatients();
+  renderBcpStaffTree();
 }
 
 // ---------- ⑨ 設定 ----------
@@ -3270,6 +3533,14 @@ function renderMasterList(containerId, arr, type){
     row.innerHTML = `<span>${name}</span><button class="icon-btn danger">削除</button>`;
     row.querySelector('button').addEventListener('click', async ()=>{
       state.referralSources[type] = state.referralSources[type].filter(n=>n!==name);
+      if(type==='hospitals' && state.bcp.clinics.includes(name)){
+        // ⑩BCPの対象クリニックは医療機関マスタから選ぶため、マスタ側で削除されたら
+        // BCP側の設定（対象クリニック・割り当て済みの職員）も追従して外す
+        state.bcp.clinics = state.bcp.clinics.filter(c=>c!==name);
+        Object.keys(state.bcp.staffClinic).forEach(n=>{
+          if(state.bcp.staffClinic[n]===name) state.bcp.staffClinic[n] = '';
+        });
+      }
       await saveState();
       renderSettings();
     });
