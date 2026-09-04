@@ -98,12 +98,9 @@ state = {
     // （irregularBookingsFor(role)で職種ごとにフィルタして一覧表示）にのみ表示される。
   }, ...],
   bcp: {
-    clinics: string[],        // ⑩BCPの対象クリニック名（最大4件）。独立したマスタは新設せず、
-                                // 既存の医療機関マスタ（referralSources.hospitals）から選ぶ
-    staffPhones: { [staffName: string]: string },   // 職員ごとの緊急連絡先電話番号
-    staffClinic: { [staffName: string]: string },   // 職員ごとの所属クリニック（clinicsのいずれか、または''=未設定）
-    staffParent: { [staffName: string]: string }    // 職員ごとの連絡順の上位者（電話連絡網の「親」）。
-                                                       // ''=そのクリニックの連絡網の起点（リーダー）
+    staffPhones: { [staffName: string]: string }   // 職員ごとの緊急連絡先電話番号。⑩BCPのクリニック・
+    // グループ分けは自動算出（bcpStaffGroups()／bcpHospitalGroups()）で毎回その場で計算するため、
+    // 自動算出できない電話番号だけをここに保持する（新規登録・終了と連動して常に最新の状態になる）
   }
 }
 ```
@@ -346,35 +343,33 @@ role では区別できなかったのを解消した）が、②空き状況の
   一覧と同じ`openIrregularModal()`を共有）で表示する。
 - ⑨スタッフ管理と⑪設定の間には「⑩ BCP（業務継続計画）」がある。災害時などの緊急連絡網を、
   看護師・セラピストの全職員（`bcpEligibleStaff()`＝`CAREGIVER_ROLES`に該当する職員のみ、事務員は対象外）と
-  現在ご利用中の全利用者様（不定期枠を含む）を対象に、クリニック（医療機関）別に整理する画面。
-  「クリニック」は独立したマスタを新設せず、既存の医療機関マスタ（`state.referralSources.hospitals`、
-  利用者様登録時の「医療機関（訪問看護指示書発行元）」）から最大4件を選ぶ形にしている
-  （`renderBcpClinicSettings()`。チェックボックス形式で、5件目以降は自動的に選択不可になる。
-  医療機関マスタ側でその名前が削除された場合は、`renderMasterList()`の削除処理から連動して
-  `state.bcp.clinics`・該当する職員の割り当ても自動的に外れる）。
-  - 利用者様側（`renderBcpPatients()`／`bcpPatientsByClinic()`）は、選んだクリニック名と一致する
-    利用者様の`hospital`値でグルーピングするだけで済む（`state.bookings`と`state.irregularBookings`の
-    両方が対象。氏名のみ表示）。どのクリニックにも一致しない・医療機関が未設定の利用者様は
-    「クリニック未設定」としてまとめて表示し、対象から漏れないようにしている。
-  - 職員側には「医療機関」に相当する項目がそもそも無いため、職員ごとに新たにクリニックを割り当てる
-    （`state.bcp.staffClinic`）。あわせて緊急連絡先電話番号（`state.bcp.staffPhones`）も設定できる。
-    緊急連絡網は「親子式」の電話連絡網：職員ごとに「誰から連絡を受けるか」にあたる連絡順の上位者
-    （`state.bcp.staffParent`）を、同じクリニック内の他の職員から選ぶ（`renderBcpStaffAssign()`の
-    `.bcp-parent-select`）。上位者を「（リーダー・連絡網の起点）」のままにすると、その職員がそのクリニックの
-    連絡網の一番上（起点）になる。上位者の選択肢は、循環（AがBの上位者でBがAの上位者、のような矛盾）を
-    防ぐため、その職員自身の下位者（`bcpDescendants()`で再帰的に集めた集合）を除外して生成する。
-    クリニックを変更すると、旧クリニック内での連絡順の位置づけは意味を失うため`staffParent`をリセットする。
-  - 連絡網は`bcpBuildTreeHtml()`が`state.bcp.staffParent`から親子関係を辿ってネストした`<ul><li>`
-    （`.bcp-tree`、非ルート項目には`└`を前置）として描画する。想定外のデータ不整合で循環が起きても
-    無限ループしないよう、描画済みの職員は`visited`セットでスキップする保険を入れている。
-    クリニック未設定の職員は、別枠で氏名・職種・電話番号の一覧として表示する。
-  - スタッフの削除・改名（`removeStaffMember()`／`renameStaffMember()`）は、`state.bcp`側の
-    クリニック・電話番号・連絡順の割り当て（削除の場合は該当職員を上位者としていた職員の連絡順も
-    リセット）にも追従する。
-  - クリニック設定・職員の割り当てフォーム（`#bcpClinicSettings`・`#bcpStaffAssign`、
-    `<details class="settings-group no-print">`で折りたたみ可能）は編集用UIのため印刷対象外
-    （`no-print`）にし、「🖨 PDF出力」ボタン（他の`.print-btn`と同じ汎用の`window.print()`）では
-    利用者様・職員の一覧部分だけが印刷される。
+  現在ご利用中の全利用者様（不定期枠を含む）を対象に、それぞれ4グループへ自動的に振り分けて整理する画面。
+  利用者様から提示いただいた自治会などの緊急連絡網（組織名を頂点に、そこから枝分かれする組織図）の
+  イメージを参考にしたレイアウト。クリニック・グループへの割り当ては一切手動保持せず、毎回
+  `state.staff`／`state.bookings`／`state.irregularBookings`から自動算出する（保持するのは自動算出
+  できない緊急連絡先電話番号＝`state.bcp.staffPhones`だけ）。これにより新規登録・終了のたびに
+  手動でグループを更新し忘れる、という事態が起きない（表示するたびに常に最新の状態で再計算される）。
+  - 職員側（`bcpStaffGroups()`）：全職員を`state.staff`の並び順（⑨スタッフ管理の↑↓で調整可能）に
+    そって`i % 4`のラウンドロビンで4グループに機械的に振り分け、人数を均等にする。
+  - 利用者様側（`bcpHospitalPatientMap()`／`bcpHospitalGroups()`）：医療機関ごとの現在の利用者数
+    （`state.bookings`と`state.irregularBookings`の`hospital`値で集計。医療機関未設定の利用者様は
+    「（医療機関未設定）」としてまとめる）をもとに、利用者数の多い医療機関から順に、その時点で
+    合計人数が最も少ないグループへ割り当てる貪欲法（LPT法）で4グループにまとめ、グループ間の
+    利用者数の合計をできるだけ均等にする（1つの医療機関の利用者様は必ず同じグループに入るため、
+    突出して利用者数の多い医療機関が1件あると、その分だけグループ間に差が出ることはある）。
+  - 画面上は、電話番号の編集フォーム（`renderBcpStaffPhoneEditor()`、`<details class="settings-group
+    no-print">`で折りたたみ可能）と、2つのグループ分けのプレビュー（`renderBcpStaffPreview()`／
+    `renderBcpHospitalPreview()`）を表示する。
+  - 「🖨 PDF出力」（`#bcpPrintBtn`→`printBcpNetwork()`）は、①②のPDF出力と同じ
+    `window.open()`＋`document.write()`＋`window.print()`のパターンで、組織名を頂点にした組織図
+    （`buildBcpNetworkHtml()`、CSSの`border-top`を使った罫線で「頂点→横棒→各グループへの縦棒」の
+    枝分かれを描画）を別ウィンドウに組み立てて印刷する。「A4 1枚で完結するように」という指定のため、
+    ①②のPDF出力と異なり複数ページには分割せず、`.bcp-content`の高さを毎回1ページ分の目安
+    （`USABLE_HEIGHT_PX = 950`）と比較して、はみ出す場合だけCSSの`zoom`で縮小し常に1ページに収める
+    （縮小率の下限は0.35。グループを人数で束ねる設計のため、職員・利用者様が多い事業所でも
+    ボックス数は常に8個＝職員4＋利用者4で増えないので縮小はほとんど不要）。
+  - スタッフの削除・改名（`removeStaffMember()`／`renameStaffMember()`）は、`state.bcp.staffPhones`
+    の電話番号だけを追従させればよい（グループ分けは自動算出のため追従不要）。
 - ⑦リスト分析・⑧月次レポートには「📥 CSV出力」ボタンもあり、そのパネル内に表示されているすべての
   表（`table.grid`）を、見出し（h3）ごとにまとめて1つのCSVファイルとしてダウンロードできる
   （`exportPanelCsv(panelId, filename)`。Excelで文字化けしないようUTF-8 BOM付きで出力）。
