@@ -327,7 +327,7 @@ require __DIR__ . '/lib/auth.php';
           <h2 class="page-title" style="margin:0;">看護師の空き状況</h2>
           <p class="page-sub" style="margin:2px 0 0;">枠の並びは左から <span id="slotHint-看護師"></span> の順です。タップすると詳細が見られます。</p>
         </div>
-        <button type="button" class="btn btn-ghost btn-small print-btn no-print" style="margin-left:auto;">🖨 PDF出力</button>
+        <button type="button" class="btn btn-ghost btn-small overview-print-btn no-print" data-role="看護師" style="margin-left:auto;">🖨 PDF出力</button>
       </div>
       <div class="ov-body">
         <div class="ov-main" id="ovMain-看護師">
@@ -350,6 +350,9 @@ require __DIR__ . '/lib/auth.php';
       <div style="overflow-x:auto;">
         <table class="grid ov-table" id="overviewTable-看護師"></table>
       </div>
+      <h3 style="font-size:14px;color:var(--teal-deep);margin:26px 0 8px;">不定期枠</h3>
+      <p class="page-sub" style="margin-bottom:10px;">曜日を固定せず、担当スタッフだけを指定して訪問している利用者様の一覧です。③新規登録・提案の「不定期枠」チェックから登録できます。</p>
+      <div id="irregularList-看護師"></div>
     </section>
 
     <section id="panel-overview-therapist" class="panel">
@@ -359,7 +362,7 @@ require __DIR__ . '/lib/auth.php';
           <h2 class="page-title" style="margin:0;">セラピストの空き状況</h2>
           <p class="page-sub" style="margin:2px 0 0;">枠の並びは左から <span id="slotHint-セラピスト"></span> の順です。タップすると詳細が見られます。</p>
         </div>
-        <button type="button" class="btn btn-ghost btn-small print-btn no-print" style="margin-left:auto;">🖨 PDF出力</button>
+        <button type="button" class="btn btn-ghost btn-small overview-print-btn no-print" data-role="セラピスト" style="margin-left:auto;">🖨 PDF出力</button>
       </div>
       <div class="ov-body">
         <div class="ov-main" id="ovMain-セラピスト">
@@ -382,6 +385,9 @@ require __DIR__ . '/lib/auth.php';
       <div style="overflow-x:auto;">
         <table class="grid ov-table" id="overviewTable-セラピスト"></table>
       </div>
+      <h3 style="font-size:14px;color:var(--teal-deep);margin:26px 0 8px;">不定期枠</h3>
+      <p class="page-sub" style="margin-bottom:10px;">曜日を固定せず、担当スタッフだけを指定して訪問している利用者様の一覧です。③新規登録・提案の「不定期枠」チェックから登録できます。</p>
+      <div id="irregularList-セラピスト"></div>
     </section>
 
     <section id="panel-staff" class="panel">
@@ -800,7 +806,8 @@ function freshState(){
     referralSources: { careManagers: [], hospitals: [] },
     staffBuffer: { '看護師': 0, 'セラピスト': 0 },
     districts: [],
-    suspendedPatients: []
+    suspendedPatients: [],
+    irregularBookings: []
   };
 }
 
@@ -833,6 +840,7 @@ function migrateState(loaded){
   if(!loaded.staffBuffer) loaded.staffBuffer = { '看護師': 0, 'セラピスト': 0 };
   if(!loaded.districts) loaded.districts = [];
   if(!loaded.suspendedPatients) loaded.suspendedPatients = [];
+  if(!loaded.irregularBookings) loaded.irregularBookings = [];
   loaded.staff.forEach(s=>{
     if(!s.qualifications){ s.qualifications = s.jobTitle ? [s.jobTitle] : []; }
     delete s.jobTitle;
@@ -951,6 +959,9 @@ document.querySelectorAll('.nav button[data-panel]').forEach(btn=>{
 document.getElementById('navLogout').addEventListener('click', ()=>{ location.href = 'logout.php'; });
 document.querySelectorAll('.print-btn').forEach(btn=>{
   btn.addEventListener('click', ()=>window.print());
+});
+document.querySelectorAll('.overview-print-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>printOverviewRoster(btn.dataset.role));
 });
 
 function showToast(msg){
@@ -1364,6 +1375,95 @@ function renderOverview(role){
     el.addEventListener('click', ()=>openSlotModal(el.dataset.staff, el.dataset.day, Number(el.dataset.slot)));
   });
   syncOverviewAlertHeight(role);
+  renderIrregularList(role);
+}
+function irregularBookingsFor(role){
+  return state.irregularBookings.filter(r=>roleGroup(r.role)===role);
+}
+function buildIrregularRow(r){
+  const row = document.createElement('div');
+  row.className = 'end-row';
+  let meta = `${roleLabel(r.staff)}／担当：${r.staff}／疾患：${r.disease||'―'}／主保険：${r.insuranceType||'―'}`;
+  if(r.timeNote) meta += `／${r.timeNote}`;
+  row.innerHTML = `
+    <div>
+      <div><strong>${r.name || '（名前未登録）'}</strong></div>
+      <div class="meta">${meta}</div>
+    </div>
+    <div style="display:flex;gap:6px;">
+      <button class="btn btn-ghost btn-small irregular-edit-btn">編集する</button>
+    </div>
+  `;
+  row.querySelector('.irregular-edit-btn').addEventListener('click', ()=>openIrregularModal(r.id));
+  return row;
+}
+function renderIrregularList(role){
+  const wrap = document.getElementById('irregularList-'+role);
+  if(!wrap) return;
+  const rows = irregularBookingsFor(role);
+  if(!rows.length){
+    wrap.innerHTML = `<p class="page-sub" style="margin:0;">現在、不定期枠として登録されている利用者様はいません。</p>`;
+    return;
+  }
+  wrap.innerHTML = '';
+  rows.forEach(r=> wrap.appendChild(buildIrregularRow(r)));
+}
+function openIrregularModal(id){
+  const r = state.irregularBookings.find(x=>x.id===id);
+  if(!r) return;
+  const content = document.getElementById('modalContent');
+  const staffOptionsHtml = staffNames(roleGroup(r.role)).map(name=>
+    `<option value="${name}" ${r.staff===name?'selected':''}>${name}（${staffInfo(name).role}）</option>`
+  ).join('');
+  content.innerHTML = `
+    <div class="bname" style="margin-bottom:8px;">不定期枠の利用者情報を編集</div>
+    <label>担当スタッフ</label><select class="irr-field" data-f="staff">${staffOptionsHtml}</select>
+    <label>氏名</label><input class="irr-field" data-f="name" type="text" value="${(r.name||'').replace(/"/g,'&quot;')}">
+    <label>疾患名</label><input class="irr-field" data-f="disease" type="text" value="${(r.disease||'').replace(/"/g,'&quot;')}">
+    <label>主保険</label><select class="irr-field" data-f="insuranceType">
+      <option value="" ${!r.insuranceType?'selected':''}>選択してください</option>
+      ${INSURANCE_TYPES.map(t=>`<option value="${t}" ${r.insuranceType===t?'selected':''}>${t}</option>`).join('')}
+    </select>
+    <label>独居</label><select class="irr-field" data-f="alone">
+      ${['不明','はい','いいえ'].map(v=>`<option value="${v}" ${r.alone===v?'selected':''}>${v}</option>`).join('')}
+    </select>
+    <label>居宅介護支援事業所</label><select class="irr-field" data-f="careManager">${refSelectOptions(state.referralSources.careManagers, r.careManager)}</select>
+    <label>医療機関</label><select class="irr-field" data-f="hospital">${refSelectOptions(state.referralSources.hospitals, r.hospital)}</select>
+    <label>地区</label><select class="irr-field" data-f="district">${refSelectOptions(state.districts, r.district)}</select>
+    <label>実施時刻メモ</label><input class="irr-field" data-f="timeNote" type="text" value="${(r.timeNote||'').replace(/"/g,'&quot;')}">
+    <label>備考</label><textarea class="irr-field" data-f="note" rows="2">${r.note||''}</textarea>
+    <div style="display:flex;gap:8px;margin-top:14px;">
+      <button class="btn btn-primary btn-small" data-irr-save>保存する</button>
+    </div>
+    <hr style="margin:16px 0;border:none;border-top:1px solid var(--line);">
+    <label>終了理由を選択して終了する</label>
+    <div style="display:flex;gap:8px;">
+      <select id="irr-end-reason"><option value="">終了理由を選択</option>${END_REASONS.map(rs=>`<option value="${rs}">${rs}</option>`).join('')}</select>
+      <button class="btn btn-danger btn-small" data-irr-end>終了する</button>
+    </div>
+  `;
+  content.querySelector('[data-irr-save]').addEventListener('click', async ()=>{
+    content.querySelectorAll('.irr-field').forEach(el=>{ r[el.dataset.f] = el.value; });
+    await saveState();
+    showToast('不定期枠の情報を更新しました');
+    closeModal();
+    renderOverview('看護師'); renderOverview('セラピスト');
+  });
+  content.querySelector('[data-irr-end]').addEventListener('click', async ()=>{
+    const reason = content.querySelector('#irr-end-reason').value;
+    if(!reason){ alert('終了理由を選択してください。'); return; }
+    if(!confirm(`${r.name||'（名前未登録）'} 様の不定期枠を「${reason}」として終了にします。よろしいですか？`)) return;
+    state.eventLog.push({
+      id:newId(), type:'終了', date: todayStr(), name: r.name||'', staff:r.staff, day:'不定期', slot:null,
+      careManager: r.careManager||'', hospital: r.hospital||'', reason
+    });
+    state.irregularBookings = state.irregularBookings.filter(x=>x.id!==id);
+    await saveState();
+    showToast('終了処理を反映しました');
+    closeModal();
+    renderOverview('看護師'); renderOverview('セラピスト');
+  });
+  document.getElementById('slotModal').hidden = false;
 }
 function syncOverviewAlertHeight(role){
   // サマリー・受け入れ可能人数カードの高さに合わせて右側のアラート枠の高さを揃え、
@@ -1483,26 +1583,48 @@ function buildRoleSections(){
     return `
       <div class="role-section" data-role-section="${role}" style="border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px 16px;margin-bottom:14px;">
         ${heading}
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px 22px;">
-          <div>
-            <label>訪問頻度パターン</label>
-            ${patternSelectHtml(role)}
+        <label style="display:flex;align-items:center;gap:6px;font-weight:600;margin-bottom:12px;">
+          <input type="checkbox" class="f-irregular" data-role="${role}" style="width:auto;">
+          不定期枠（曜日を固定せず、担当スタッフだけを指定して登録します。①②の「不定期枠」欄に表示されます）
+        </label>
+        <div class="schedule-fields" data-role="${role}">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px 22px;">
+            <div>
+              <label>訪問頻度パターン</label>
+              ${patternSelectHtml(role)}
+            </div>
+            <div class="freq-weekly-wrap" data-role="${role}">
+              <label>毎週の場合の回数（週）</label>
+              <select class="f-freq" data-role="${role}">
+                <option value="1">週1回</option>
+                <option value="2" selected>週2回</option>
+                <option value="3">週3回</option>
+                <option value="4">週4回</option>
+                <option value="5">週5回</option>
+                <option value="6">週6回</option>
+                <option value="7">週7回（土日含む）</option>
+              </select>
+            </div>
           </div>
-          <div class="freq-weekly-wrap" data-role="${role}">
-            <label>毎週の場合の回数（週）</label>
-            <select class="f-freq" data-role="${role}">
-              <option value="1">週1回</option>
-              <option value="2" selected>週2回</option>
-              <option value="3">週3回</option>
-              <option value="4">週4回</option>
-              <option value="5">週5回</option>
-              <option value="6">週6回</option>
-              <option value="7">週7回（土日含む）</option>
-            </select>
+          <div style="margin-top:12px;">
+            <label class="day-chips-label" data-role="${role}">希望曜日（未選択＝指定なし。土・日も選択できます）</label>
+            <div class="chip-group day-chips" data-role="${role}"></div>
           </div>
+          <div style="margin-top:12px;background:var(--amber-tint);border:1px solid var(--amber);border-radius:8px;padding:8px 12px;">
+            <label style="display:flex;align-items:center;gap:6px;font-weight:600;margin-bottom:0;">
+              <input type="checkbox" class="f-weekend-exception" data-role="${role}" style="width:auto;">
+              特例（通常の勤務体系に関わらず、指定した曜日・スタッフに土日訪問として登録する）
+            </label>
+            <p class="page-sub" style="margin:4px 0 0;">土曜・日曜への訪問がどうしても必要な方向けの特例登録です。チェックを入れると、⑨設定で土日勤務がOFFのスタッフも候補に含めて提案します。登録後は①②の土日欄に名前が表示されます。</p>
+          </div>
+          <div style="margin-top:12px;">
+            <label>希望時間帯（未選択＝指定なし）</label>
+            <div class="chip-group slot-chips" data-role="${role}"></div>
+          </div>
+          ${companionHtml}
         </div>
         <div style="margin-top:12px;max-width:320px;">
-          <label>担当スタッフ（未選択＝指定なし。空いているスタッフから自動で提案します）</label>
+          <label class="preferred-staff-label" data-role="${role}">担当スタッフ（未選択＝指定なし。空いているスタッフから自動で提案します）</label>
           <select class="f-preferred-staff" data-role="${role}">
             <option value="">指定なし</option>
             ${staffNames(role).map(n=>{
@@ -1512,35 +1634,21 @@ function buildRoleSections(){
             }).join('')}
           </select>
         </div>
-        <div style="margin-top:12px;">
-          <label class="day-chips-label" data-role="${role}">希望曜日（未選択＝指定なし。土・日も選択できます）</label>
-          <div class="chip-group day-chips" data-role="${role}"></div>
-        </div>
-        <div style="margin-top:12px;background:var(--amber-tint);border:1px solid var(--amber);border-radius:8px;padding:8px 12px;">
-          <label style="display:flex;align-items:center;gap:6px;font-weight:600;margin-bottom:0;">
-            <input type="checkbox" class="f-weekend-exception" data-role="${role}" style="width:auto;">
-            特例（通常の勤務体系に関わらず、指定した曜日・スタッフに土日訪問として登録する）
-          </label>
-          <p class="page-sub" style="margin:4px 0 0;">土曜・日曜への訪問がどうしても必要な方向けの特例登録です。チェックを入れると、⑨設定で土日勤務がOFFのスタッフも候補に含めて提案します。登録後は①②の土日欄に名前が表示されます。</p>
-        </div>
-        <div style="margin-top:12px;">
-          <label>希望時間帯（未選択＝指定なし）</label>
-          <div class="chip-group slot-chips" data-role="${role}"></div>
-        </div>
         <div style="margin-top:12px;max-width:220px;">
           <label>サービス時間</label>
           <select class="f-duration" data-role="${role}">
             ${durationOptionsFor(role).map(d=>`<option value="${d}" ${d==='60'?'selected':''}>${d}分</option>`).join('')}
           </select>
         </div>
-        ${companionHtml}
       </div>`;
   }).join('');
 
   selectedRoles.forEach(role=>{
     updatePatternUIFor(role);
     buildSlotChipsFor(role);
+    syncIrregularVisibility(role);
     wrap.querySelector(`.f-pattern[data-role="${role}"]`).addEventListener('change', ()=>updatePatternUIFor(role));
+    wrap.querySelector(`.f-irregular[data-role="${role}"]`).addEventListener('change', ()=>syncIrregularVisibility(role));
     if(role==='看護師'){
       const durationSel = wrap.querySelector(`.f-duration[data-role="${role}"]`);
       const companionOuter = wrap.querySelector(`.companion-outer-wrap[data-role="${role}"]`);
@@ -1561,6 +1669,20 @@ function buildRoleSections(){
       });
     }
   });
+}
+function syncIrregularVisibility(role){
+  const wrap = document.getElementById('roleSections');
+  const cb = wrap.querySelector(`.f-irregular[data-role="${role}"]`);
+  const scheduleFields = wrap.querySelector(`.schedule-fields[data-role="${role}"]`);
+  const staffLabel = wrap.querySelector(`.preferred-staff-label[data-role="${role}"]`);
+  if(!cb || !scheduleFields) return;
+  const on = cb.checked;
+  scheduleFields.style.display = on ? 'none' : '';
+  if(staffLabel){
+    staffLabel.textContent = on
+      ? '担当スタッフ（不定期枠のため必須）'
+      : '担当スタッフ（未選択＝指定なし。空いているスタッフから自動で提案します）';
+  }
 }
 function updatePatternUIFor(role){
   const wrap = document.getElementById('roleSections');
@@ -1949,17 +2071,36 @@ async function confirmSuggestion(s, patient, patternValue, role){
   const box = document.getElementById('suggestions');
   box.querySelectorAll(`.sugg-card[data-role="${role}"]`).forEach(el=>el.remove());
   box.querySelectorAll(`[data-role-heading="${role}"]`).forEach(el=>el.remove());
-  if(!box.querySelector('.sugg-card')){
-    // 全ての職種の提案が確定済み（他の職種の提案が残っていない）ときだけフォームをリセットする
-    box.innerHTML = '';
-    document.getElementById('intakeForm').reset();
-    hideExistingPatientNotice();
-    selectedRoles = ['看護師'];
-    CAREGIVER_ROLES.forEach(r=>{ selectedDaysByRole[r] = []; selectedSlotsByRole[r] = []; });
-    buildRoleChips();
-    buildRoleSections();
-  }
+  resetIntakeFormIfComplete();
   renderOverview('看護師'); renderOverview('セラピスト');
+}
+function resetIntakeFormIfComplete(){
+  // 全ての職種の提案カードが確定済み（他の職種の提案が残っていない）ときだけフォームをリセットする
+  const box = document.getElementById('suggestions');
+  if(box.querySelector('.sugg-card')) return;
+  box.innerHTML = '';
+  document.getElementById('intakeForm').reset();
+  hideExistingPatientNotice();
+  selectedRoles = ['看護師'];
+  CAREGIVER_ROLES.forEach(r=>{ selectedDaysByRole[r] = []; selectedSlotsByRole[r] = []; });
+  buildRoleChips();
+  buildRoleSections();
+}
+async function registerIrregularPatient(role, patient, staff){
+  const id = newId();
+  state.irregularBookings.push({
+    id, staff, role,
+    name: patient.name, disease: patient.disease, insuranceType: patient.insuranceType,
+    alone: patient.alone, careManager: patient.careManager, hospital: patient.hospital,
+    district: patient.district, note: patient.note, timeNote: patient.timeNote,
+    serviceDuration: patient.serviceDuration, startDate: todayStr()
+  });
+  state.eventLog.push({
+    id: newId(), type:'新規', date: todayStr(), name: patient.name,
+    staff, day:'不定期', slot:null, careManager: patient.careManager, hospital: patient.hospital
+  });
+  await saveState();
+  showToast(`${patient.name || '利用者様'} を${role}の不定期枠として登録しました（担当：${staff}）`);
 }
 
 // 既存利用者への「サービス内容の追加」対応：同姓同名の登録中の予約があれば案内し、内容の引き継ぎができるようにする
@@ -2030,7 +2171,7 @@ function goToIntakeToAddVisit(name){
   showToast(`${name} 様の登録済みの内容を引き継ぎました。空き枠を探して追加登録してください`);
 }
 
-document.getElementById('intakeForm').addEventListener('submit', (e)=>{
+document.getElementById('intakeForm').addEventListener('submit', async (e)=>{
   e.preventDefault();
   const roles = selectedRoles.slice();
   const roleSectionsWrap = document.getElementById('roleSections');
@@ -2048,13 +2189,42 @@ document.getElementById('intakeForm').addEventListener('submit', (e)=>{
   const box = document.getElementById('suggestions');
   box.innerHTML = '';
   const showRoleHeading = roles.length>1;
-  roles.forEach(role=>{
+  let anyImmediateRegistration = false;
+  for(const role of roles){
+    const isIrregular = roleSectionsWrap.querySelector(`.f-irregular[data-role="${role}"]`).checked;
+    const serviceDuration = roleSectionsWrap.querySelector(`.f-duration[data-role="${role}"]`).value;
+    const preferredStaff = roleSectionsWrap.querySelector(`.f-preferred-staff[data-role="${role}"]`).value;
+    const patient = Object.assign({}, sharedFields, { serviceDuration });
+
+    if(isIrregular){
+      if(showRoleHeading){
+        const h = document.createElement('div');
+        h.style.cssText = 'font-weight:700;font-size:14px;margin-top:6px;';
+        h.textContent = role + 'の提案候補';
+        h.dataset.roleHeading = role;
+        box.appendChild(h);
+      }
+      if(!preferredStaff){
+        const empty = document.createElement('div');
+        empty.className = 'empty-msg';
+        empty.textContent = '不定期枠として登録するには、担当スタッフを選択してください。';
+        box.appendChild(empty);
+        continue;
+      }
+      await registerIrregularPatient(role, patient, preferredStaff);
+      anyImmediateRegistration = true;
+      const done = document.createElement('div');
+      done.className = 'empty-msg';
+      done.style.cssText = 'background:var(--sage-tint);color:var(--teal-deep);';
+      done.textContent = `${patient.name || '利用者様'} を${role}の不定期枠として登録しました（担当：${preferredStaff}）。①②の「不定期枠」欄に表示されます。`;
+      box.appendChild(done);
+      continue;
+    }
+
     const patternValue = roleSectionsWrap.querySelector(`.f-pattern[data-role="${role}"]`).value;
     const pattern = PATTERNS[patternValue];
     const freq = Number(roleSectionsWrap.querySelector(`.f-freq[data-role="${role}"]`).value);
-    const serviceDuration = roleSectionsWrap.querySelector(`.f-duration[data-role="${role}"]`).value;
     const weekendException = roleSectionsWrap.querySelector(`.f-weekend-exception[data-role="${role}"]`).checked;
-    const preferredStaff = roleSectionsWrap.querySelector(`.f-preferred-staff[data-role="${role}"]`).value;
     const days = selectedDaysByRole[role] || [];
     const slots = selectedSlotsByRole[role] || [];
 
@@ -2074,7 +2244,7 @@ document.getElementById('intakeForm').addEventListener('submit', (e)=>{
         }
       }
     }
-    const patient = Object.assign({}, sharedFields, { serviceDuration, companion, freq });
+    Object.assign(patient, { companion, freq });
 
     const sugg = pattern.kind==='weekly'
       ? findWeeklySuggestions(freq, days, slots, role, !!pattern.includeWeekend, weekendException, preferredStaff)
@@ -2093,7 +2263,7 @@ document.getElementById('intakeForm').addEventListener('submit', (e)=>{
         ? `「${preferredStaff}」さんの条件に合う空き枠が見つかりませんでした。曜日・時間帯の希望が合っていないか、既に埋まっている可能性があります。`
         : `条件に合う空き枠が見つかりませんでした（${role}）。${role}の登録がない、または曜日・時間の希望が合っていない可能性があります。`;
       box.appendChild(empty);
-      return;
+      continue;
     }
     sugg.forEach(s=>{
       const info = labelSuggestion(s, days, role);
@@ -2111,7 +2281,11 @@ document.getElementById('intakeForm').addEventListener('submit', (e)=>{
       card.querySelector('button').addEventListener('click', ()=>confirmSuggestion(s, patient, patternValue, role));
       box.appendChild(card);
     });
-  });
+  }
+  if(anyImmediateRegistration){
+    resetIntakeFormIfComplete();
+    renderOverview('看護師'); renderOverview('セラピスト');
+  }
 });
 
 // ---------- ④ 利用者検索 ----------
@@ -2215,6 +2389,99 @@ function buildPatientScheduleHtml(name, bookings){
   </table>
   <div class="footer">土曜・日曜は通常休診日です。予定の変更についてはお問い合わせください。</div>
 </body></html>`;
+}
+// ①②「🖨 PDF出力」：曜日×時間帯の色つきマス目（.blk）は画面上の一覧性重視のレイアウトで、
+// 印刷してもマスの色だけでは利用者名が読めない。そのため印刷時は別ウィンドウに、
+// スタッフ×曜日で利用者名をテキストとして読める一覧表を組み立てて印刷する
+// （週間予定表PDFと同じ、window.open+document.write+window.print()のパターン）。
+// A4縦1枚に月〜金5日分を収めるのは現実的でないため、月〜水で1ページ・木〜金＋不定期枠で
+// 1ページの計2ページに分けている（page-break-afterで強制改ページ）。
+function rosterCellContent(staff, day, role){
+  const nSlots = slotCount(role);
+  const slotLabels = slotLabelsFor(role);
+  const items = [];
+  for(let i=0;i<nSlots;i++){
+    bookingsAt(staff, day, i).forEach(b=>{
+      const noteBits = [];
+      const patLabel = patternLabelOf(b);
+      if(patLabel && patLabel!=='毎週') noteBits.push(patLabel);
+      if(b.hospitalized) noteBits.push('入院中');
+      const note = noteBits.length ? `（${noteBits.join('／')}）` : '';
+      items.push(`<div class="roster-visit">${slotLabels[i]}〜 ${b.name||'（名前未登録）'}${note}</div>`);
+    });
+  }
+  return items.join('') || '';
+}
+function rosterTableHtml(role, days, names){
+  const headCells = days.map(d=>`<th>${d}</th>`).join('');
+  const rows = names.map(staff=>{
+    const profTag = role==='セラピスト' ? `<div class="roster-prof">${staffInfo(staff).role}</div>` : '';
+    const cells = days.map(d=>`<td>${rosterCellContent(staff, d, role)}</td>`).join('');
+    return `<tr><td class="roster-staff">${staff}${profTag}</td>${cells}</tr>`;
+  }).join('');
+  return `<table class="roster-table"><tr><th>担当スタッフ</th>${headCells}</tr>${rows}</table>`;
+}
+function rosterIrregularHtml(role){
+  const rows = irregularBookingsFor(role);
+  if(!rows.length) return `<p class="roster-empty">不定期枠として登録されている利用者様はいません。</p>`;
+  return `<table class="roster-table roster-irregular-table">
+    <tr><th>担当スタッフ</th><th>利用者名</th><th>備考</th></tr>
+    ${rows.map(r=>`<tr><td>${r.staff}</td><td>${r.name||'（名前未登録）'}</td><td>${[r.timeNote,r.note].filter(Boolean).join('／')||'―'}</td></tr>`).join('')}
+  </table>`;
+}
+function buildOverviewRosterHtml(role){
+  const names = staffNames(role);
+  const titleRole = role==='セラピスト' ? 'セラピスト' : '看護師';
+  const page1 = rosterTableHtml(role, ['月','火','水'], names);
+  const page2 = rosterTableHtml(role, ['木','金'], names);
+  const irregular = rosterIrregularHtml(role);
+  return `<!DOCTYPE html>
+<html lang="ja"><head><meta charset="UTF-8">
+<title>${titleRole}週間予定一覧　${todayStr()}</title>
+<style>
+  @page{ size:A4 portrait; margin:12mm; }
+  *{ box-sizing:border-box; }
+  body{ font-family:"Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",sans-serif; margin:0; color:#1a1a1a; }
+  .roster-page{ page-break-after:always; }
+  .roster-page:last-child{ page-break-after:auto; }
+  .roster-title{ font-size:18px; font-weight:700; margin-bottom:4px; }
+  .roster-date{ font-size:11px; color:#666; margin-bottom:10px; }
+  table.roster-table{ width:100%; border-collapse:collapse; table-layout:fixed; }
+  table.roster-table th, table.roster-table td{ border:1px solid #999; padding:4px 6px; font-size:10.5px; vertical-align:top; text-align:left; }
+  table.roster-table th{ background:#EFF4F2; font-weight:700; text-align:center; }
+  td.roster-staff{ font-weight:700; white-space:nowrap; width:15%; }
+  .roster-prof{ font-weight:400; font-size:9px; color:#666; }
+  .roster-visit{ line-height:1.4; }
+  .roster-visit + .roster-visit{ margin-top:3px; padding-top:3px; border-top:1px dashed #ccc; }
+  h3.roster-sub{ font-size:13px; margin:16px 0 6px; color:#1D4B44; }
+  .roster-empty{ font-size:11px; color:#666; }
+  @media print{ body{ padding:0; } }
+</style>
+</head>
+<body>
+  <div class="roster-page">
+    <div class="roster-title">${titleRole}　週間予定一覧（月〜水）</div>
+    <div class="roster-date">作成日：${todayStr()}</div>
+    ${page1}
+  </div>
+  <div class="roster-page">
+    <div class="roster-title">${titleRole}　週間予定一覧（木〜金）</div>
+    <div class="roster-date">作成日：${todayStr()}</div>
+    ${page2}
+    <h3 class="roster-sub">不定期枠</h3>
+    ${irregular}
+  </div>
+</body></html>`;
+}
+function printOverviewRoster(role){
+  const html = buildOverviewRosterHtml(role);
+  const win = window.open('', '_blank', 'width=1100,height=850');
+  if(!win){ alert('ポップアップがブロックされました。ブラウザの設定でこのサイトのポップアップを許可してください。'); return; }
+  win.document.open();
+  win.document.write(html);
+  win.document.close();
+  win.focus();
+  win.print();
 }
 function printPatientSchedule(name){
   const bookings = findExistingBookingsByName(name);

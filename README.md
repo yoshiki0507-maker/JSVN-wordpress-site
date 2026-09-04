@@ -86,6 +86,15 @@ state = {
                                // ⑤のページから直接新規登録した場合は空配列（③では看護師のみが選択された状態で開く）
     suspendedAt: string,      // 一時停止日（YYYY-MM-DD）
     reason: 'manual' | 'hospitalized_auto'  // 手動（④のチェック・⑤の直接登録） or 入院2ヶ月経過の自動移行
+  }, ...],
+  irregularBookings: [{
+    id, staff, role,           // staff: 担当スタッフ名（必須）。role: '看護師'|'理学療法士'|'作業療法士'|'言語聴覚士'
+    name, disease, insuranceType, alone, careManager, hospital, district, note, timeNote, serviceDuration,
+    startDate: string          // 登録日（YYYY-MM-DD）
+    // 曜日・時間帯を固定しない「不定期枠」の利用者様の記録。state.bookingsとは別の配列で管理し、
+    // day/slotIdxを持たないため①②の空き状況グリッド・空き枠数の計算・自動提案には一切関与しない
+    // （曜日を固定しない前提のため、他の利用者様の枠を塞ぐこともない）。①②の「不定期枠」欄
+    // （irregularBookingsFor(role)で職種ごとにフィルタして一覧表示）にのみ表示される。
   }, ...]
 }
 ```
@@ -270,6 +279,34 @@ role では区別できなかったのを解消した）が、②空き状況の
   同じ枠に表示される2枚のカードをそれぞれ個別に編集・終了できる。
 - 各画面の「🖨 PDF出力」ボタンはブラウザの印刷機能（`window.print()`）を呼び出す実装。専用ライブラリは
   使わず、印刷時は`@media print`でナビや操作ボタンを非表示にして該当パネルのみを出力する。
+  ただし①②の「🖨 PDF出力」（`.overview-print-btn`、`data-role`属性でどちらの画面かを判別）だけは例外で、
+  画面上の`.blk`マス目（色だけで空き状況を示す表示）をそのまま印刷しても利用者名が読めないため、
+  週間予定表PDF（`printPatientSchedule()`）と同じ`window.open()`＋`document.write()`＋`window.print()`の
+  パターンで、担当スタッフ×曜日で利用者名をテキストとして読める一覧表（`printOverviewRoster(role)`／
+  `buildOverviewRosterHtml(role)`）を別ウィンドウに組み立てて印刷する。月〜金の5日分をA4縦1枚に収める
+  のは現実的ではないため、月〜水（1ページ目）・木〜金＋不定期枠（2ページ目）の計2ページに分け
+  （`.roster-page`に`page-break-after:always`）、各セルには`rosterCellContent()`がその担当スタッフ・
+  その曜日の全時間帯の予約を「時刻〜 利用者名（隔週・月次パターンや入院中なら括弧書きで併記）」の
+  形でテキスト表示する（`.blk`と同じ`bookingsAt()`を使うがマス目ではなく文字で出す点だけが異なる）。
+  スタッフ人数や予約件数が多いと、ブラウザの自動改ページにより3ページ目以降に続くことがある
+  （2ページに収まらなければならない、という制約は設けていない）。
+- ①②の空き状況テーブルの下には「不定期枠」欄（`#irregularList-看護師`／`#irregularList-セラピスト`）
+  があり、曜日を固定せず担当スタッフだけを指定して訪問している利用者様を一覧表示する
+  （`irregularBookingsFor(role)`で`state.irregularBookings`を職種ごとにフィルタし、
+  `renderIrregularList(role)`が`buildIrregularRow()`で1行ずつ描画する）。登録は③新規登録・提案の
+  各職種セクションにある「不定期枠（曜日を固定せず、担当スタッフだけを指定して登録します）」
+  チェックボックス（`.f-irregular`）から行う。チェックすると、訪問頻度パターン・希望曜日・特例・
+  希望時間帯・（看護師の）ペア登録欄をまとめた`.schedule-fields`が非表示になり（`syncIrregularVisibility()`）、
+  代わりに「担当スタッフ」欄が必須になる（未選択のまま送信すると案内を表示）。フォーム送信時、
+  不定期枠がONの職種は`findWeeklySuggestions()`による空き枠探索を行わず、`registerIrregularPatient()`が
+  `state.irregularBookings`に直接1件追加する（提案カードでの「この案で確定」は不要で、送信した
+  時点で即登録される）。曜日・時間帯を持たないため、①②の空き枠数の計算・自動提案（`occupiedWeeksAt()`
+  など）には一切関与しない（他の利用者様の枠を塞がない）。①②の一覧の「編集する」から開く
+  `openIrregularModal()`は、④利用者検索などと同じ`#slotModal`を再利用した専用フォームで、
+  担当スタッフを含む全項目の編集と、終了理由を選んでの終了（`state.irregularBookings`からの削除）が
+  行える。新規登録・終了はどちらも`eventLog`に記録するため（`day:'不定期', slot:null`という
+  プレースホルダー値で記録するだけで、実際の集計ロジックはeventLogの`day`/`slot`を参照しないため
+  影響はない）、⑧月次レポートの新規・終了件数にも通常の予約と同様に反映される。
 - ⑦リスト分析・⑧月次レポートには「📥 CSV出力」ボタンもあり、そのパネル内に表示されているすべての
   表（`table.grid`）を、見出し（h3）ごとにまとめて1つのCSVファイルとしてダウンロードできる
   （`exportPanelCsv(panelId, filename)`。Excelで文字化けしないようUTF-8 BOM付きで出力）。
