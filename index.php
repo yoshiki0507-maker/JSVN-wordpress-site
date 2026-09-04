@@ -2432,9 +2432,12 @@ function buildPatientScheduleHtml(name, bookings){
 // 曜日ごと×時間帯で利用者名をテキストとして読める一覧表を組み立てて印刷する
 // （週間予定表PDFと同じ、window.open+document.write+window.print()のパターン。ユーザーが
 // 提示した「利用者様スケジュール管理表」＝曜日で区切り、時間帯を列に並べる形式を参考にした）。
-// A4縦1枚に月〜金5日分を収めるのは現実的でないため、月〜水で1ページ・木〜金＋不定期枠で
-// 1ページの計2ページに分けている（page-break-afterで強制改ページ）。行数を抑えて2ページに
-// 収まりやすくするため、その日1件も訪問が無いスタッフの行はまるごと省略する。
+// 行数を抑えるため、その日1件も訪問が無いスタッフの行はまるごと省略する。空きセルは、
+// そのスタッフがそもそも勤務しない曜日・時間帯（非勤務、グレー）と、勤務はしているが予約が
+// 入っていない曜日・時間帯（空き、①②のマス目と同じ緑）を区別して色分けする。①②の非勤務マス目は
+// 淡いグレー（#EEEFEC）だが、この一覧表は文字のない大きめのセルを塗りつぶす形になるため、空きの
+// 緑（#E7F1E7）と輝度がほぼ同じで見分けづらい。白黒印刷でも判別できるよう、はっきり濃いグレー
+// （#D6D6D6）にしている。
 function rosterDaySectionHtml(role, day, names){
   const slotLabels = slotLabelsFor(role);
   const nSlots = slotLabels.length;
@@ -2451,15 +2454,21 @@ function rosterDaySectionHtml(role, day, names){
     const cells = [];
     for(let i=0;i<nSlots;i++){
       const bks = bookingsAt(staff, day, i);
-      const items = bks.map(b=>{
-        const noteBits = [];
-        const patLabel = patternLabelOf(b);
-        if(patLabel && patLabel!=='毎週') noteBits.push(patLabel);
-        if(b.hospitalized) noteBits.push('入院中');
-        const note = noteBits.length ? `（${noteBits.join('／')}）` : '';
-        return `<div class="roster-visit">${b.name||'（名前未登録）'}${note}</div>`;
-      }).join('');
-      cells.push(bks.length ? `<td>${items}</td>` : `<td class="roster-cell-free"></td>`);
+      if(bks.length){
+        const items = bks.map(b=>{
+          const noteBits = [];
+          const patLabel = patternLabelOf(b);
+          if(patLabel && patLabel!=='毎週') noteBits.push(patLabel);
+          if(b.hospitalized) noteBits.push('入院中');
+          const note = noteBits.length ? `（${noteBits.join('／')}）` : '';
+          return `<div class="roster-visit">${b.name||'（名前未登録）'}${note}</div>`;
+        }).join('');
+        cells.push(`<td>${items}</td>`);
+      }else if(worksOnSlot(staff, day, i)){
+        cells.push(`<td class="roster-cell-free"></td>`);
+      }else{
+        cells.push(`<td class="roster-cell-off"></td>`);
+      }
     }
     return `<tr><td class="roster-staff">${staff}${profTag}</td>${cells.join('')}</tr>`;
   }).join('');
@@ -2476,11 +2485,14 @@ function rosterIrregularHtml(role){
     ${rows.map(r=>`<tr><td>${r.staff}</td><td>${r.name||'（名前未登録）'}</td><td>${[r.timeNote,r.note].filter(Boolean).join('／')||'―'}</td></tr>`).join('')}
   </table>`;
 }
+// 以前は月〜水／木〜金＋不定期枠で強制的に2ページへ分割していたが、事業所によっては
+// 1ページに収まる／逆にもっと詰める必要がある場合があるため、月〜金＋不定期枠を1つの
+// 連続したコンテンツとして流し込み、実際の分量に応じてprintOverviewRoster()側で
+// 「1ページに収まるならそのまま・収まらなければ2ページにバランスよく分割」を自動判定する。
 function buildOverviewRosterHtml(role){
   const names = staffNames(role);
   const titleRole = role==='セラピスト' ? 'セラピスト' : '看護師';
-  const page1 = ['月','火','水'].map(d=>rosterDaySectionHtml(role, d, names)).join('');
-  const page2 = ['木','金'].map(d=>rosterDaySectionHtml(role, d, names)).join('');
+  const days = ['月','火','水','木','金'].map(d=>rosterDaySectionHtml(role, d, names)).join('');
   const irregular = rosterIrregularHtml(role);
   return `<!DOCTYPE html>
 <html lang="ja"><head><meta charset="UTF-8">
@@ -2489,12 +2501,13 @@ function buildOverviewRosterHtml(role){
   @page{ size:A4 portrait; margin:10mm; }
   *{ box-sizing:border-box; }
   body{ font-family:"Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",sans-serif; margin:0; color:#1a1a1a; }
-  .roster-page{ page-break-after:always; }
-  .roster-page:last-child{ page-break-after:auto; }
   .roster-title{ font-size:16px; font-weight:700; margin-bottom:3px; }
   .roster-date{ font-size:10px; color:#666; margin-bottom:4px; }
-  .roster-legend{ font-size:9px; color:#555; margin-bottom:6px; display:flex; align-items:center; gap:5px; }
-  .roster-legend i{ width:10px; height:10px; border-radius:2px; background:#E7F1E7; border:1px solid #5F8A66; display:inline-block; }
+  .roster-legend{ font-size:9px; color:#555; margin-bottom:6px; display:flex; align-items:center; gap:14px; }
+  .roster-legend span{ display:inline-flex; align-items:center; gap:5px; }
+  .roster-legend i{ width:10px; height:10px; border-radius:2px; display:inline-block; }
+  .roster-legend i.free{ background:#E7F1E7; border:1px solid #5F8A66; }
+  .roster-legend i.off{ background:#D6D6D6; border:1px solid #999; }
   .roster-day-block{ margin-bottom:5px; page-break-inside:avoid; }
   .roster-day-title{ font-size:11px; font-weight:700; background:#EFF4F2; color:#1D4B44; padding:1px 6px; margin-bottom:1px; }
   table.roster-table{ width:100%; border-collapse:collapse; table-layout:fixed; }
@@ -2502,28 +2515,23 @@ function buildOverviewRosterHtml(role){
   table.roster-table th{ background:#F5F7F5; font-weight:700; text-align:center; }
   td.roster-staff{ font-weight:700; white-space:nowrap; width:13%; }
   td.roster-cell-free{ background:#E7F1E7; }
+  td.roster-cell-off{ background:#D6D6D6; }
   .roster-prof{ font-weight:400; font-size:7px; color:#666; }
   .roster-visit{ line-height:1.25; }
   .roster-visit + .roster-visit{ margin-top:1px; padding-top:1px; border-top:1px dashed #ccc; }
-  h3.roster-sub{ font-size:12px; margin:8px 0 3px; color:#1D4B44; }
+  h3.roster-sub{ font-size:12px; margin:8px 0 3px; color:#1D4B44; page-break-after:avoid; }
   .roster-empty{ font-size:10px; color:#666; margin:2px 0 8px; }
   .roster-tip{ font-size:10px; color:#B8862F; margin:0 0 8px; }
   @media print{ body{ padding:0; } .roster-tip{ display:none; } }
 </style>
 </head>
 <body>
-  <div class="roster-tip">💡 印刷ダイアログの詳細設定で「ヘッダーとフッター」のチェックを外すと、より確実にA4 2枚に収まります。</div>
-  <div class="roster-page">
-    <div class="roster-title">${titleRole}　週間予定一覧（月〜水）</div>
+  <div class="roster-tip">💡 印刷ダイアログの詳細設定で「ヘッダーとフッター」のチェックを外すと、より確実にレイアウトどおりに収まります。</div>
+  <div class="roster-content">
+    <div class="roster-title">${titleRole}　週間予定一覧（月〜金）</div>
     <div class="roster-date">作成日：${todayStr()}</div>
-    <div class="roster-legend"><i></i>空き</div>
-    ${page1}
-  </div>
-  <div class="roster-page">
-    <div class="roster-title">${titleRole}　週間予定一覧（木〜金）</div>
-    <div class="roster-date">作成日：${todayStr()}</div>
-    <div class="roster-legend"><i></i>空き</div>
-    ${page2}
+    <div class="roster-legend"><span><i class="free"></i>空き</span><span><i class="off"></i>非勤務</span></div>
+    ${days}
     <h3 class="roster-sub">不定期枠</h3>
     ${irregular}
   </div>
@@ -2537,29 +2545,33 @@ function printOverviewRoster(role){
   win.document.write(html);
   win.document.close();
   // スタッフ数・訪問件数が多い事業所では、固定フォントサイズのままだと1ページに収まらない
-  // ことがある。各.roster-page（月〜水／木〜金＋不定期枠）の実際の高さをA4縦の印字可能領域
-  // と比較し、はみ出す場合だけCSS zoomで縮小してA4 1枚に収める（zoomはtransformと違い印刷時の
-  // ページ分割計算にも反映されるChromium系ブラウザでの実測に基づく）。目標高さはA4の理論値
+  // ことがある一方、少ない事業所では2ページに強制分割すると不自然に余白の多いページができる。
+  // そのため月〜金＋不定期枠を1つの.roster-contentとして流し込み、実際の高さを測って
+  // 「1ページに収まるならそのまま（軽い縮小のみ）」「収まらなければ2ページ分の高さを目標に
+  // まとめて縮小してバランスよく分割」の2段階で自動調整する（CSS zoomは印刷時のページ分割
+  // 計算にも反映されるChromium系ブラウザでの実測に基づく採用）。目標高さはA4の理論値
   // （@pageのmargin 10mm×2を差し引いた約277mm＝96CSS px/inch換算で約1046px）よりかなり
-  // 低めに設定している。ブラウザの印刷ダイアログで「ヘッダーとフッター」（URLや日付・ページ番号）
-  // が有効だと、@pageのmarginとは別に上下の印字可能領域がさらに削られるため、その分の余白を
-  // 見込んでおかないと実際の印刷でページが溢れる（1回のzoom計算だけでは正確な倍率にならない
-  // ことがあるため、再測定しながら数回かけて収束させる）。文字が読めなくなりすぎないよう
-  // 縮小率は0.45を下限にしている（それでも収まらない極端な場合のみ複数ページに続く）。
+  // 低め（880px）にしている。ブラウザの印刷ダイアログで「ヘッダーとフッター」が有効だと、
+  // @pageのmarginとは別に上下の印字可能領域がさらに削られるため、その分の余白を見込んでいる。
   const USABLE_HEIGHT_PX = 880;
-  const ZOOM_FLOOR = 0.45;
-  win.document.querySelectorAll('.roster-page').forEach(pageEl=>{
-    let zoom = 1;
-    pageEl.style.zoom = '1';
-    for(let i=0;i<6;i++){
-      const h = pageEl.scrollHeight;
-      if(h <= USABLE_HEIGHT_PX || zoom <= ZOOM_FLOOR) break;
-      const nextZoom = Math.max(ZOOM_FLOOR, zoom * (USABLE_HEIGHT_PX / h));
-      if(Math.abs(nextZoom - zoom) < 0.004) break;
-      zoom = nextZoom;
-      pageEl.style.zoom = String(zoom);
-    }
-  });
+  const ONE_PAGE_FLOOR = 0.72;  // 1ページに収める場合、読みにくくなりすぎない縮小率の下限
+  const TWO_PAGE_FLOOR = 0.45;  // 2ページに分ける場合は、これより小さくは縮小しない
+  const el = win.document.querySelector('.roster-content');
+  el.style.zoom = '1';
+  const naturalHeight = el.scrollHeight;
+  const targetHeight = (naturalHeight <= USABLE_HEIGHT_PX || naturalHeight * ONE_PAGE_FLOOR <= USABLE_HEIGHT_PX)
+    ? USABLE_HEIGHT_PX          // 1ページに収まる、または軽い縮小で収まる
+    : USABLE_HEIGHT_PX * 2;     // それ以外は2ページ分の高さを目標にバランスよく分割
+  const floor = targetHeight === USABLE_HEIGHT_PX ? ONE_PAGE_FLOOR : TWO_PAGE_FLOOR;
+  let zoom = 1;
+  for(let i=0;i<6;i++){
+    const h = el.scrollHeight;
+    if(h <= targetHeight || zoom <= floor) break;
+    const nextZoom = Math.max(floor, zoom * (targetHeight / h));
+    if(Math.abs(nextZoom - zoom) < 0.004) break;
+    zoom = nextZoom;
+    el.style.zoom = String(zoom);
+  }
   win.focus();
   win.print();
 }
