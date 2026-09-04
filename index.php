@@ -2413,7 +2413,8 @@ function rosterDaySectionHtml(role, day, names){
     const profTag = role==='セラピスト' ? `<span class="roster-prof">${staffInfo(staff).role}</span>` : '';
     const cells = [];
     for(let i=0;i<nSlots;i++){
-      const items = bookingsAt(staff, day, i).map(b=>{
+      const bks = bookingsAt(staff, day, i);
+      const items = bks.map(b=>{
         const noteBits = [];
         const patLabel = patternLabelOf(b);
         if(patLabel && patLabel!=='毎週') noteBits.push(patLabel);
@@ -2421,7 +2422,7 @@ function rosterDaySectionHtml(role, day, names){
         const note = noteBits.length ? `（${noteBits.join('／')}）` : '';
         return `<div class="roster-visit">${b.name||'（名前未登録）'}${note}</div>`;
       }).join('');
-      cells.push(`<td>${items}</td>`);
+      cells.push(bks.length ? `<td>${items}</td>` : `<td class="roster-cell-free"></td>`);
     }
     return `<tr><td class="roster-staff">${staff}${profTag}</td>${cells.join('')}</tr>`;
   }).join('');
@@ -2454,30 +2455,37 @@ function buildOverviewRosterHtml(role){
   .roster-page{ page-break-after:always; }
   .roster-page:last-child{ page-break-after:auto; }
   .roster-title{ font-size:16px; font-weight:700; margin-bottom:3px; }
-  .roster-date{ font-size:10px; color:#666; margin-bottom:8px; }
-  .roster-day-block{ margin-bottom:6px; page-break-inside:avoid; }
-  .roster-day-title{ font-size:11.5px; font-weight:700; background:#EFF4F2; color:#1D4B44; padding:2px 6px; margin-bottom:2px; }
+  .roster-date{ font-size:10px; color:#666; margin-bottom:4px; }
+  .roster-legend{ font-size:9px; color:#555; margin-bottom:6px; display:flex; align-items:center; gap:5px; }
+  .roster-legend i{ width:10px; height:10px; border-radius:2px; background:#E7F1E7; border:1px solid #5F8A66; display:inline-block; }
+  .roster-day-block{ margin-bottom:5px; page-break-inside:avoid; }
+  .roster-day-title{ font-size:11px; font-weight:700; background:#EFF4F2; color:#1D4B44; padding:1px 6px; margin-bottom:1px; }
   table.roster-table{ width:100%; border-collapse:collapse; table-layout:fixed; }
-  table.roster-table th, table.roster-table td{ border:1px solid #999; padding:2px 4px; font-size:9px; vertical-align:top; text-align:left; }
+  table.roster-table th, table.roster-table td{ border:1px solid #999; padding:1px 3px; font-size:8px; vertical-align:top; text-align:left; }
   table.roster-table th{ background:#F5F7F5; font-weight:700; text-align:center; }
   td.roster-staff{ font-weight:700; white-space:nowrap; width:13%; }
-  .roster-prof{ font-weight:400; font-size:7.5px; color:#666; }
-  .roster-visit{ line-height:1.3; }
-  .roster-visit + .roster-visit{ margin-top:2px; padding-top:2px; border-top:1px dashed #ccc; }
-  h3.roster-sub{ font-size:12px; margin:10px 0 4px; color:#1D4B44; }
+  td.roster-cell-free{ background:#E7F1E7; }
+  .roster-prof{ font-weight:400; font-size:7px; color:#666; }
+  .roster-visit{ line-height:1.25; }
+  .roster-visit + .roster-visit{ margin-top:1px; padding-top:1px; border-top:1px dashed #ccc; }
+  h3.roster-sub{ font-size:12px; margin:8px 0 3px; color:#1D4B44; }
   .roster-empty{ font-size:10px; color:#666; margin:2px 0 8px; }
-  @media print{ body{ padding:0; } }
+  .roster-tip{ font-size:10px; color:#B8862F; margin:0 0 8px; }
+  @media print{ body{ padding:0; } .roster-tip{ display:none; } }
 </style>
 </head>
 <body>
+  <div class="roster-tip">💡 印刷ダイアログの詳細設定で「ヘッダーとフッター」のチェックを外すと、より確実にA4 2枚に収まります。</div>
   <div class="roster-page">
     <div class="roster-title">${titleRole}　週間予定一覧（月〜水）</div>
     <div class="roster-date">作成日：${todayStr()}</div>
+    <div class="roster-legend"><i></i>空き</div>
     ${page1}
   </div>
   <div class="roster-page">
     <div class="roster-title">${titleRole}　週間予定一覧（木〜金）</div>
     <div class="roster-date">作成日：${todayStr()}</div>
+    <div class="roster-legend"><i></i>空き</div>
     ${page2}
     <h3 class="roster-sub">不定期枠</h3>
     ${irregular}
@@ -2493,17 +2501,26 @@ function printOverviewRoster(role){
   win.document.close();
   // スタッフ数・訪問件数が多い事業所では、固定フォントサイズのままだと1ページに収まらない
   // ことがある。各.roster-page（月〜水／木〜金＋不定期枠）の実際の高さをA4縦の印字可能領域
-  // （@pageのmargin 10mm×2を差し引いた約277mm＝96CSS px/inch換算で約1046px）と比較し、
-  // はみ出す場合だけCSS zoomで縮小してA4 1枚に収める（zoomはtransformと違い印刷時の
-  // ページ分割計算にも反映されるChromium系ブラウザでの実測に基づく）。文字が読めなく
-  // ならないよう縮小率は0.6を下限にしている（それでも収まらない場合はそのまま複数ページに続く）。
-  const USABLE_HEIGHT_PX = 1046;
-  const ZOOM_FLOOR = 0.6;
+  // と比較し、はみ出す場合だけCSS zoomで縮小してA4 1枚に収める（zoomはtransformと違い印刷時の
+  // ページ分割計算にも反映されるChromium系ブラウザでの実測に基づく）。目標高さはA4の理論値
+  // （@pageのmargin 10mm×2を差し引いた約277mm＝96CSS px/inch換算で約1046px）よりかなり
+  // 低めに設定している。ブラウザの印刷ダイアログで「ヘッダーとフッター」（URLや日付・ページ番号）
+  // が有効だと、@pageのmarginとは別に上下の印字可能領域がさらに削られるため、その分の余白を
+  // 見込んでおかないと実際の印刷でページが溢れる（1回のzoom計算だけでは正確な倍率にならない
+  // ことがあるため、再測定しながら数回かけて収束させる）。文字が読めなくなりすぎないよう
+  // 縮小率は0.45を下限にしている（それでも収まらない極端な場合のみ複数ページに続く）。
+  const USABLE_HEIGHT_PX = 880;
+  const ZOOM_FLOOR = 0.45;
   win.document.querySelectorAll('.roster-page').forEach(pageEl=>{
+    let zoom = 1;
     pageEl.style.zoom = '1';
-    const h = pageEl.scrollHeight;
-    if(h > USABLE_HEIGHT_PX){
-      pageEl.style.zoom = String(Math.max(ZOOM_FLOOR, USABLE_HEIGHT_PX / h));
+    for(let i=0;i<6;i++){
+      const h = pageEl.scrollHeight;
+      if(h <= USABLE_HEIGHT_PX || zoom <= ZOOM_FLOOR) break;
+      const nextZoom = Math.max(ZOOM_FLOOR, zoom * (USABLE_HEIGHT_PX / h));
+      if(Math.abs(nextZoom - zoom) < 0.004) break;
+      zoom = nextZoom;
+      pageEl.style.zoom = String(zoom);
     }
   });
   win.focus();
