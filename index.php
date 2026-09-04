@@ -3337,9 +3337,9 @@ function buildBcpNetworkHtml(){
     <div class="orgchart">
       <div class="oc-root"><div class="oc-box">訪問看護ステーション</div></div>
     </div>
-    <div class="oc-section-label">緊急連絡網〈職員〉（全職員を人数均等に4グループへ自動分割）</div>
+    <div class="oc-section-label">緊急連絡網〈職員〉</div>
     <div class="oc-level">${staffBranches}</div>
-    <div class="oc-section-label" style="margin-top:12px;">緊急連絡網〈利用者様〉（医療機関別・利用者数が均等になるよう4グループへ自動分割）</div>
+    <div class="oc-section-label" style="margin-top:12px;">緊急連絡網〈利用者様〉</div>
     <div class="oc-level">${hospBranches}</div>
   </div>
 </body></html>`;
