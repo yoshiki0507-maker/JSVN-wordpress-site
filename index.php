@@ -406,6 +406,7 @@ require __DIR__ . '/lib/auth.php';
     <section id="panel-staff" class="panel">
       <h2 class="page-title">スタッフ管理</h2>
       <p class="page-sub">看護師・理学療法士・作業療法士・言語聴覚士・事務員の追加や削除ができます。削除は、そのスタッフに現在ご利用中の予定がない場合のみ行えます。↑↓で並び順を自由に変更できます（①②の表示順に反映されます）。名前はそのまま書き換えられます。資格・専門性はスタッフごとに複数登録できます。事務員は名簿に載るだけで、空き状況の対象にはなりません。理学療法士・作業療法士・言語聴覚士は②空き状況〈セラピスト〉画面・時間帯設定・空き枠数の計算調整を共有しますが、新規登録・提案では職種ごとに独立して訪問頻度パターンや希望曜日を指定できます。職種は名前の右のプルダウンからいつでも変更できます（例えば旧仕様で「セラピスト」として登録されていた方は、ここで理学療法士・作業療法士・言語聴覚士のいずれかに変更してください）。</p>
+      <div class="summary-row" id="staffRoleCounts" style="margin-bottom:18px;"></div>
       <div id="staffList"></div>
       <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center;">
         <input type="text" id="newStaffName" placeholder="スタッフ名" style="max-width:180px;">
@@ -567,8 +568,16 @@ require __DIR__ . '/lib/auth.php';
         </div>
       </div>
       <p class="page-sub">「居宅介護支援事業所」「医療機関（訪問看護指示書発行元）」ごとに、現在の実利用者数・全体に占める割合・直近の新規紹介数を集計します。※ここでの「割合」は自社の現在の利用者全体に占めるシェアという意味で計算しています（各事業所が抱える利用者全体の中での割合ではありません）。</p>
-      <div class="summary-card" style="max-width:220px;margin:14px 0 22px;">
-        <div class="day">利用者総数</div><div class="num" id="referralTotalPatients">0</div><div class="unit">人（現在ご利用中・氏名で重複を除いた人数）</div>
+      <div class="summary-row" style="margin:14px 0 22px;">
+        <div class="summary-card">
+          <div class="day">利用者総数</div><div class="num" id="referralTotalPatients">0</div><div class="unit">人（現在ご利用中・氏名で重複を除いた人数）</div>
+        </div>
+        <div class="summary-card">
+          <div class="day">居宅介護支援事業所数</div><div class="num" id="referralTotalCareManagers">0</div><div class="unit">件（現在利用者様がいる事業所数）</div>
+        </div>
+        <div class="summary-card">
+          <div class="day">医療機関数</div><div class="num" id="referralTotalHospitals">0</div><div class="unit">件（現在利用者様がいる医療機関数）</div>
+        </div>
       </div>
       <h3 style="font-size:14px;color:var(--teal-deep);margin:22px 0 8px;">居宅介護支援事業所別</h3>
       <table class="grid" id="cmTable"></table>
@@ -670,22 +679,22 @@ require __DIR__ . '/lib/auth.php';
       <details class="settings-group">
         <summary>居宅介護支援事業所マスタ</summary>
         <div class="settings-group-body">
-          <div id="cmList"></div>
-          <div style="display:flex;gap:8px;margin-top:10px;">
+          <div style="display:flex;gap:8px;margin-bottom:10px;">
             <input type="text" id="newCmName" placeholder="事業所名を入力">
             <button class="btn btn-ghost btn-small" id="addCmBtn">＋ 追加</button>
           </div>
+          <div id="cmList"></div>
         </div>
       </details>
 
       <details class="settings-group">
         <summary>医療機関マスタ（訪問看護指示書発行元）</summary>
         <div class="settings-group-body">
-          <div id="hospList"></div>
-          <div style="display:flex;gap:8px;margin-top:10px;">
+          <div style="display:flex;gap:8px;margin-bottom:10px;">
             <input type="text" id="newHospName" placeholder="医療機関名を入力">
             <button class="btn btn-ghost btn-small" id="addHospBtn">＋ 追加</button>
           </div>
+          <div id="hospList"></div>
         </div>
       </details>
 
@@ -693,11 +702,11 @@ require __DIR__ . '/lib/auth.php';
         <summary>地区マスタ</summary>
         <div class="settings-group-body">
           <p class="page-sub" style="margin-bottom:10px;">例：さいたま市緑区、川口市　など。登録しておくと③新規登録・提案で地区を選べるようになります。</p>
-          <div id="districtList"></div>
-          <div style="display:flex;gap:8px;margin-top:10px;">
+          <div style="display:flex;gap:8px;margin-bottom:10px;">
             <input type="text" id="newDistrictName" placeholder="地区名を入力（例：さいたま市緑区）">
             <button class="btn btn-ghost btn-small" id="addDistrictBtn">＋ 追加</button>
           </div>
+          <div id="districtList"></div>
         </div>
       </details>
 
@@ -875,6 +884,10 @@ function migrateState(loaded){
   }
   delete loaded.staffWorkdays;
   if(!loaded.referralSources) loaded.referralSources = { careManagers: [], hospitals: [] };
+  // 居宅介護支援事業所・医療機関のマスタは名前順で表示・選択できるよう、読み込み時に一度整列しておく
+  // （新規追加時にも都度整列するため、以後は常に名前順が保たれる）
+  loaded.referralSources.careManagers.sort((a,b)=>a.localeCompare(b,'ja'));
+  loaded.referralSources.hospitals.sort((a,b)=>a.localeCompare(b,'ja'));
   if(!loaded.staffBuffer) loaded.staffBuffer = { '看護師': 0, 'セラピスト': 0 };
   if(!loaded.districts) loaded.districts = [];
   if(!loaded.suspendedPatients) loaded.suspendedPatients = [];
@@ -3006,9 +3019,28 @@ function countDistinctPatients(){
   state.irregularBookings.forEach(b=> names.add(b.name || '(名前未登録)'));
   return names.size;
 }
+// 現在の利用者様（不定期枠を含む）を対象に、指定したフィールド（careManager／hospital）の
+// 実際に利用者様がいる値（＝空欄・未設定は数えない）の種類数を数える。⑦の「居宅介護支援事業所数」
+// 「医療機関数」で使う（renderReferralAnalysisTable()の集計ロジックと同じ、氏名で重複を除いた集計対象）
+function countDistinctReferralGroups(field){
+  const patients = new Map();
+  const add = (b)=>{
+    const key = b.name || '(名前未登録)';
+    if(!patients.has(key)) patients.set(key, b[field] || '');
+  };
+  Object.values(state.bookings).forEach(add);
+  state.irregularBookings.forEach(add);
+  const groups = new Set();
+  patients.forEach(v=>{ if(v) groups.add(v); });
+  return groups.size;
+}
 function renderReferralAnalysis(){
   const totalEl = document.getElementById('referralTotalPatients');
   if(totalEl) totalEl.textContent = countDistinctPatients();
+  const cmTotalEl = document.getElementById('referralTotalCareManagers');
+  if(cmTotalEl) cmTotalEl.textContent = countDistinctReferralGroups('careManager');
+  const hospTotalEl = document.getElementById('referralTotalHospitals');
+  if(hospTotalEl) hospTotalEl.textContent = countDistinctReferralGroups('hospital');
   renderReferralAnalysisTable('cmTable', 'careManager', '居宅介護支援事業所');
   renderReferralAnalysisTable('hospTable', 'hospital', '医療機関');
 }
@@ -3444,7 +3476,16 @@ function renderSettings(){
   renderWorkdayTable('セラピスト');
 }
 
+function renderStaffRoleCounts(){
+  const wrap = document.getElementById('staffRoleCounts');
+  if(!wrap) return;
+  wrap.innerHTML = CAREGIVER_ROLES.map(role=>{
+    const count = state.staff.filter(s=>s.role===role).length;
+    return `<div class="summary-card"><div class="day">${role}</div><div class="num">${count}</div><div class="unit">人</div></div>`;
+  }).join('');
+}
 function renderStaffList(){
+  renderStaffRoleCounts();
   const wrap = document.getElementById('staffList');
   if(!wrap) return;
   if(!state.staff.length){ wrap.innerHTML = '<p class="page-sub">スタッフが登録されていません。</p>'; return; }
@@ -3626,7 +3667,10 @@ document.getElementById('addCmBtn').addEventListener('click', async ()=>{
   const input = document.getElementById('newCmName');
   const v = input.value.trim();
   if(!v) return;
-  if(!state.referralSources.careManagers.includes(v)) state.referralSources.careManagers.push(v);
+  if(!state.referralSources.careManagers.includes(v)){
+    state.referralSources.careManagers.push(v);
+    state.referralSources.careManagers.sort((a,b)=>a.localeCompare(b,'ja'));
+  }
   await saveState();
   input.value = '';
   renderSettings();
@@ -3635,7 +3679,10 @@ document.getElementById('addHospBtn').addEventListener('click', async ()=>{
   const input = document.getElementById('newHospName');
   const v = input.value.trim();
   if(!v) return;
-  if(!state.referralSources.hospitals.includes(v)) state.referralSources.hospitals.push(v);
+  if(!state.referralSources.hospitals.includes(v)){
+    state.referralSources.hospitals.push(v);
+    state.referralSources.hospitals.sort((a,b)=>a.localeCompare(b,'ja'));
+  }
   await saveState();
   input.value = '';
   renderSettings();
