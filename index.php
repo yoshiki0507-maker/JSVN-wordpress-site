@@ -239,10 +239,11 @@ require __DIR__ . '/lib/auth.php';
   .month-card{ background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:14px; }
   .month-card .m{ font-family:var(--font-mono); font-size:12px; color:var(--ink-soft); margin-bottom:8px;}
   .bar-row{ display:flex; align-items:center; gap:6px; margin-bottom:5px; }
-  .bar-row .lbl{ width:34px; font-size:10.5px; color:var(--ink-soft); }
+  .bar-row .lbl{ width:48px; font-size:10.5px; color:var(--ink-soft); flex:0 0 auto; }
   .bar-track{ flex:1; background:#EEF1EF; border-radius:4px; height:12px; overflow:hidden; }
   .bar-fill{ height:100%; border-radius:4px; }
   .bar-fill.new{ background:var(--sage); }
+  .bar-fill.suspended{ background:var(--amber); }
   .bar-fill.end{ background:var(--brick); }
   .bar-row .val{ width:18px; font-family:var(--font-mono); font-size:11px; text-align:right; }
 
@@ -2793,6 +2794,10 @@ function autoTransitionLongHospitalized(){
       district: first.district, note: first.note, previousRoles,
       suspendedAt: todayStr(), reason: 'hospitalized_auto'
     });
+    state.eventLog.push({
+      id: newId(), type:'一時停止', date: todayStr(), name: first.name,
+      careManager: first.careManager, hospital: first.hospital
+    });
     bookings.forEach(b=>{ delete state.bookings[b.id]; });
     movedNames.push(name);
   });
@@ -2810,6 +2815,10 @@ async function suspendPatientGroup(ids, first){
     alone: first.alone, careManager: first.careManager, hospital: first.hospital,
     district: first.district, note: first.note, previousRoles,
     suspendedAt: todayStr(), reason: 'manual'
+  });
+  state.eventLog.push({
+    id: newId(), type:'一時停止', date: todayStr(), name: first.name,
+    careManager: first.careManager, hospital: first.hospital
   });
   ids.forEach(id=>{ delete state.bookings[id]; });
   await saveState();
@@ -2896,18 +2905,24 @@ document.getElementById('suspendedNewForm').addEventListener('submit', async (e)
   e.preventDefault();
   const name = document.getElementById('sus-name').value.trim();
   if(!name){ alert('氏名を入力してください。'); return; }
+  const susCareManager = document.getElementById('sus-cm').value;
+  const susHospital = document.getElementById('sus-hosp').value;
   state.suspendedPatients.push({
     id: newId(), name,
     disease: document.getElementById('sus-disease').value.trim(),
     insuranceType: document.getElementById('sus-insurance').value,
     alone: document.getElementById('sus-alone').value,
-    careManager: document.getElementById('sus-cm').value,
-    hospital: document.getElementById('sus-hosp').value,
+    careManager: susCareManager,
+    hospital: susHospital,
     district: document.getElementById('sus-district').value,
     note: document.getElementById('sus-note').value.trim(),
     previousRoles: [],
     suspendedAt: todayStr(),
     reason: 'manual'
+  });
+  state.eventLog.push({
+    id: newId(), type:'一時停止', date: todayStr(), name,
+    careManager: susCareManager, hospital: susHospital
   });
   await saveState();
   e.target.reset();
@@ -3056,9 +3071,11 @@ function renderReport(){
   const byMonth = {};
   state.eventLog.forEach(ev=>{
     const m = monthKey(ev.date);
-    if(!byMonth[m]) byMonth[m] = { newSet:new Set(), end:0 };
+    if(!byMonth[m]) byMonth[m] = { newSet:new Set(), suspendedSet:new Set(), end:0 };
     if(ev.type==='新規'){
       byMonth[m].newSet.add(ev.name ? ('n:'+ev.name) : ('n:__anon_'+ev.id));
+    }else if(ev.type==='一時停止'){
+      byMonth[m].suspendedSet.add(ev.name ? ('s:'+ev.name) : ('s:__anon_'+ev.id));
     }else{
       byMonth[m].end++;
     }
@@ -3072,21 +3089,22 @@ function renderReport(){
     return;
   }
   const stats = {};
-  months.forEach(m=>{ stats[m] = { new: byMonth[m].newSet.size, end: byMonth[m].end }; });
-  const max = Math.max(...months.map(m=>Math.max(stats[m].new, stats[m].end)), 1);
+  months.forEach(m=>{ stats[m] = { new: byMonth[m].newSet.size, suspended: byMonth[m].suspendedSet.size, end: byMonth[m].end }; });
+  const max = Math.max(...months.map(m=>Math.max(stats[m].new, stats[m].suspended, stats[m].end)), 1);
   grid.innerHTML = months.map(m=>{
     const v = stats[m];
     return `<div class="month-card">
       <div class="m">${m}</div>
       <div class="bar-row"><span class="lbl">新規</span><div class="bar-track"><div class="bar-fill new" style="width:${v.new/max*100}%"></div></div><span class="val">${v.new}</span></div>
+      <div class="bar-row"><span class="lbl">一時停止</span><div class="bar-track"><div class="bar-fill suspended" style="width:${v.suspended/max*100}%"></div></div><span class="val">${v.suspended}</span></div>
       <div class="bar-row"><span class="lbl">終了</span><div class="bar-track"><div class="bar-fill end" style="width:${v.end/max*100}%"></div></div><span class="val">${v.end}</span></div>
     </div>`;
   }).join('');
 
-  let html = '<tr><th>年月</th><th>新規（利用者数）</th><th>終了</th><th>純増減</th></tr>';
+  let html = '<tr><th>年月</th><th>新規（利用者数）</th><th>一時訪問停止</th><th>終了</th><th>純増減</th></tr>';
   months.forEach(m=>{
     const v = stats[m];
-    html += `<tr><td>${m}</td><td>${v.new}</td><td>${v.end}</td><td>${v.new-v.end>=0?'+':''}${v.new-v.end}</td></tr>`;
+    html += `<tr><td>${m}</td><td>${v.new}</td><td>${v.suspended}</td><td>${v.end}</td><td>${v.new-v.end>=0?'+':''}${v.new-v.end}</td></tr>`;
   });
   table.innerHTML = html;
 
