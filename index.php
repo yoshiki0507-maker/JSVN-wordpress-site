@@ -1009,7 +1009,7 @@ function switchPanel(name){
   document.querySelectorAll('.nav button[data-panel]').forEach(b=>b.classList.toggle('active', b.dataset.panel===name));
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.getElementById('panel-'+name).classList.add('active');
-  if(name!=='intake') resumingSuspendedId = null;
+  if(name!=='intake'){ resumingSuspendedId = null; convertingIrregularId = null; }
   const fn = RENDERERS[name];
   if(fn) fn();
 }
@@ -1527,8 +1527,9 @@ function openIrregularModal(id){
     <label>地区</label><select class="irr-field" data-f="district">${refSelectOptions(state.districts, r.district)}</select>
     <label>実施時刻メモ</label><input class="irr-field" data-f="timeNote" type="text" value="${(r.timeNote||'').replace(/"/g,'&quot;')}">
     <label>備考</label><textarea class="irr-field" data-f="note" rows="2">${r.note||''}</textarea>
-    <div style="display:flex;gap:8px;margin-top:14px;">
+    <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;">
       <button class="btn btn-primary btn-small" data-irr-save>保存する</button>
+      <button class="btn btn-ghost btn-small" data-irr-to-regular>📅 定期枠に変更する</button>
     </div>
     <hr style="margin:16px 0;border:none;border-top:1px solid var(--line);">
     <label>終了理由を選択して終了する</label>
@@ -1544,6 +1545,9 @@ function openIrregularModal(id){
     closeModal();
     renderOverview('看護師'); renderOverview('セラピスト');
     if(document.getElementById('panel-end').classList.contains('active')) renderEndList();
+  });
+  content.querySelector('[data-irr-to-regular]').addEventListener('click', ()=>{
+    convertIrregularToRegular(id);
   });
   content.querySelector('[data-irr-end]').addEventListener('click', async ()=>{
     const reason = content.querySelector('#irr-end-reason').value;
@@ -2161,6 +2165,13 @@ async function confirmSuggestion(s, patient, patternValue, role){
     const idx = state.suspendedPatients.findIndex(s2=>s2.id===resumingSuspendedId && s2.name===patient.name);
     if(idx>=0) state.suspendedPatients.splice(idx,1);
     resumingSuspendedId = null;
+  }
+  if(convertingIrregularId){
+    // 不定期枠→定期枠への切り替えの場合、実際に空き枠が確定した時点で不定期枠の記録を消す
+    // （フォームを開いただけ・確定前に離脱した場合は不定期枠のまま残しておく）
+    const idx = state.irregularBookings.findIndex(r2=>r2.id===convertingIrregularId && r2.name===patient.name && r2.role===role);
+    if(idx>=0) state.irregularBookings.splice(idx,1);
+    convertingIrregularId = null;
   }
   await saveState();
   const companionMsg = patient.companion ? `（${patient.companion.name}様と合わせて2名）` : '';
@@ -2804,6 +2815,7 @@ function autoTransitionLongHospitalized(){
   return movedNames;
 }
 let resumingSuspendedId = null;
+let convertingIrregularId = null;
 async function suspendPatientGroup(ids, first){
   const bookings = ids.map(id=>state.bookings[id]).filter(Boolean);
   if(!bookings.length) return false;
@@ -2850,6 +2862,40 @@ function resumeSuspendedPatient(id){
   resumingSuspendedId = id;
   document.getElementById('roleSections').scrollIntoView({behavior:'smooth', block:'start'});
   showToast(`${sp.name || '利用者様'} 様の情報を引き継ぎました。空き枠を探して登録すると「一時訪問停止」から外れます`);
+}
+// ①②の不定期枠一覧・編集モーダルから、曜日・時間帯を固定した通常の予約（定期枠）へ切り替える。
+// 不定期枠の情報（氏名・疾患名・希望していた担当スタッフなど）を③新規登録・提案の入力欄に
+// 引き継ぎ、通常どおり曜日・時間帯を選んで空き枠を探して登録してもらう（不定期枠のチェックは
+// 入れない＝schedule-fieldsが表示された状態で開く）。resumeSuspendedPatient()と同様、実際に
+// 空き枠が確定するまでは不定期枠の記録を残しておき、確定した時点でconfirmSuggestion()側が
+// state.irregularBookingsから削除する（フォームを開いただけ・確定前に離脱した場合は不定期枠の
+// ままにしておく）。
+function convertIrregularToRegular(id){
+  const r = state.irregularBookings.find(x=>x.id===id);
+  if(!r) return;
+  closeModal();
+  switchPanel('intake');
+  selectedRoles = [r.role];
+  buildRoleChips();
+  buildRoleSections();
+  const nameInput = document.getElementById('f-name');
+  nameInput.value = r.name || '';
+  nameInput.dispatchEvent(new Event('input'));
+  document.getElementById('f-disease').value = r.disease || '';
+  document.getElementById('f-insurance').value = r.insuranceType || '';
+  document.getElementById('f-alone').value = r.alone || '不明';
+  document.getElementById('f-cm').value = r.careManager || '';
+  document.getElementById('f-hosp').value = r.hospital || '';
+  document.getElementById('f-district').value = r.district || '';
+  document.getElementById('f-timenote').value = r.timeNote || '';
+  document.getElementById('f-note').value = r.note || '';
+  const staffSel = document.querySelector(`.f-preferred-staff[data-role="${r.role}"]`);
+  if(staffSel && r.staff) staffSel.value = r.staff;
+  const durationSel = document.querySelector(`.f-duration[data-role="${r.role}"]`);
+  if(durationSel && r.serviceDuration) durationSel.value = r.serviceDuration;
+  convertingIrregularId = id;
+  document.getElementById('roleSections').scrollIntoView({behavior:'smooth', block:'start'});
+  showToast(`${r.name || '利用者様'} 様の情報を引き継ぎました。曜日・時間帯を選んで空き枠を探して登録すると「不定期枠」から定期枠に切り替わります`);
 }
 async function removeSuspendedPatient(id){
   const sp = state.suspendedPatients.find(s=>s.id===id);

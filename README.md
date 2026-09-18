@@ -334,7 +334,15 @@ role では区別できなかったのを解消した）が、②空き状況の
   など）には一切関与しない（他の利用者様の枠を塞がない）。①②の一覧の「編集する」から開く
   `openIrregularModal()`は、④利用者検索などと同じ`#slotModal`を再利用した専用フォームで、
   担当スタッフを含む全項目の編集と、終了理由を選んでの終了（`state.irregularBookings`からの削除）が
-  行える。新規登録・終了はどちらも`eventLog`に記録するため（`day:'不定期', slot:null`という
+  行える。「📅 定期枠に変更する」ボタン（`convertIrregularToRegular(id)`）を押すと、曜日・時間帯を
+  固定した通常の予約へ切り替えられる：③新規登録・提案に切り替え、`resumeSuspendedPatient()`（⑤一時
+  訪問停止の再登録）と同じパターンで氏名・疾患名・主保険・独居・居宅介護支援事業所・医療機関・地区・
+  実施時刻メモ・備考・担当スタッフ・サービス時間を引き継いだ状態で開く（不定期枠のチェックは入れない
+  ＝`.schedule-fields`が表示された状態）。あとは通常どおり曜日・時間帯を選んで空き枠を探して登録すれば
+  よい。`resumingSuspendedId`と同様の仕組みで`convertingIrregularId`にその不定期枠のidを保持しておき、
+  `confirmSuggestion()`が実際に空き枠を確定した時点で`state.irregularBookings`から削除する（フォームを
+  開いただけ・確定前に他の画面へ移動した場合は不定期枠のまま残る。`switchPanel()`が③以外に切り替わると
+  `resumingSuspendedId`と一緒にリセットされる）。新規登録・終了はどちらも`eventLog`に記録するため（`day:'不定期', slot:null`という
   プレースホルダー値で記録するだけで、実際の集計ロジックはeventLogの`day`/`slot`を参照しないため
   影響はない）、⑧月次レポートの新規・終了件数にも通常の予約と同様に反映される。不定期枠の利用者様は
   `state.bookings`ではなく`state.irregularBookings`に記録されるため、月次レポートの新規・終了件数
