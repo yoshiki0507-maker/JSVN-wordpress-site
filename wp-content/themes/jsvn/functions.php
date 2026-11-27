@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit; // 直接アクセスを禁止
 }
 
-define( 'JSVN_VERSION', '1.13.1' );
+define( 'JSVN_VERSION', '1.14.0' );
 
 /**
  * テーマの基本セットアップ
@@ -837,8 +837,12 @@ function jsvn_seed_pages() {
 			'content' => "<h2>第1章　総則</h2>\n<p>（名称）第1条　本会は、日本訪問看護学会と称する。</p>\n<p>（目的）第2条　本会は、訪問看護に関する学術の発展に寄与することを目的とする。</p>\n<h2>第2章　会員</h2>\n<p>第3条　本会の会員は、正会員・学生会員・賛助会員とする。</p>\n<p><em>※ 全文は準備中です。</em></p>",
 		),
 		'officers' => array(
-			'title'   => '役員・代議員・名誉会員紹介',
-			'content' => "<p>日本訪問看護学会の役員をご紹介します。（理事長1名・副理事長2名・常任理事3名・理事15名で構成）</p>",
+			'title'   => '役員名簿',
+			'content' => '',
+		),
+		'supporters' => array(
+			'title'   => '賛助会員',
+			'content' => '',
 		),
 		'election-rules' => array(
 			'title'   => '代議員・役員選出規定',
@@ -1007,6 +1011,33 @@ function jsvn_maybe_seed() {
 	update_option( 'jsvn_seed_version', JSVN_VERSION );
 }
 add_action( 'admin_init', 'jsvn_maybe_seed' );
+
+/**
+ * 既存の役員名簿ページから、初期の前書き（理事長○名…の文）を一度だけ削除する。
+ * 人数が実態と異なり変動するため。手動で書き換えた前書きは対象外（一致時のみ削除）。
+ */
+function jsvn_cleanup_officer_intro() {
+	if ( '1' === get_option( 'jsvn_officer_intro_removed' ) ) {
+		return;
+	}
+	$page = get_page_by_path( 'officers', OBJECT, 'page' );
+	if ( $page ) {
+		$c   = (string) $page->post_content;
+		$new = $c;
+		// 初期シード文をそのまま削除
+		$new = str_replace( '<p>日本訪問看護学会の役員をご紹介します。（理事長1名・副理事長2名・常任理事3名・理事15名で構成）</p>', '', $new );
+		// 表記ゆれ対策：「…理事長○名…構成）…」を含む段落を削除
+		$tmp = preg_replace( '~<p>[^<]*理事長[0-9０-９]+名[^<]*構成[^<]*</p>\s*~u', '', $new );
+		if ( null !== $tmp ) {
+			$new = $tmp;
+		}
+		if ( $new !== $c ) {
+			wp_update_post( array( 'ID' => $page->ID, 'post_content' => $new ) );
+		}
+	}
+	update_option( 'jsvn_officer_intro_removed', '1' );
+}
+add_action( 'admin_init', 'jsvn_cleanup_officer_intro' );
 
 /**
  * 入会案内ページの「会費表の該当部分だけ」を一度だけ安全に書き換える。
