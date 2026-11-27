@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit; // 直接アクセスを禁止
 }
 
-define( 'JSVN_VERSION', '1.13.0' );
+define( 'JSVN_VERSION', '1.13.1' );
 
 /**
  * テーマの基本セットアップ
@@ -1225,6 +1225,24 @@ function jsvn_officer_chair_label( $committees ) {
 }
 
 /**
+ * 委員会・部会名から「長」の呼称を作る。
+ *  例）学術委員会→学術委員長／広報委員会→広報委員長／在宅ケア部会→在宅ケア部会長
+ */
+function jsvn_officer_chair_title( $name ) {
+	$name = trim( (string) $name );
+	if ( '' === $name ) {
+		return '';
+	}
+	if ( '委員会' === mb_substr( $name, -3 ) ) {
+		return mb_substr( $name, 0, mb_strlen( $name ) - 3 ) . '委員長';
+	}
+	if ( '部会' === mb_substr( $name, -2 ) ) {
+		return $name . '長';
+	}
+	return $name . '長';
+}
+
+/**
  * 入力欄（役職・所属・資格）のメタボックス
  */
 function jsvn_officer_metabox() {
@@ -1262,9 +1280,14 @@ function jsvn_officer_metabox_cb( $post ) {
 	}
 	echo '</div>';
 
-	$chair = get_post_meta( $post->ID, '_jsvn_chair', true );
-	echo '<p style="margin-top:10px;"><label><input type="checkbox" name="jsvn_chair" value="1"' . checked( $chair, 1, false ) . '> <strong>委員長・部会長を務める</strong></label></p>';
-	echo '<p style="color:#777;font-size:12px;margin-top:-4px;">チェックすると、氏名の横に「委員長／部会長」バッジを表示します。</p>';
+	$chair_of = get_post_meta( $post->ID, '_jsvn_chair_of', true );
+	echo '<p style="margin-top:10px;"><label><strong>委員長・部会長を務める委員会・部会</strong><br><select name="jsvn_chair_of" style="width:100%;">';
+	echo '<option value="">（務めない）</option>';
+	foreach ( $committees as $c ) {
+		echo '<option value="' . esc_attr( $c ) . '"' . selected( $chair_of, $c, false ) . '>' . esc_html( $c ) . '</option>';
+	}
+	echo '</select></label></p>';
+	echo '<p style="color:#777;font-size:12px;margin-top:-4px;">選ぶと、氏名の横に「○○委員長／○○部会長」のバッジを表示します。</p>';
 	echo '<p style="color:#777;font-size:12px;line-height:1.6;">氏名は上の「タイトル」欄に入力してください。このページでは顔写真は使いません。</p>';
 }
 
@@ -1287,8 +1310,8 @@ function jsvn_officer_save( $post_id ) {
 	$cmts = isset( $_POST['jsvn_committees'] ) ? (array) wp_unslash( $_POST['jsvn_committees'] ) : array();
 	$cmts = array_values( array_filter( array_map( 'sanitize_text_field', $cmts ) ) );
 	update_post_meta( $post_id, '_jsvn_committees', $cmts );
-	// 委員長・部会長フラグ
-	update_post_meta( $post_id, '_jsvn_chair', isset( $_POST['jsvn_chair'] ) ? 1 : 0 );
+	// 委員長・部会長を務める委員会・部会
+	update_post_meta( $post_id, '_jsvn_chair_of', isset( $_POST['jsvn_chair_of'] ) ? sanitize_text_field( wp_unslash( $_POST['jsvn_chair_of'] ) ) : '' );
 }
 add_action( 'save_post_jsvn_officer', 'jsvn_officer_save' );
 
@@ -1336,13 +1359,25 @@ function jsvn_render_officers() {
 			$affil      = get_post_meta( $id, '_jsvn_affiliation', true );
 			$term       = get_post_meta( $id, '_jsvn_term', true );
 			$committees = (array) get_post_meta( $id, '_jsvn_committees', true );
-			$is_chair   = get_post_meta( $id, '_jsvn_chair', true );
+			$chair_of   = get_post_meta( $id, '_jsvn_chair_of', true );
+
+			// 委員長・部会長バッジの呼称（具体名）。旧データ(_jsvn_chair)は汎用表記でフォールバック
+			if ( $chair_of ) {
+				$chair_badge = jsvn_officer_chair_title( $chair_of );
+				if ( ! in_array( $chair_of, $committees, true ) ) {
+					$committees[] = $chair_of; // 長を務める委員会はタグにも表示
+				}
+			} elseif ( get_post_meta( $id, '_jsvn_chair', true ) ) {
+				$chair_badge = jsvn_officer_chair_label( $committees );
+			} else {
+				$chair_badge = '';
+			}
 
 			echo '<article class="jsvn-officer">';
 			echo '<div class="jsvn-officer__head">';
 			echo '<h3 class="jsvn-officer__name">' . esc_html( get_the_title( $id ) ) . '</h3>';
-			if ( $is_chair ) {
-				echo '<span class="jsvn-officer__chair">' . esc_html( jsvn_officer_chair_label( $committees ) ) . '</span>';
+			if ( $chair_badge ) {
+				echo '<span class="jsvn-officer__chair">' . esc_html( $chair_badge ) . '</span>';
 			}
 			echo '</div>';
 			if ( $affil ) {
