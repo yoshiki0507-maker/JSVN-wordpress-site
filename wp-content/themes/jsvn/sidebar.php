@@ -25,7 +25,7 @@
 
 	<?php if ( jsvn_sponsor_banners() ) : ?>
 		<section class="widget">
-			<h3 class="widget-title">協賛企業・賛助会員</h3>
+			<h3 class="widget-title">協賛企業</h3>
 			<?php jsvn_render_sponsor_banners(); ?>
 		</section>
 	<?php endif; ?>

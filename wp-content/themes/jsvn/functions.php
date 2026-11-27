@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit; // 直接アクセスを禁止
 }
 
-define( 'JSVN_VERSION', '1.16.1' );
+define( 'JSVN_VERSION', '1.17.0' );
 
 /**
  * テーマの基本セットアップ
@@ -883,6 +883,10 @@ function jsvn_seed_pages() {
 		'contact' => array(
 			'title'   => 'お問い合わせ',
 			'content' => "<p>本会へのお問い合わせは、以下よりお願いいたします。</p>\n<p>メール：（準備中）<br>お問い合わせフォームを設置予定です。</p>",
+		),
+		'corporate' => array(
+			'title'   => '企業会員のご案内',
+			'content' => "<p>日本訪問看護学会では、本会の活動にご賛同・ご支援いただける企業・団体の皆さまを募集しています。訪問看護の発展と、地域で暮らす人々の療養生活の質の向上を、ともに支えていただけるパートナーをお待ちしております。</p>\n<h2>会員種別と年会費</h2>\n<table><tbody>\n<tr><th>賛助会員</th><td>年会費　15,000円（1口）</td></tr>\n<tr><th>企業会員</th><td>年会費　30,000円（1口）</td></tr>\n</tbody></table>\n<p>複数口でのご入会も歓迎いたします。</p>\n<h2>企業会員の特典</h2>\n<ul>\n<li>本会公式サイトへの企業名・バナー掲載</li>\n<li>学術集会・研究会のご案内および参加のご優待</li>\n<li>学会誌・ニュースレターの送付</li>\n<li>本会主催事業における協賛・展示のご案内</li>\n</ul>\n<h2>お申し込みの流れ</h2>\n<p>ご入会をご希望の企業・団体さまは、<a href=\"/contact/\">お問い合わせ</a>よりご連絡ください。担当者より入会申込書および詳細をご案内いたします。</p>",
 		),
 		'news' => array(
 			'title'   => 'お知らせ',
@@ -2058,7 +2062,7 @@ function jsvn_content_fields() {
 				'banner_journal_en'   => array( 'バナー3 英字', 'text', 'JOURNAL & NEWSLETTER' ),
 				'banner_login_label'  => array( 'バナー4 見出し', 'text', '会員ログイン（学会バンク）' ),
 				'banner_login_en'     => array( 'バナー4 英字', 'text', 'MEMBER LOGIN' ),
-				'sponsors_heading'    => array( '協賛企業 見出し', 'text', '協賛企業・賛助会員' ),
+				'sponsors_heading'    => array( '協賛企業 見出し', 'text', '協賛企業' ),
 			),
 		),
 		'blogsns' => array(
