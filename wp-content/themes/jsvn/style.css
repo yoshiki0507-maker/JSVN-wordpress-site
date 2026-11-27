@@ -4,7 +4,7 @@ Theme URI: https://jsvn.example.jp/
 Author: JSVN Web Team
 Author URI: https://jsvn.example.jp/
 Description: 日本訪問看護学会の公式サイト用カスタムテーマ。訪問看護の「温かさ」と学会としての「学術的な信頼感」を両立させたデザインです。WordPress 6.x 対応。
-Version: 1.12.1
+Version: 1.13.0
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -747,28 +747,52 @@ ul, ol { margin: 0 0 1.2em; padding-left: 1.4em; }
   display: flex; align-items: baseline; gap: .8rem;
 }
 .jsvn-officer-role-h span { font-size: .8rem; color: var(--jsvn-gold); font-weight: 700; }
-/* 役員名簿（写真なし・氏名／所属／任期のシンプルなカード） */
+/* 役員名簿（写真なし・氏名／所属／任期＋委員会・部会） */
 .jsvn-officers { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 1.8rem; }
+.jsvn-officers--3col { grid-template-columns: repeat(3, 1fr); }
 .jsvn-officer {
+  display: flex; flex-direction: column; gap: .4rem;
   background: #fff; border: 1px solid var(--jsvn-line); border-left: 4px solid var(--jsvn-green);
-  border-radius: 10px; padding: 1.15rem 1.4rem; box-shadow: var(--jsvn-shadow-sm);
+  border-radius: 10px; padding: 1.05rem 1.3rem; box-shadow: var(--jsvn-shadow-sm);
   transition: transform .2s ease, box-shadow .2s ease;
 }
 .jsvn-officer:hover { transform: translateY(-2px); box-shadow: var(--jsvn-shadow); }
-/* .jsvn-article h3 の上マージンを打ち消し（枠上部の余白を詰める）*/
+/* 氏名＋委員長バッジの行 */
+.jsvn-officer__head { display: flex; align-items: center; flex-wrap: wrap; gap: .4rem .6rem; }
 .jsvn-officers .jsvn-officer__name {
-  font-family: var(--jsvn-serif); font-size: 1.24rem; font-weight: 700;
-  color: var(--jsvn-navy); margin: 0 0 .35rem; line-height: 1.3;
+  font-family: var(--jsvn-serif); font-size: 1.22rem; font-weight: 700;
+  color: var(--jsvn-navy); margin: 0; line-height: 1.3;
 }
-.jsvn-officer__affil { font-size: .9rem; color: var(--jsvn-ink-soft); margin: 0 0 .45rem; line-height: 1.65; }
-.jsvn-officer__term { font-size: .84rem; color: var(--jsvn-ink); margin: 0; }
-.jsvn-officer__term span {
-  display: inline-block; font-size: .68rem; font-weight: 700; color: #fff;
-  background: var(--jsvn-gold); border-radius: 4px; padding: .12em .6em; margin-right: .55em;
+.jsvn-officer__chair {
+  font-size: .66rem; font-weight: 700; color: #fff; letter-spacing: .05em; white-space: nowrap;
+  background: linear-gradient(135deg, #b8892f 0%, #d8b155 55%, #9c7532 100%);
+  padding: .22em .75em; border-radius: 999px; box-shadow: 0 2px 7px rgba(156, 117, 50, .35);
+}
+.jsvn-officer__affil { font-size: .88rem; color: var(--jsvn-ink-soft); margin: 0; line-height: 1.6; }
+/* 任期（左）＋ 委員会・部会タグ（右）で枠の右側まで使う */
+.jsvn-officer__foot {
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap;
+  gap: .4rem .8rem; margin-top: .25rem; padding-top: .5rem; border-top: 1px dashed var(--jsvn-line);
+}
+.jsvn-officer__term { font-size: .82rem; color: var(--jsvn-ink); white-space: nowrap; }
+.jsvn-officer__term > span {
+  display: inline-block; font-size: .66rem; font-weight: 700; color: #fff;
+  background: var(--jsvn-gold); border-radius: 4px; padding: .12em .6em; margin-right: .5em;
   letter-spacing: .03em; vertical-align: middle;
 }
+.jsvn-officer__cmts { display: flex; flex-wrap: wrap; gap: .3rem; justify-content: flex-end; }
+.jsvn-officer__cmt {
+  font-size: .72rem; font-weight: 600; color: var(--jsvn-green);
+  background: var(--jsvn-green-soft); border: 1px solid #cfe0d6;
+  border-radius: 6px; padding: .18em .6em; line-height: 1.5; white-space: nowrap;
+}
+.jsvn-officers--3col .jsvn-officer__name { font-size: 1.1rem; }
+@media (max-width: 920px) {
+  .jsvn-officers--3col { grid-template-columns: repeat(2, 1fr); }
+}
 @media (max-width: 640px) {
-  .jsvn-officers { grid-template-columns: 1fr; }
+  .jsvn-officers,
+  .jsvn-officers--3col { grid-template-columns: 1fr; }
 }
 
 /* 賛助会員（名前・所属のみのシンプル一覧） */

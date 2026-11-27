@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit; // 直接アクセスを禁止
 }
 
-define( 'JSVN_VERSION', '1.12.1' );
+define( 'JSVN_VERSION', '1.13.0' );
 
 /**
  * テーマの基本セットアップ
@@ -1163,6 +1163,68 @@ function jsvn_officer_roles() {
 }
 
 /**
+ * 役員名簿で選べる委員会・部会の一覧。
+ * [外観 > カスタマイズ > 委員会・部会] のテキスト（1行1件）で編集可能。
+ */
+function jsvn_officer_committees() {
+	$default = "学術委員会\n編集委員会\n倫理委員会\n利益相反（COI）委員会\n教育・研修委員会\n広報委員会";
+	$raw     = get_theme_mod( 'jsvn_committees', $default );
+	$out     = array();
+	foreach ( preg_split( '/\r\n|\r|\n/', (string) $raw ) as $line ) {
+		$line = trim( $line );
+		if ( '' !== $line ) {
+			$out[] = $line;
+		}
+	}
+	return $out;
+}
+
+/**
+ * 委員会・部会の選択肢をカスタマイザーで編集できるようにする。
+ */
+function jsvn_customize_committees( $wp_customize ) {
+	$wp_customize->add_section( 'jsvn_committees_sec', array(
+		'title'       => __( '委員会・部会（役員名簿の選択肢）', 'jsvn' ),
+		'priority'    => 50,
+		'description' => __( '役員名簿で各役員に設定できる「委員会・部会」の選択肢です。1行に1つずつ入力してください。', 'jsvn' ),
+	) );
+	$wp_customize->add_setting( 'jsvn_committees', array(
+		'default'           => "学術委員会\n編集委員会\n倫理委員会\n利益相反（COI）委員会\n教育・研修委員会\n広報委員会",
+		'sanitize_callback' => 'sanitize_textarea_field',
+	) );
+	$wp_customize->add_control( 'jsvn_committees', array(
+		'label'       => __( '委員会・部会の一覧（1行に1件）', 'jsvn' ),
+		'section'     => 'jsvn_committees_sec',
+		'type'        => 'textarea',
+		'input_attrs' => array( 'rows' => 8 ),
+	) );
+}
+add_action( 'customize_register', 'jsvn_customize_committees' );
+
+/**
+ * 役員の委員長・部会長バッジの表示ラベルを求める。
+ */
+function jsvn_officer_chair_label( $committees ) {
+	$has_bukai  = false;
+	$has_iinkai = false;
+	foreach ( (array) $committees as $c ) {
+		if ( false !== mb_strpos( $c, '部会' ) ) {
+			$has_bukai = true;
+		}
+		if ( false !== mb_strpos( $c, '委員会' ) ) {
+			$has_iinkai = true;
+		}
+	}
+	if ( $has_bukai && ! $has_iinkai ) {
+		return '部会長';
+	}
+	if ( $has_iinkai && ! $has_bukai ) {
+		return '委員長';
+	}
+	return '委員長・部会長';
+}
+
+/**
  * 入力欄（役職・所属・資格）のメタボックス
  */
 function jsvn_officer_metabox() {
@@ -1186,6 +1248,23 @@ function jsvn_officer_metabox_cb( $post ) {
 	echo '<p style="color:#777;font-size:12px;margin:-4px 0 10px;">同じ役職の中で、このふりがなの五十音順（あいうえお順）に並びます。空欄なら氏名順になります。</p>';
 	echo '<p><label><strong>所属・肩書</strong><br><input type="text" name="jsvn_affiliation" value="' . esc_attr( $affil ) . '" style="width:100%;" placeholder="例）○○大学大学院 教授"></label></p>';
 	echo '<p><label><strong>任期</strong><br><input type="text" name="jsvn_term" value="' . esc_attr( $term ) . '" style="width:100%;" placeholder="例）2026年4月〜2028年3月"></label></p>';
+
+	$sel = (array) get_post_meta( $post->ID, '_jsvn_committees', true );
+	echo '<p style="margin-bottom:4px;"><strong>担当の委員会・部会</strong></p>';
+	echo '<div style="max-height:150px;overflow:auto;border:1px solid #dcdcde;border-radius:4px;padding:6px 8px;">';
+	$committees = jsvn_officer_committees();
+	if ( empty( $committees ) ) {
+		echo '<p style="color:#777;margin:0;">［外観＞カスタマイズ＞委員会・部会］で選択肢を追加してください。</p>';
+	}
+	foreach ( $committees as $c ) {
+		$ck = in_array( $c, $sel, true ) ? ' checked' : '';
+		echo '<label style="display:block;margin:.25em 0;"><input type="checkbox" name="jsvn_committees[]" value="' . esc_attr( $c ) . '"' . $ck . '> ' . esc_html( $c ) . '</label>';
+	}
+	echo '</div>';
+
+	$chair = get_post_meta( $post->ID, '_jsvn_chair', true );
+	echo '<p style="margin-top:10px;"><label><input type="checkbox" name="jsvn_chair" value="1"' . checked( $chair, 1, false ) . '> <strong>委員長・部会長を務める</strong></label></p>';
+	echo '<p style="color:#777;font-size:12px;margin-top:-4px;">チェックすると、氏名の横に「委員長／部会長」バッジを表示します。</p>';
 	echo '<p style="color:#777;font-size:12px;line-height:1.6;">氏名は上の「タイトル」欄に入力してください。このページでは顔写真は使いません。</p>';
 }
 
@@ -1204,6 +1283,12 @@ function jsvn_officer_save( $post_id ) {
 			update_post_meta( $post_id, $key, sanitize_text_field( wp_unslash( $_POST[ $field ] ) ) );
 		}
 	}
+	// 担当の委員会・部会（複数選択）
+	$cmts = isset( $_POST['jsvn_committees'] ) ? (array) wp_unslash( $_POST['jsvn_committees'] ) : array();
+	$cmts = array_values( array_filter( array_map( 'sanitize_text_field', $cmts ) ) );
+	update_post_meta( $post_id, '_jsvn_committees', $cmts );
+	// 委員長・部会長フラグ
+	update_post_meta( $post_id, '_jsvn_chair', isset( $_POST['jsvn_chair'] ) ? 1 : 0 );
 }
 add_action( 'save_post_jsvn_officer', 'jsvn_officer_save' );
 
@@ -1244,17 +1329,38 @@ function jsvn_render_officers() {
 			return strcmp( $ka, $kb );
 		} );
 		echo '<h2 class="jsvn-officer-role-h">' . esc_html( $role ) . '<span>' . count( $grouped[ $role ] ) . '名</span></h2>';
-		echo '<div class="jsvn-officers">';
+		// 理事長・副理事長・常任理事・監事・顧問“以外”（＝理事・名誉会員）は3列に
+		$three = ! in_array( $role, array( '理事長', '副理事長', '常任理事', '監事', '顧問' ), true );
+		echo '<div class="jsvn-officers' . ( $three ? ' jsvn-officers--3col' : '' ) . '">';
 		foreach ( $grouped[ $role ] as $id ) {
-			$affil = get_post_meta( $id, '_jsvn_affiliation', true );
-			$term  = get_post_meta( $id, '_jsvn_term', true );
+			$affil      = get_post_meta( $id, '_jsvn_affiliation', true );
+			$term       = get_post_meta( $id, '_jsvn_term', true );
+			$committees = (array) get_post_meta( $id, '_jsvn_committees', true );
+			$is_chair   = get_post_meta( $id, '_jsvn_chair', true );
+
 			echo '<article class="jsvn-officer">';
+			echo '<div class="jsvn-officer__head">';
 			echo '<h3 class="jsvn-officer__name">' . esc_html( get_the_title( $id ) ) . '</h3>';
+			if ( $is_chair ) {
+				echo '<span class="jsvn-officer__chair">' . esc_html( jsvn_officer_chair_label( $committees ) ) . '</span>';
+			}
+			echo '</div>';
 			if ( $affil ) {
 				echo '<p class="jsvn-officer__affil">' . esc_html( $affil ) . '</p>';
 			}
-			if ( $term ) {
-				echo '<p class="jsvn-officer__term"><span>任期</span>' . esc_html( $term ) . '</p>';
+			if ( $term || ! empty( $committees ) ) {
+				echo '<div class="jsvn-officer__foot">';
+				if ( $term ) {
+					echo '<span class="jsvn-officer__term"><span>任期</span>' . esc_html( $term ) . '</span>';
+				}
+				if ( ! empty( $committees ) ) {
+					echo '<span class="jsvn-officer__cmts">';
+					foreach ( $committees as $c ) {
+						echo '<span class="jsvn-officer__cmt">' . esc_html( $c ) . '</span>';
+					}
+					echo '</span>';
+				}
+				echo '</div>';
 			}
 			echo '</article>';
 		}
