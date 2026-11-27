@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit; // 直接アクセスを禁止
 }
 
-define( 'JSVN_VERSION', '1.14.0' );
+define( 'JSVN_VERSION', '1.15.0' );
 
 /**
  * テーマの基本セットアップ
@@ -1139,9 +1139,13 @@ add_action( 'admin_init', 'jsvn_sync_join_content' );
  */
 function jsvn_body_class_join( $classes ) {
 	if ( is_page() ) {
-		$obj = get_queried_object();
-		if ( $obj && isset( $obj->post_name ) && 'join' === $obj->post_name ) {
+		$obj  = get_queried_object();
+		$slug = ( $obj && isset( $obj->post_name ) ) ? $obj->post_name : '';
+		if ( 'join' === $slug ) {
 			$classes[] = 'jsvn-page-join';
+		}
+		if ( in_array( $slug, array( 'officers', 'supporters' ), true ) ) {
+			$classes[] = 'jsvn-page-roster';
 		}
 	}
 	return $classes;
@@ -1573,9 +1577,62 @@ function jsvn_render_supporters() {
 	return true;
 }
 
-/* =============================================================
- *  SNS（Instagram / X / Facebook / YouTube）とブログ
- * ============================================================= */
+/**
+ * 活動協力者（クラウドファンディング協力者など）の一覧を返す。
+ */
+function jsvn_cooperators() {
+	$raw = get_theme_mod( 'jsvn_cooperators', '' );
+	return apply_filters( 'jsvn_cooperators', jsvn_parse_supporters( $raw ) );
+}
+
+/**
+ * カスタマイザーに「活動協力者」設定を追加。
+ */
+function jsvn_customize_cooperators( $wp_customize ) {
+	$wp_customize->add_section( 'jsvn_coop_sec', array(
+		'title'       => __( '活動協力者（クラウドファンディング等）', 'jsvn' ),
+		'priority'    => 49,
+		'description' => __( '賛助会員ページに表示する活動協力者（クラウドファンディング協力者など）の一覧です。1行に1名、「名前」または「名前,所属・コメント」の形式で入力してください。', 'jsvn' ),
+	) );
+	$wp_customize->add_setting( 'jsvn_cooperators', array(
+		'default'           => '',
+		'sanitize_callback' => 'sanitize_textarea_field',
+	) );
+	$wp_customize->add_control( 'jsvn_cooperators', array(
+		'label'       => __( '活動協力者一覧（1行に1名）', 'jsvn' ),
+		'section'     => 'jsvn_coop_sec',
+		'type'        => 'textarea',
+		'input_attrs' => array( 'rows' => 10, 'placeholder' => "山田 太郎\n佐藤 花子,東京都" ),
+	) );
+}
+add_action( 'customize_register', 'jsvn_customize_cooperators' );
+
+/**
+ * 活動協力者一覧を出力（名前を複数列で。クラウドファンディング協力者向け）。
+ */
+function jsvn_render_cooperators() {
+	$list = jsvn_cooperators();
+	if ( empty( $list ) ) {
+		return false;
+	}
+	echo '<section class="jsvn-coop">';
+	echo '<h2 class="jsvn-officer-role-h">' . esc_html( jsvn_text( 'cooperators_heading', '活動協力者' ) ) . '<span>' . count( $list ) . '名</span></h2>';
+	$lead = jsvn_text( 'cooperators_lead', '本会の活動にご協力・ご支援をいただいた皆さまです。（順不同・敬称略）' );
+	if ( $lead ) {
+		echo '<p class="jsvn-coop__lead">' . esc_html( $lead ) . '</p>';
+	}
+	echo '<ul class="jsvn-coop__list">';
+	foreach ( $list as $s ) {
+		echo '<li class="jsvn-coop__item">' . esc_html( $s['name'] );
+		if ( '' !== $s['affil'] ) {
+			echo '<span class="jsvn-coop__affil">' . esc_html( $s['affil'] ) . '</span>';
+		}
+		echo '</li>';
+	}
+	echo '</ul>';
+	echo '</section>';
+	return true;
+}
 
 /**
  * SNSのURLをカスタマイザーに追加
@@ -1968,10 +2025,12 @@ function jsvn_content_fields() {
 			),
 		),
 		'supporters' => array(
-			'title'  => '賛助会員の見出し',
+			'title'  => '賛助会員・活動協力者の見出し',
 			'fields' => array(
-				'supporters_heading' => array( '見出し', 'text', '賛助会員' ),
-				'supporters_lead'    => array( '説明文（空欄で非表示）', 'textarea', '本会の活動を温かくご支援いただいている賛助会員の皆さまです。（順不同・敬称略）' ),
+				'supporters_heading'  => array( '賛助会員 見出し', 'text', '賛助会員' ),
+				'supporters_lead'     => array( '賛助会員 説明文（空欄で非表示）', 'textarea', '本会の活動を温かくご支援いただいている賛助会員の皆さまです。（順不同・敬称略）' ),
+				'cooperators_heading' => array( '活動協力者 見出し', 'text', '活動協力者' ),
+				'cooperators_lead'    => array( '活動協力者 説明文（空欄で非表示）', 'textarea', '本会の活動にご協力・ご支援をいただいた皆さまです。（順不同・敬称略）' ),
 			),
 		),
 		'pillars' => array(

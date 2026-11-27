@@ -26,8 +26,11 @@ while ( have_posts() ) : the_post();
 					the_content();
 				}
 				// 賛助会員を描画
-				if ( ! jsvn_render_supporters() ) {
-					echo '<p>賛助会員は準備中です。［外観 &gt; カスタマイズ &gt; 賛助会員］から登録できます。</p>';
+				$jsvn_sup  = jsvn_render_supporters();
+				// 活動協力者（クラウドファンディング協力者など）を描画
+				$jsvn_coop = jsvn_render_cooperators();
+				if ( ! $jsvn_sup && ! $jsvn_coop ) {
+					echo '<p>準備中です。［外観 &gt; カスタマイズ &gt; 賛助会員 ／ 活動協力者］から登録できます。</p>';
 				}
 				?>
 			</article>
