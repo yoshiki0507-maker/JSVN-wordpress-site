@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit; // 直接アクセスを禁止
 }
 
-define( 'JSVN_VERSION', '1.16.0' );
+define( 'JSVN_VERSION', '1.16.1' );
 
 /**
  * テーマの基本セットアップ
@@ -1845,44 +1845,17 @@ function jsvn_render_member_map() {
 	$total  = array_sum( $counts );
 
 	// --- 地図SVG ---
-	$okinawa_d = isset( $data['paths']['沖縄県'] ) ? $data['paths']['沖縄県'] : '';
 	$svg  = '<svg viewBox="' . esc_attr( $data['viewbox'] ) . '" xmlns="http://www.w3.org/2000/svg" class="jsvn-jpmap" role="img" aria-label="都道府県別の会員数">';
 	foreach ( $data['paths'] as $nm => $d ) {
-		if ( '沖縄県' === $nm ) {
-			continue; // 沖縄は下のインセット枠で描画
-		}
 		$v    = isset( $counts[ $nm ] ) ? (int) $counts[ $nm ] : 0;
 		$svg .= '<path d="' . esc_attr( $d ) . '" fill="' . esc_attr( jsvn_member_color( $v ) ) . '" stroke="#aab8af" stroke-width="0.8" class="jsvn-pref" tabindex="0" role="img" aria-label="' . esc_attr( $nm . ' 会員数 ' . $v . '名' ) . '" data-n="' . esc_attr( $nm ) . '" data-v="' . esc_attr( $v ) . '"></path>';
 	}
-
-	// --- 沖縄県インセット（右下のきれいな枠にきちんと収める）---
-	if ( $okinawa_d ) {
-		$bx = 580; $by = 760; $bw = 172; $bh = 150; // 枠（右下）
-		$pad = 13; $label_h = 22;
-		$cx0 = $bx + $pad;        $cy0 = $by + $pad + $label_h;
-		$cx1 = $bx + $bw - $pad;  $cy1 = $by + $bh - $pad;
-
-		preg_match_all( '/-?\d+\.?\d*/', $okinawa_d, $mm );
-		$ns = $mm[0]; $oxs = array(); $oys = array();
-		for ( $i = 0; $i + 1 < count( $ns ); $i += 2 ) {
-			$oxs[] = (float) $ns[ $i ];
-			$oys[] = (float) $ns[ $i + 1 ];
-		}
-		$ox0 = min( $oxs ); $oy0 = min( $oys );
-		$ow  = max( max( $oxs ) - $ox0, 0.1 );
-		$oh  = max( max( $oys ) - $oy0, 0.1 );
-		$scale = min( ( $cx1 - $cx0 ) / $ow, ( $cy1 - $cy0 ) / $oh );
-		$tx = round( $cx0 + ( ( $cx1 - $cx0 ) - $ow * $scale ) / 2 - $ox0 * $scale, 2 );
-		$ty = round( $cy0 + ( ( $cy1 - $cy0 ) - $oh * $scale ) / 2 - $oy0 * $scale, 2 );
-		$scale = round( $scale, 4 );
-		$ov = isset( $counts['沖縄県'] ) ? (int) $counts['沖縄県'] : 0;
-
-		$svg .= '<rect x="' . $bx . '" y="' . $by . '" width="' . $bw . '" height="' . $bh . '" rx="10" fill="#f7faf8" stroke="#c4d3c9" stroke-width="1.2"/>';
-		$svg .= '<text x="' . ( $bx + $bw / 2 ) . '" y="' . ( $by + 17 ) . '" text-anchor="middle" font-size="13" font-weight="700" fill="#5b6960">沖縄県</text>';
-		$svg .= '<line x1="' . ( $bx + 12 ) . '" y1="' . ( $by + 26 ) . '" x2="' . ( $bx + $bw - 12 ) . '" y2="' . ( $by + 26 ) . '" stroke="#e1e9e3" stroke-width="1"/>';
-		$svg .= '<g transform="translate(' . $tx . ',' . $ty . ') scale(' . $scale . ')">';
-		$svg .= '<path d="' . esc_attr( $okinawa_d ) . '" fill="' . esc_attr( jsvn_member_color( $ov ) ) . '" stroke="#aab8af" stroke-width="' . round( 0.8 / max( $scale, 0.01 ), 2 ) . '" class="jsvn-pref" tabindex="0" role="img" aria-label="' . esc_attr( '沖縄県 会員数 ' . $ov . '名' ) . '" data-n="沖縄県" data-v="' . esc_attr( $ov ) . '"></path>';
-		$svg .= '</g>';
+	if ( ! empty( $data['bracket'] ) ) {
+		$svg .= '<polyline points="' . esc_attr( $data['bracket'] ) . '" fill="none" stroke="#8a97a0" stroke-width="1.2" stroke-linejoin="round"/>';
+	}
+	if ( ! empty( $data['label'] ) ) {
+		$lb   = $data['label'];
+		$svg .= '<text x="' . esc_attr( $lb['x'] ) . '" y="' . esc_attr( $lb['y'] ) . '" font-size="12" fill="#5b6960">沖縄県</text>';
 	}
 	$svg .= '</svg>';
 
